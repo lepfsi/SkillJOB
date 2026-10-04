@@ -11,6 +11,23 @@ from app.services.skills_taxonomy import load_taxonomy
 router = APIRouter(prefix="/api/assistant", tags=["assistant"])
 
 
+@router.get("/status", response_model=dict)
+def assistant_status(
+    user: models.User = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """État du moteur de l'agent : modèle LLM connecté ou mode local.
+    Transparence totale : plus jamais de changement de moteur silencieux."""
+    from app.services import llm_client
+
+    conf = llm_client.get_llm_config(db)
+    return {
+        "llm_enabled": conf["enabled"],
+        "model": conf["model"] if conf["enabled"] else "",
+        "mode": "llm" if conf["enabled"] else "local",
+    }
+
+
 def _resources_map(db: Session) -> dict[str, list[dict]]:
     """Ressources d'apprentissage réelles (titres + URLs) pour l'assistant."""
     out: dict[str, list[dict]] = {}

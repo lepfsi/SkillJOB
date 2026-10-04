@@ -34,6 +34,10 @@ export class ApiError extends Error {
   }
 }
 
+// Base de l'API : relative par défaut (proxy Vite en dev, rewrite Vercel
+// en production). Alternative : VITE_API_URL pour appeler l'API en direct.
+const API_BASE = import.meta.env.VITE_API_URL || "";
+
 // FastAPI renvoie detail = liste d'objets sur les 422 : on linéarise
 // en message lisible pour éviter tout crash de rendu React.
 function humanizeDetail(detail) {
@@ -62,7 +66,7 @@ export async function api(path, { method = "GET", body, form } = {}) {
     headers["Content-Type"] = "application/json";
     payload = JSON.stringify(body);
   }
-  const res = await fetch(`/api${path}`, { method, headers, body: payload });
+  const res = await fetch(`${API_BASE}/api${path}`, { method, headers, body: payload });
 
   if (res.status === 401 && !path.startsWith("/auth/")) {
     clearSession();
@@ -87,5 +91,5 @@ export async function apiRaw(path) {
   const headers = {};
   const token = getToken();
   if (token) headers["Authorization"] = `Bearer ${token}`;
-  return fetch(`/api${path}`, { headers });
+  return fetch(`${API_BASE}/api${path}`, { headers });
 }

@@ -2,12 +2,11 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client.js";
 import { PROFICIENCY_LABELS, SOURCE_LABELS } from "../lib.js";
+import { TrendIcon } from "../components/icons.jsx";
 import { Loader, ErrorNote, Empty } from "../components/ui.jsx";
 
 // Page Skills (§32) : matrice de compétences avec niveau, source,
 // preuves et demande du marché.
-const TREND_ARROW = { up: "↑", stable: "→", down: "↓" };
-
 export default function Skills() {
   const [profile, setProfile] = useState(undefined);
   const [market, setMarket] = useState(null);
@@ -93,7 +92,7 @@ export default function Skills() {
                       <td>
                         {m ? (
                           <span className={`trend trend-${m.trend}`}>
-                            {TREND_ARROW[m.trend]} {m.demand_count} offre(s)
+                            <TrendIcon trend={m.trend} /> {m.demand_count} offre(s)
                           </span>
                         ) : (
                           <span className="muted small">Non demandée</span>

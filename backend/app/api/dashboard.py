@@ -1,4 +1,7 @@
-"""Dashboard orienté action (§27) + inbox calculée (§28)."""
+"""Dashboard orienté action (§27) + inbox calculée (§28) + briefing IA
+variant (l'agent ne répète jamais la même phrase : formulations tirées
+au sort, sujets réordonnés — contenu toujours factuel §47)."""
+import random
 from collections import Counter
 
 from fastapi import APIRouter, Depends
@@ -127,7 +130,7 @@ def dashboard(
             "score": match["score"],
         }]
 
-    briefing = _ai_briefing(
+    label, briefing = _ai_briefing(
         user, profile, jobs, matches, strong_matches, applications,
         interviews, best_overall, completeness, new_opportunities,
     )
@@ -143,64 +146,137 @@ def dashboard(
         "market_week": market_week,
         "next_action": next_action,
         "ai_briefing": briefing,
+        "ai_label": label,
         "profile_completeness": completeness,
         "top_matches": top_matches,
     }
 
 
+_BRIEFING_LABELS = [
+    "Ce que j'ai repéré pour toi aujourd'hui",
+    "Ton assistant a travaillé pour toi",
+    "Le point du jour",
+    "Ce que je vois dans tes données",
+    "Trois choses à savoir",
+]
+
+
 def _ai_briefing(
     user, profile, jobs, matches, strong_matches, applications,
     interviews, best_overall, completeness, new_opportunities,
-) -> str:
-    """Briefing personnalisé, FACTUEL : l'IA résume ce qu'elle a observé
-    et propose. Chaque affirmation vient des données réelles (§47)."""
+):
+    """Briefing personnalisé, FACTUEL mais vivant : plusieurs
+    formulations par sujet, ordre tiré au sort, tutoiement (persona
+    Ori). Retourne (libellé, texte). Chaque affirmation vient des
+    données réelles (§47)."""
     if profile is None:
         return (
-            "Bienvenue ! Je n'ai encore rien à analyser : importez votre CV "
-            "ou répondez au questionnaire, et je me charge du reste — "
-            "compétences, métiers visés et correspondances."
+            random.choice(_BRIEFING_LABELS[:2]),
+            random.choice([
+                "Bienvenue ! Je n'ai encore rien à analyser : importe ton CV "
+                "ou réponds au questionnaire, et je me charge du reste — "
+                "compétences, métiers visés et correspondances.",
+                "Salut ! Je n'ai encore aucune donnée sur toi. Importe ton "
+                "CV, je m'occupe du reste.",
+            ]),
         )
+
     first = (user.full_name or "").split(" ")[0]
-    sentences = []
+    observations: list[str] = []
+
+    # ---- Sujet : meilleure correspondance
     if strong_matches:
         job, match = max(strong_matches, key=lambda t: t[1]["score"])
-        plural = "s vous correspondent fortement" if len(strong_matches) > 1 \
-            else " vous correspond fortement"
-        sentences.append(
-            f"{first}, j'ai comparé votre profil aux {len(jobs)} offres "
-            f"actives : {len(strong_matches)}{plural}. "
-            f"La meilleure piste est « {job.title} » chez {job.company} "
-            f"({match['score']}/100)."
-        )
+        if len(strong_matches) == 1:
+            observations.append(random.choice([
+                f"j'ai comparé ton profil aux {len(jobs)} offres actives : "
+                f"une te correspond fortement, « {job.title} » chez "
+                f"{job.company} ({match['score']}/100).",
+                f"une piste se détache : « {job.title} » chez {job.company}, "
+                f"correspondance {match['score']}/100 — la meilleure du moment.",
+            ]))
+        else:
+            n = len(strong_matches)
+            observations.append(random.choice([
+                f"j'ai comparé ton profil aux {len(jobs)} offres actives : "
+                f"{n} te correspondent fortement. La meilleure : "
+                f"« {job.title} » chez {job.company} ({match['score']}/100).",
+                f"bonne nouvelle : {n} offres te correspondent bien, dont "
+                f"« {job.title} » chez {job.company} ({match['score']}/100).",
+            ]))
     elif best_overall:
         job, match = best_overall
-        sentences.append(
-            f"{first}, j'ai comparé votre profil aux {len(jobs)} offres "
-            f"actives. La piste la plus proche est « {job.title} » chez "
-            f"{job.company} ({match['score']}/100) — encore perfectible."
-        )
-    else:
-        sentences.append(
-            f"{first}, aucune offre active pour l'instant : je surveille "
-            "le marché et je vous alerte dès qu'une correspondance apparaît."
-        )
+        observations.append(random.choice([
+            f"la piste la plus proche est « {job.title} » chez {job.company} "
+            f"({match['score']}/100) — encore perfectible.",
+            f"rien de parfait pour l'instant, mais « {job.title} » chez "
+            f"{job.company} reste ta meilleure option ({match['score']}/100).",
+        ]))
+
+    # ---- Sujet : entretien (prioritaire, on le met souvent en tête)
     if interviews:
-        sentences.append(
-            f"Vous avez {len(interviews)} entretien(s) à préparer : je peux "
-            "générer les questions probables et votre pitch."
-        )
+        n = len(interviews)
+        mot = "entretien" if n == 1 else "entretiens"
+        observations.append(random.choice([
+            f"tu as {n} {mot} à préparer — je peux générer les questions "
+            "probables et ton pitch.",
+            f"il te reste {n} {mot} à préparer : on le simule ensemble ?",
+            f"pense à ton {mot} à venir : je peux te préparer une simulation "
+            "complète.",
+        ]))
     elif applications:
         ongoing = [a for a in applications if a.status not in ("acceptee", "refusee")]
-        sentences.append(
-            f"{len(ongoing)} candidature(s) en cours — pensez aux relances "
-            "au-delà de dix jours sans réponse."
-        )
+        if ongoing:
+            n = len(ongoing)
+            observations.append(random.choice([
+                f"{n} candidature" + ("s" if n > 1 else "") + " en cours — "
+                "pense aux relances au-delà de dix jours sans réponse.",
+                f"côté candidatures, {n} dossier"
+                + ("s" if n > 1 else "") + " en attente : une relance peut "
+                "débloquer la situation.",
+            ]))
+
+    # ---- Sujet : marché (parfois mentionné)
+    if new_opportunities > 0 and random.random() < 0.6:
+        n = new_opportunities
+        observations.append(random.choice([
+            f"{n} nouvelle" + ("s" if n > 1 else "") + " offre"
+            + ("s" if n > 1 else "") + " sondée" + ("s" if n > 1 else "")
+            + " cette semaine.",
+        ]))
+
+    # ---- Compose : ouverture + 2 sujets tirés au sort + conseil final
+    random.shuffle(observations)
+    lead = observations[:2]
+
+    tip = ""
     if completeness and completeness["missing"]:
-        top_missing = completeness["missing"][:2]
-        sentences.append(
-            "Pour renforcer votre profil : " + " puis ".join(top_missing) + "."
-        )
-    return " ".join(sentences)
+        tip = random.choice([
+            "Pour renforcer ton profil : " + completeness["missing"][0].lower() + ".",
+            "Petit chantier possible : " + completeness["missing"][0].lower() + ".",
+        ])
+
+    greeting = random.choice([
+        f"{first}, ",
+        f"Salut {first} ! ",
+        f"Tiens {first}, ",
+        "",
+    ])
+    text = greeting + " ".join(lead)
+    if tip:
+        text = (text + " " + tip).strip()
+    return random.choice(_BRIEFING_LABELS), _polish_sentences(text)
+
+
+def _polish_sentences(text: str) -> str:
+    """Typographie : chaque phrase démarre par une majuscule (les
+    observations sont assemblées dynamiquement)."""
+    import re as _re
+
+    def upper_first(match):
+        return match.group(1) + match.group(2).upper()
+
+    return _re.sub(r"([.!?] )([a-zà-ÿ])", upper_first, text[:1].upper() + text[1:])
 
 
 def _next_action(user, profile, jobs, matches, applications, interviews) -> dict:

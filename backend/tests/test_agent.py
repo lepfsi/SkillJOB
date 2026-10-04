@@ -206,3 +206,151 @@ def test_web_search_failure_is_honest(client, monkeypatch):
     # pas de résultats inventés)
     assert "reply" in body
     assert "trouvé sur le web" not in body["reply"]
+
+
+# ------------------------------------- Actions réelles de l'agent
+
+def test_cv_intent_proposes_actions(client):
+    """« Prépare mon CV » : Ori propose de GÉNÉRER le CV (bouton d'action),
+    pas seulement d'ouvrir la page."""
+    body = _ask(client, _demo_headers(client), "Prépare mon CV pour mon meilleur match")
+    actions = body.get("actions", [])
+    types = [a["type"] for a in actions]
+    assert "generate_cv" in types and "generate_letter" in types
+    assert all(a.get("job_id") for a in actions)
+
+
+def test_interview_intent_proposes_simulation(client):
+    body = _ask(client, _demo_headers(client), "Prépare mon entretien")
+    actions = body.get("actions", [])
+    assert any(a["type"] == "interview_prep" for a in actions)
+
+
+def test_no_profile_reply_proposes_building(client):
+    """Sans profil : Ori propose de CONSTRUIRE le profil ensemble
+    (l'utilisateur garde le contrôle : questionnaire + validation)."""
+    client.post("/api/auth/register", json={
+        "email": "no.profile@example.cm", "password": "pass1234",
+        "full_name": "Sans Profil", "gender": "homme"})
+    tok = client.post("/api/auth/login", json={
+        "email": "no.profile@example.cm", "password": "pass1234"}).json()["token"]
+    body = _ask(client, {"Authorization": f"Bearer {tok}"},
+                "Quels métiers puis-je viser ?")
+    assert "profil" in body["reply"].lower()
+    assert "construit ensemble" in body["reply"]
+    assert any(a["type"] == "build_profile" for a in body.get("actions", []))
+
+
+def test_actions_always_present(client):
+    body = _ask(client, _demo_headers(client), "bonjour")
+    assert isinstance(body.get("actions", []), list)
+
+
+def test_llm_links_become_buttons(client):
+    """Robustesse : les liens markdown cités dans une réponse (mode LLM)
+    sont extraits en boutons cliquables, même en texte brut."""
+    from app.services import assistant as svc
+    from app.services.assistant import answer
+
+    fake_reply = (
+        "Pour Cisco, commence par [CCNA intro](https://www.netacad.com/x) "
+        "puis [AZ-900](https://learn.microsoft.com/y)."
+    )
+    original = svc.llm_client.chat_completion
+
+    class _Cfg:
+        enabled = True
+
+    svc.llm_client.get_llm_config = lambda db: {"enabled": True}
+    svc.llm_client.chat_completion = lambda db, messages, max_tokens=450: fake_reply
+    try:
+        from app.database import SessionLocal
+        db = SessionLocal()
+        res = answer(
+            "formations", [], None, [], [], None, db=db, role="candidate",
+        )
+    finally:
+        svc.llm_client.chat_completion = original
+        svc.llm_client.get_llm_config = lambda db: {"enabled": False}
+        db.close()
+    hrefs = [l["href"] for l in res["links"]]
+    assert "https://www.netacad.com/x" in hrefs
+    assert "https://learn.microsoft.com/y" in hrefs
+
+
+# --------------------- Mode moteur + bilan + remises à niveau
+
+def test_response_reports_engine_mode(client):
+    """Transparence : chaque réponse indique son moteur (« local » ou
+    « llm »), pour ne plus jamais confondre les deux."""
+    body = _ask(client, _demo_headers(client), "bonjour")
+    assert body["mode"] == "local"
+
+
+def test_assistant_status_endpoint(client):
+    response = client.get("/api/assistant/status",
+                          headers=_demo_headers(client))
+    assert response.status_code == 200
+    body = response.json()
+    assert body["mode"] in ("local", "llm")
+    assert "llm_enabled" in body
+    # Sans configuration admin : moteur local
+    assert body["llm_enabled"] is False
+
+
+def test_bilan_intent_uses_observed_data(client):
+    """« C'est à toi de me dire, d'après ce que tu observes » : Ori
+    résume ce qu'il voit (métiers, piste, écarts), pas une liste creuse."""
+    body = _ask(client, _demo_headers(client),
+                "C'est à toi de me dire, basé sur ce que tu as observé autour de moi")
+    reply = body["reply"]
+    assert "colle bien" in reply.lower()
+    assert "Technicien" in reply or "Administrateur" in reply
+    assert "On commence par quoi ?" in reply
+
+
+def test_remises_en_niveau_triggers_formations(client):
+    """« remises en niveau » est compris comme une demande de formation."""
+    body = _ask(client, _demo_headers(client),
+                "Quelles sont les remises en niveau dispo ?")
+    assert "prioritaires" in body["reply"] or "écarts" in body["reply"]
+    assert "Apprentissage" in [l["label"] for l in body["links"]] or \
+           any(l["href"] == "/learning" for l in body["links"])
+
+
+def test_internet_followup_uses_previous_question(client, monkeypatch):
+    """« Et sur internet il y a rien ? » : la recherche porte sur la
+    question précédente (remises en niveau), pas sur du vide."""
+    from app.services import assistant as svc
+
+    HTML = '<a class="result__a" href="https://exemple.cm/formation">Formation remise à niveau</a><a class="result__snippet">Programme de remise à niveau en informatique.</a>'
+
+    class FakeResponse:
+        def __enter__(self):
+            return self
+        def __exit__(self, *a):
+            return False
+        def read(self, limit=None):
+            return HTML.encode("utf-8")
+
+    captured = {}
+    def fake_urlopen(req, timeout=10):
+        captured["url"] = req.full_url if hasattr(req, "full_url") else str(req)
+        return FakeResponse()
+
+    monkeypatch.setattr(svc.urllib.request, "urlopen", fake_urlopen)
+    body = _ask_with_history(client, _demo_headers(client),
+                             "Quelles sont les remises en niveau dispo ?",
+                             "Et sur internet il y a rien ?")
+    assert "trouvé sur le web" in body["reply"]
+    assert "remise" in captured.get("url", "").lower() or "niveau" in captured.get("url", "").lower()
+
+
+def _ask_with_history(client, headers, previous, message):
+    response = client.post("/api/assistant", json={
+        "message": message,
+        "history": [{"role": "user", "content": previous},
+                    {"role": "assistant", "content": "réponse précédente"}],
+    }, headers=headers)
+    assert response.status_code == 200, response.text
+    return response.json()

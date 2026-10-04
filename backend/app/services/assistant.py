@@ -78,7 +78,8 @@ _SEARCH_TRIGGERS = re.compile(
 _STOPWORDS = re.compile(
     r"\b(moi|je|tu|il|elle|on|nous|vous|peux|pourrais|pourra[sz]?|stp|"
     r"svp|s'il|te|pla[îi]t|fouille|internet|net|le|la|les|un|une|des|"
-    r"sur|de|du|d'|que|qui|est|sont|pour)\b",
+    r"sur|de|du|d'|que|quelles?|qui|est|sont|pour|rien|y|a|ya|dispo|"
+    r"disponibles?|quoi|trucs?|choses?|toujours|encore)\b",
     re.IGNORECASE,
 )
 
@@ -92,7 +93,7 @@ def _detect_search(message: str) -> "str | None":
     query = _STOPWORDS.sub(" ", query)
     query = re.sub(r"[?!.;,]", " ", query)
     query = re.sub(r"\s+", " ", query).strip()
-    return query[:120] if len(query) >= 4 else None
+    return query[:120] if len(query) >= 8 else None
 
 
 def _web_search(query: str) -> list[dict]:
@@ -132,6 +133,19 @@ def _web_search(query: str) -> list[dict]:
             snippet = re.sub(r"\s+", " ", snippet).strip()[:200]
         results.append({"title": title, "url": href, "snippet": snippet})
     return results
+
+
+def _detect_search_from_history(history: list[dict[str, str]]) -> "str | None":
+    """« Et sur internet, il y a rien ? » : la recherche porte sur le
+    sujet de la question précédente. On relit l'historique récent."""
+    previous_user = [m["content"] for m in history[-4:] if m.get("role") == "user"]
+    if not previous_user:
+        return None
+    query = previous_user[-1]
+    query = re.sub(r"[?!.;,]", " ", query)
+    query = _STOPWORDS.sub(" ", query)
+    query = re.sub(r"\s+", " ", query).strip()
+    return query[:120] if len(query) >= 8 else None
 
 
 class _Context:
@@ -205,7 +219,7 @@ class _Context:
         formation_lines = []
         for skill in self.gaps[:4]:
             for r in self.resources_for(skill)[:2]:
-                url = f" — {r['url']}" if r.get("url") else ""
+                url = f" · {r['url']}" if r.get("url") else ""
                 formation_lines.append(
                     f"[{r['title']}]({r['url']}) · {r['provider']}{url} [compétence : {skill}]"
                     if r.get("url")
@@ -228,7 +242,7 @@ class _Context:
         if self.web_results:
             lines = [
                 f"[{r['title']}]({r['url']})"
-                + (f" — {r['snippet']}" if r.get("snippet") else "")
+                + (f" · {r['snippet']}" if r.get("snippet") else "")
                 for r in self.web_results
             ]
             parts.append(
@@ -332,9 +346,11 @@ def _rules_reply(message: str, ctx: _Context) -> dict[str, Any]:
     def no_profile_reply() -> str | None:
         if ctx.profile is None:
             return (
-                "Pour des réponses personnalisées, complétez d'abord votre profil "
-                "(import CV ou questionnaire). Je peux néanmoins vous parler du "
-                "marché ou lister les offres récentes."
+                "Je vois que ton profil n'est pas encore complet, pas de "
+                "souci : on le construit ensemble. Pas besoin d'un CV tout "
+                "fait, la plateforme le fabrique avec toi, question par "
+                "question, et tu valides chaque étape. En attendant, je "
+                "peux te parler du marché ou des offres du moment."
             )
         return None
 
@@ -352,7 +368,7 @@ def _rules_reply(message: str, ctx: _Context) -> dict[str, Any]:
         for r in ctx.web_results[:3]:
             line = f"- [{r['title']}]({r['url']})"
             if r.get("snippet"):
-                line += f" — {r['snippet'][:120]}"
+                line += f" · {r['snippet'][:120]}"
             lines.append(line)
         links = [{"label": r["title"][:40], "href": r["url"]}
                  for r in ctx.web_results[:3]]
@@ -398,7 +414,8 @@ def _rules_reply(message: str, ctx: _Context) -> dict[str, Any]:
     if re.search(r"(pourquoi|comment.*choisi|explication|justifie)", norm):
         blocked = no_profile_reply()
         if blocked:
-            return {"reply": blocked, "suggestions": [], "links": [{"label": "Compléter mon profil", "href": "/profile"}]}
+            return {"reply": blocked, "suggestions": [], "links": [{"label": "Compléter mon profil", "href": "/profile"}],
+            "actions": [{"type": "build_profile", "label": "On construit ton profil ?"}]}
         lines = ["Voici comment j'ai construit mes recommandations :"]
         if ctx.best_match:
             job, m = ctx.best_match
@@ -462,12 +479,13 @@ def _rules_reply(message: str, ctx: _Context) -> dict[str, Any]:
     if re.search(r"(metier|orientation|carrier|viser|quel boulot|quelle direction)", norm):
         blocked = no_profile_reply()
         if blocked:
-            return {"reply": blocked, "suggestions": [], "links": [{"label": "Compléter mon profil", "href": "/profile"}]}
+            return {"reply": blocked, "suggestions": [], "links": [{"label": "Compléter mon profil", "href": "/profile"}],
+            "actions": [{"type": "build_profile", "label": "On construit ton profil ?"}]}
         tops = _top_careers(ctx.skills, ctx.careers, ctx.taxonomy)
         if not tops:
             reply = "Aucun métier référencé pour le moment."
         else:
-            lines = ["Voici les métiers les plus compatibles avec votre profil :"]
+            lines = ["Voici les métiers les plus compatibles avec ton profil :"]
             for career, m in tops:
                 lines.append(
                     f"- « {career.title} » ({career.family}) : score {m['score']}/100, "
@@ -486,7 +504,8 @@ def _rules_reply(message: str, ctx: _Context) -> dict[str, Any]:
     if re.search(r"(manque|ecart|competence.*a (developper|apprendre)|gap|point faible)", norm):
         blocked = no_profile_reply()
         if blocked:
-            return {"reply": blocked, "suggestions": [], "links": [{"label": "Compléter mon profil", "href": "/profile"}]}
+            return {"reply": blocked, "suggestions": [], "links": [{"label": "Compléter mon profil", "href": "/profile"}],
+            "actions": [{"type": "build_profile", "label": "On construit ton profil ?"}]}
         if not ctx.gaps:
             reply = (
                 "Bonne nouvelle : vous couvrez déjà les compétences des "
@@ -495,7 +514,7 @@ def _rules_reply(message: str, ctx: _Context) -> dict[str, Any]:
             links = [{"label": "Voir les offres", "href": "/jobs"}]
         else:
             reply = (
-                "Par rapport à vos métiers recommandés, vos écarts "
+                "Par rapport à tes métiers recommandés, tes écarts "
                 "prioritaires sont : " + ", ".join(ctx.gaps[:5])
                 + ". La page Apprentissage propose des formations concrètes "
                 "pour chacune, avec leurs liens."
@@ -511,7 +530,8 @@ def _rules_reply(message: str, ctx: _Context) -> dict[str, Any]:
     if re.search(r"\b(candidature|postule|postuler|relance)\b", norm):
         blocked = no_profile_reply()
         if blocked:
-            return {"reply": blocked, "suggestions": [], "links": [{"label": "Compléter mon profil", "href": "/profile"}]}
+            return {"reply": blocked, "suggestions": [], "links": [{"label": "Compléter mon profil", "href": "/profile"}],
+            "actions": [{"type": "build_profile", "label": "On construit ton profil ?"}]}
         reply = (
             "La page Candidatures joue le rôle de mini-ATS personnel : chaque "
             "offre suivie affiche son pipeline (identifiée, CV préparé, envoyée, "
@@ -552,14 +572,15 @@ def _rules_reply(message: str, ctx: _Context) -> dict[str, Any]:
     if re.search(r"\b(cv|curriculum)\b|lettre|candidature", norm):
         blocked = no_profile_reply()
         if blocked:
-            return {"reply": blocked, "suggestions": [], "links": [{"label": "Compléter mon profil", "href": "/profile"}]}
+            return {"reply": blocked, "suggestions": [], "links": [{"label": "Compléter mon profil", "href": "/profile"}],
+            "actions": [{"type": "build_profile", "label": "On construit ton profil ?"}]}
         if not ctx.best_match:
             reply = "Aucune offre disponible pour générer un CV ciblé."
             links = []
         else:
             job, m = ctx.best_match
             reply = (
-                f"Votre meilleure correspondance actuelle est « {job.title} » "
+                f"Ta meilleure correspondance actuelle est « {job.title} » "
                 f"chez {job.company} (score {m['score']}/100). "
                 "Je peux générer un CV ciblé et une lettre de motivation qui "
                 "réorganisent UNIQUEMENT les informations de votre profil "
@@ -568,26 +589,45 @@ def _rules_reply(message: str, ctx: _Context) -> dict[str, Any]:
             )
             links = [{"label": f"Offre : {job.title}", "href": f"/jobs/{job.id}"},
                      {"label": "Mes documents", "href": "/documents"}]
-        return {"reply": reply, "suggestions": follow_ups("Quelles questions d'entretien anticiper ?"), "links": links}
+        return {
+            "reply": reply,
+            "suggestions": follow_ups("Quelles questions d'entretien anticiper ?"),
+            "links": links,
+            "actions": [
+                {"type": "generate_cv", "job_id": job.id,
+                 "label": "Générer mon CV ciblé"},
+                {"type": "generate_letter", "job_id": job.id,
+                 "label": "Rédiger ma lettre de motivation"},
+            ],
+        }
 
     # ---- Entretien
     if re.search(r"(entretien|interview)", norm):
         blocked = no_profile_reply()
         if blocked:
-            return {"reply": blocked, "suggestions": [], "links": [{"label": "Compléter mon profil", "href": "/profile"}]}
+            return {"reply": blocked, "suggestions": [], "links": [{"label": "Compléter mon profil", "href": "/profile"}],
+            "actions": [{"type": "build_profile", "label": "On construit ton profil ?"}]}
         if not ctx.best_match:
             reply = "Aucune offre disponible pour préparer un entretien."
             links = []
         else:
             job, m = ctx.best_match
             reply = (
-                f"Pour votre meilleure offre (« {job.title} », {job.company}), la "
+                f"Pour ta meilleure offre (« {job.title} », {job.company}), la "
                 "page de détail propose une préparation d'entretien : questions "
                 "probables, questions techniques sur les compétences demandées, "
                 "questions comportementales et un pitch professionnel factuel."
             )
             links = [{"label": "Préparer l'entretien", "href": f"/jobs/{job.id}"}]
-        return {"reply": reply, "suggestions": follow_ups("Génère mon CV ciblé."), "links": links}
+        return {
+            "reply": reply,
+            "suggestions": follow_ups("Génère mon CV ciblé."),
+            "links": links,
+            "actions": [
+                {"type": "interview_prep", "job_id": job.id,
+                 "label": "Simuler l'entretien maintenant"},
+            ],
+        }
 
     # ---- Tendances / marché
     if re.search(r"(tendance|marche|secteur|demande|salaire)", norm):
@@ -608,10 +648,11 @@ def _rules_reply(message: str, ctx: _Context) -> dict[str, Any]:
         return {"reply": reply, "suggestions": follow_ups("Comment mes compétences se positionnent-elles ?"), "links": links}
 
     # ---- Formation / apprentissage (avec liens réels vers les cours)
-    if re.search(r"(formation|apprendre|cours|certif|etudier|upskill)", norm):
+    if re.search(r"(formation|apprendre|cours|certif|etudier|upskill|remis(es|e)? (à|a|en) niveau|mise (à|a) niveau|recyclage|perfectionnement|se perfectionner)", norm):
         blocked = no_profile_reply()
         if blocked:
-            return {"reply": blocked, "suggestions": [], "links": [{"label": "Compléter mon profil", "href": "/profile"}]}
+            return {"reply": blocked, "suggestions": [], "links": [{"label": "Compléter mon profil", "href": "/profile"}],
+            "actions": [{"type": "build_profile", "label": "On construit ton profil ?"}]}
         # Compétence précise dans la question ? Sinon, premier écart prioritaire.
         asked = next(
             (name for name in ctx.gaps if name.lower() in message.lower()),
@@ -622,7 +663,7 @@ def _rules_reply(message: str, ctx: _Context) -> dict[str, Any]:
         lines = []
         if ctx.gaps:
             lines.append(
-                "Vos écarts prioritaires (par rapport à vos métiers recommandés) : "
+                "Tes écarts prioritaires, par rapport à tes métiers recommandés : "
                 + ", ".join(ctx.gaps[:3]) + "."
             )
             if asked and resources:
@@ -658,7 +699,8 @@ def _rules_reply(message: str, ctx: _Context) -> dict[str, Any]:
     if re.search(r"linkedin", norm):
         blocked = no_profile_reply()
         if blocked:
-            return {"reply": blocked, "suggestions": [], "links": [{"label": "Compléter mon profil", "href": "/profile"}]}
+            return {"reply": blocked, "suggestions": [], "links": [{"label": "Compléter mon profil", "href": "/profile"}],
+            "actions": [{"type": "build_profile", "label": "On construit ton profil ?"}]}
         url_match = re.search(r"https?://[^\s]+linkedin[^\s]+", message, re.IGNORECASE)
         lines = []
         if url_match:
@@ -706,15 +748,77 @@ def _rules_reply(message: str, ctx: _Context) -> dict[str, Any]:
         links = [{"label": "Mon profil OrientSkill", "href": "/profile"}]
         return {"reply": reply, "suggestions": follow_ups("Quelles compétences me manquent ?"), "links": links}
 
-    # ---- Fallback honnête
-    reply = (
-        "Je peux vous aider sur : les métiers compatibles avec votre profil, "
-        "vos compétences manquantes, les offres récentes, la préparation de "
-        "votre CV ou lettre, la préparation d'entretien et les tendances du "
-        "marché. Reformulez votre question dans l'un de ces domaines."
-    )
+    # ---- Bilan : « c'est à toi de me dire, d'après ce que tu observes »
+    if re.search(
+        r"(où j'en suis|mon bilan|fais le point|faire le point|le point sur|"
+        r"ce que tu (vois|observes?|repères?|as repéré)|d'après ce que|"
+        r"bas[ée]e?? sur ce que|autour de moi|ta analyse|ton analyse|conseille[- ]moi)",
+        norm,
+    ):
+        blocked = no_profile_reply()
+        if blocked:
+            return {
+                "reply": blocked,
+                "suggestions": [],
+                "links": [{"label": "Compléter mon profil", "href": "/profile"}],
+                "actions": [{"type": "build_profile", "label": "On construit ton profil ?"}],
+            }
+        lines = []
+        if ctx.top_career:
+            career, m = ctx.top_career
+            lines.append(
+                "Ton profil colle bien avec « " + career.title + " » "
+                "(score " + str(m["score"]) + "/100)."
+            )
+        if ctx.best_match:
+            job, m = ctx.best_match
+            lines.append(
+                "Côté offres, ta meilleure piste reste « " + job.title + " » chez "
+                + job.company + " (" + str(m["score"]) + "/100)."
+            )
+        if ctx.gaps:
+            lines.append(
+                "Pour progresser, tes écarts prioritaires sont : "
+                + ", ".join(ctx.gaps[:3]) + "."
+            )
+        interviews = [a for a in ctx.applications if a.get("status") == "entretien"]
+        if interviews:
+            lines.append(
+                "Et tu as " + str(len(interviews)) + " entretien(s) à préparer : "
+                "on peut le simuler ensemble quand tu veux."
+            )
+        lines.append("On commence par quoi ?")
+        links = []
+        if ctx.best_match:
+            links.append({"label": "Offre : " + ctx.best_match[0].title,
+                          "href": "/jobs/" + str(ctx.best_match[0].id)})
+        links.append({"label": "Apprentissage", "href": "/learning"})
+        return {
+            "reply": "\n".join(lines),
+            "suggestions": dynamic_suggestions(ctx),
+            "links": links,
+        }
+
+    # ---- Fallback honnête, mais vivant : on oriente vers le concret
+    import random as _random
+
+    fallbacks = [
+        "Là, je ne suis pas sûr d'avoir saisi. Reformule autrement : par "
+        "exemple « où j'en suis », « formations pour Cisco », « prépare mon "
+        "CV », ou « cherche des bourses MINFOP sur internet ».",
+        "Je n'ai pas compris la demande. Essaie avec un exemple concret : "
+        "« quelles formations pour Azure », « prépare mon entretien », ou "
+        "colle l'URL d'une offre à analyser.",
+        "Hmm, reformule pour moi : quel est le but ? Trouver une offre, "
+        "monter en compétence, préparer une candidature ou comprendre où "
+        "tu en es ?",
+    ]
     links = [{"label": "Tableau de bord", "href": "/dashboard"}]
-    return {"reply": reply, "suggestions": dynamic_suggestions(ctx), "links": links}
+    return {
+        "reply": _random.choice(fallbacks),
+        "suggestions": dynamic_suggestions(ctx),
+        "links": links,
+    }
 
 
 def _llm_reply(
@@ -780,12 +884,15 @@ def answer(
     verified: bool = False,
 ) -> dict[str, Any]:
     """Point d'entrée : LLM si configuré (avec succès), sinon règles.
-    Les suggestions sont TOUJOURS calculées depuis les données réelles."""
+    Les suggestions sont TOUJOURS calculées depuis les données réelles.
+    `mode` révèle à l'interface le moteur utilisé (« llm » ou « local »)."""
     # Fouille web bornée : si l'utilisateur demande une recherche, on
-    # collecte AVANT de répondre — le LLM comme le moteur de règles
-    # y ont accès (données fraîches + liens réels).
+    # collecte AVANT de répondre. Le sujet vient du message courant,
+    # ou de la question précédente (« et sur internet, il y a rien ? »).
     web_results = []
-    search_query = _detect_search(message)
+    search_query = None
+    if _SEARCH_TRIGGERS.search(message):
+        search_query = _detect_search(message) or _detect_search_from_history(history)
     if search_query:
         web_results = _web_search(search_query)
 
@@ -799,4 +906,17 @@ def answer(
     rules = _rules_reply(message, ctx)
     if llm_text:
         rules["reply"] = llm_text
+        # Robustesse : les liens cités par le LLM deviennent AUSSI des
+        # boutons cliquables sous la réponse (le rendu du chat gère déjà
+        # le markdown ; les boutons restent là en secours).
+        md_links = re.findall(r"\[([^\]]+)\]\((https?://[^\s)]+)\)", llm_text)
+        existing = {l.get("href") for l in rules.get("links", [])}
+        for label, url in md_links[:4]:
+            if url not in existing:
+                existing.add(url)
+                rules.setdefault("links", []).append(
+                    {"label": label[:40] or "Lien", "href": url}
+                )
+    rules.setdefault("actions", [])
+    rules["mode"] = "llm" if llm_text else "local"
     return rules

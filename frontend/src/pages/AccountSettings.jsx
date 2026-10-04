@@ -127,7 +127,7 @@ function NotificationsSection() {
           {telegramChats && telegramChats.length === 0 && (
             <p className="small muted">
               Aucun chat détecté : ouvrez Telegram, démarrez une conversation
-              avec le bot OrientSkill et envoyez /start — le bot affichera
+              avec le bot OrientSkill et envoyez /start : le bot affichera
               votre chat ID, et il apparaîtra ici.
             </p>
           )}

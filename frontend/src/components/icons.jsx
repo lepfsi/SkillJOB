@@ -54,3 +54,36 @@ export function Icon({ d, size = 17, className = "" }) {
     </svg>
   );
 }
+
+// Flèches directionnelles épaisses : usage tendances et liens « voir ».
+// Trait 2.4, plus affirmé typographiquement que ↑ / → texte.
+export function ArrowIcon({ direction = "right", size = 13 }) {
+  const paths = {
+    up: ["M12 19V5", "m5 12 7-7 7 7"],
+    down: ["M12 5v14", "m19 12-7 7-7-7"],
+    right: ["M5 12h14", "m12 5 7 7-7 7"],
+    flat: ["M5 12h14"],
+  };
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ verticalAlign: "-0.12em" }}
+      aria-hidden="true"
+    >
+      {paths[direction].map((p, i) => <path key={i} d={p} />)}
+    </svg>
+  );
+}
+
+// Icône de tendance complet (sens + couleur gérée par la classe CSS).
+export function TrendIcon({ trend, size = 13 }) {
+  const direction = trend === "up" ? "up" : trend === "down" ? "down" : "flat";
+  return <ArrowIcon direction={direction} size={size} />;
+}

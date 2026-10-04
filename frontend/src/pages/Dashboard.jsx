@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../api/client.js";
-import { Icon, I } from "../components/icons.jsx";
+import { Icon, I, ArrowIcon, TrendIcon } from "../components/icons.jsx";
 import { Loader, ErrorNote } from "../components/ui.jsx";
 import { relTime } from "../lib.js";
 
@@ -9,8 +9,6 @@ import { relTime } from "../lib.js";
 // jeune. Hiérarchie : 1) briefing personnalisé de l'IA, 2) action
 // prioritaire, 3) signaux clés, 4) meilleure piste et marché, 5) flux.
 // Chaque bloc est cliquable : le dashboard mène à l'action (§73).
-
-const TREND_ARROW = { up: "↑", stable: "→", down: "↓" };
 
 function CompletenessRing({ score }) {
   const radius = 30;
@@ -126,14 +124,14 @@ export default function Dashboard() {
       </header>
 
       {/* ---------- Briefing IA ---------- */}
-      <section className="ai-card">
-        <span className="ai-mark"><Icon d={I.spark} size={20} /></span>
-        <div className="ai-card-body">
-          <p className="ai-label">Votre assistant a analysé votre situation</p>
-          <p className="ai-briefing">{data.ai_briefing}</p>
+        <section className="ai-card">
+          <span className="ai-mark"><Icon d={I.spark} size={20} /></span>
+          <div className="ai-card-body">
+            <p className="ai-label">{data.ai_label || "Votre assistant a analysé votre situation"}</p>
+            <p className="ai-briefing">{data.ai_briefing}</p>
           <div className="ai-card-actions">
             <Link className="btn btn-primary btn-small" to={nextTo}>
-              {nextLabel} <Icon d={I.arrow} size={14} />
+              {nextLabel} <ArrowIcon direction="right" size={13} />
             </Link>
             <Link className="btn btn-ghost btn-small" to="/assistant">
               Parler à l'assistant
@@ -147,7 +145,7 @@ export default function Dashboard() {
         <Link className="unread-banner" to="/messages">
           <Icon d={I.mail} size={16} />
           <span>
-            {unread} message{unread > 1 ? "s" : ""} non lu{unread > 1 ? "s" : ""} —
+            {unread} message{unread > 1 ? "s" : ""} non lu{unread > 1 ? "s" : ""} :
             un recruteur vous attend peut-être.
           </span>
           <Icon d={I.arrow} size={15} />
@@ -170,7 +168,7 @@ export default function Dashboard() {
             <section className="dash-card">
               <div className="dash-card-head">
                 <h2>Votre meilleure piste du moment</h2>
-                <Link className="small" to="/opportunites">Toutes les offres →</Link>
+                <Link className="small" to="/opportunites">Toutes les offres <ArrowIcon direction="right" /></Link>
               </div>
               {data.top_matches.map((m) => (
                 <Link key={m.id} className="match-row" to={`/opportunites/${m.id}`}>
@@ -192,7 +190,7 @@ export default function Dashboard() {
           <section className="dash-card">
             <div className="dash-card-head">
               <h2>Marché cette semaine</h2>
-              <Link className="small" to="/carriere">Analyse complète →</Link>
+              <Link className="small" to="/carriere">Analyse complète <ArrowIcon direction="right" /></Link>
             </div>
             <p className="small muted" style={{ marginTop: 0 }}>
               {data.market_week.offers_in_period} offre(s) publiée(s) entre le{" "}
@@ -204,7 +202,7 @@ export default function Dashboard() {
                   <li key={t.name}>
                     <span>{t.name} <span className="small muted">({t.count} offre(s))</span></span>
                     <span className={`trend trend-${t.trend}`}>
-                      {TREND_ARROW[t.trend]} {t.pct_change > 0 ? `+${t.pct_change}` : t.pct_change} %
+                      <TrendIcon trend={t.trend} /> {t.pct_change > 0 ? `+${t.pct_change}` : t.pct_change} %
                     </span>
                   </li>
                 ))}
@@ -219,7 +217,7 @@ export default function Dashboard() {
             <section className="dash-card">
               <div className="dash-card-head">
                 <h2>Activité récente</h2>
-                <Link className="small" to="/inbox">Tout voir →</Link>
+                <Link className="small" to="/inbox">Tout voir <ArrowIcon direction="right" /></Link>
               </div>
               {events.slice(0, 4).map((ev) => (
                 <p key={ev.id} className="small dash-event">

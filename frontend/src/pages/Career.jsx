@@ -4,11 +4,10 @@ import { api } from "../api/client.js";
 import MatchBadge from "../components/MatchBadge.jsx";
 import SkillTag from "../components/SkillTag.jsx";
 import { ACCESSIBILITY_LABELS } from "../lib.js";
+import { TrendIcon } from "../components/icons.jsx";
 import { Loader, ErrorNote, Empty } from "../components/ui.jsx";
 
 // Page Career (§33) : métiers compatibles + lecture du marché (§13).
-const TREND_ARROW = { up: "↑", stable: "→", down: "↓" };
-
 function MarketPanel({ market }) {
   if (!market) return null;
   return (
@@ -30,13 +29,13 @@ function MarketPanel({ market }) {
           <h3>En hausse</h3>
           <div className="chip-row">
             {market.trending_up.length > 0
-              ? market.trending_up.map((s) => <span key={s} className="chip">{TREND_ARROW.up} {s}</span>)
+              ? market.trending_up.map((s) => <span key={s} className="chip"><TrendIcon trend="up" /> {s}</span>)
               : <span className="muted small">Aucune hausse marquée</span>}
           </div>
           <h3>En baisse</h3>
           <div className="chip-row">
             {market.trending_down.length > 0
-              ? market.trending_down.map((s) => <span key={s} className="chip">{TREND_ARROW.down} {s}</span>)
+              ? market.trending_down.map((s) => <span key={s} className="chip"><TrendIcon trend="down" /> {s}</span>)
               : <span className="muted small">Aucune baisse marquée</span>}
           </div>
           <h3>Émergentes</h3>

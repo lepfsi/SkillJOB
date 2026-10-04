@@ -51,7 +51,7 @@ export default function VerificationSection({ status, onStatusChange }) {
       <p className="small muted">
         Lutte contre les faux comptes, à notre manière : déposez une pièce
         d'identité (CNI ou passeport), un administrateur la compare à votre
-        profil, et votre compte reçoit le badge « Profil vérifié » — visible
+        profil, et votre compte reçoit le badge « Profil vérifié », visible
         des recruteurs et intégré à vos CV. Le document est conservé
         uniquement le temps de l'examen.
       </p>

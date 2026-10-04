@@ -533,6 +533,7 @@ class DashboardOut(BaseModel):
     market_week: MarketWeek
     next_action: NextAction
     ai_briefing: str = ""
+    ai_label: str = ""
     profile_completeness: Optional[ProfileCompleteness] = None
     top_matches: list[TopMatchEntry] = Field(default_factory=list)
 
@@ -612,6 +613,8 @@ class AssistantOut(BaseModel):
     reply: str
     suggestions: list[str]
     links: list[AssistantLink]
+    actions: list[dict[str, Any]] = Field(default_factory=list)
+    mode: str = "local"  # "llm" (modèle connecté) | "local" (moteur de règles)
 
 
 # ---------------------------------------------- Vérification de profil
