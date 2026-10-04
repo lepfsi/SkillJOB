@@ -60,8 +60,42 @@ def chat_completion(
         with urllib.request.urlopen(request, timeout=timeout) as response:
             data = json.loads(response.read().decode("utf-8"))
         return data["choices"][0]["message"]["content"]
-    except (URLError, KeyError, ValueError, TimeoutError, OSError):
+    except (URLError, KeyError, ValueError, TimeoutError, OSError) as exc:
+        _notify_admin_failure(db, conf, str(exc)[:120])
         return None
+
+
+# Anti-spam : au plus une notification admin par heure de défaillance.
+_last_failure_notified: "float | None" = None
+
+
+def _notify_admin_failure(db, conf: dict, error: str) -> None:
+    """Défaillance du modèle IA → notification des administrateurs
+    (leurs canaux configurés). La clé API n'apparaît JAMAIS dans le
+    message. Best effort : aucune exception ne remonte à l'appelant."""
+    global _last_failure_notified
+    import time as _time
+
+    now = _time.time()
+    if _last_failure_notified is not None and now - _last_failure_notified < 3600:
+        return
+    _last_failure_notified = now
+    try:
+        from app import models as _models
+        from app.services.notifications import dispatch
+
+        admins = db.query(_models.User).filter(_models.User.role == "admin").all()
+        for admin in admins:
+            dispatch(
+                db, admin,
+                "OrientSkill AI : défaillance du modèle IA",
+                f"L'appel au modèle ({conf.get('model') or 'non précisé'}, "
+                f"{conf.get('base_url')}) a échoué : {error}. L'assistant "
+                "passe en mode local. Vérifiez la clé API dans "
+                "Paramètres > LLM. (La clé n'apparaît jamais dans ce message.)",
+            )
+    except Exception:
+        pass  # notifier ne doit jamais casser l'assistant
 
 
 def test_connection(db: Session) -> tuple[bool, str]:

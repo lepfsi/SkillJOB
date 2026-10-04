@@ -50,6 +50,7 @@ const RECRUITER_NAV = [
   { to: "/recruteur/candidats", label: "Talents", icon: "users" },
   { to: "/recruteur/shortlists", label: "Shortlists", icon: "clipboard" },
   { to: "/messages", label: "Messages", icon: "chat", messages: true },
+  { to: "/assistant", label: "Assistant", icon: "spark" },
   { to: "/parametres-compte", label: "Paramètres", icon: "settings" },
 ];
 
@@ -104,12 +105,16 @@ export default function Layout({ children }) {
 
   const activeGroup = useActiveGroup(CANDIDATE_NAV_GROUPS);
   const activeAdminGroup = useActiveGroup(ADMIN_NAV_GROUPS);
-  const [openGroups, setOpenGroups] = useState(() => new Set([activeGroup]));
+  const [openGroups, setOpenGroups] = useState(
+    () => new Set(CANDIDATE_NAV_GROUPS.map((_, i) => i))
+  );
   useEffect(() => {
     setOpenGroups((prev) => new Set(prev).add(activeGroup));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeGroup]);
-  const [openAdminGroups, setOpenAdminGroups] = useState(() => new Set([activeAdminGroup]));
+  const [openAdminGroups, setOpenAdminGroups] = useState(
+    () => new Set(ADMIN_NAV_GROUPS.map((_, i) => i))
+  );
   useEffect(() => {
     setOpenAdminGroups((prev) => new Set(prev).add(activeAdminGroup));
     // eslint-disable-next-line react-hooks/exhaustive-deps

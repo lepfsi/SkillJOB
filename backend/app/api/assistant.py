@@ -16,10 +16,13 @@ def assistant_status(
     user: models.User = Depends(security.get_current_user),
     db: Session = Depends(get_db),
 ):
-    """État du moteur de l'agent : modèle LLM connecté ou mode local.
-    Transparence totale : plus jamais de changement de moteur silencieux."""
+    """État du moteur — STRICTEMENT réservé à l'admin.
+    Les utilisateurs reçoivent un mode neutre « orientskill » : ils ne
+    savent pas s'il y a un modèle derrière, ni lequel."""
     from app.services import llm_client
 
+    if user.role != "admin":
+        return {"mode": "orientskill"}
     conf = llm_client.get_llm_config(db)
     return {
         "llm_enabled": conf["enabled"],

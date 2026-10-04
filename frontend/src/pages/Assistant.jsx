@@ -10,11 +10,16 @@ import { mapInternalPath, mdToHtml } from "../lib.js";
 // profil. L'utilisateur garde toujours le contrôle : chaque action est
 // un bouton qu'il clique, et tout contenu généré passe par la validation.
 
-const OPENINGS = [
+const CANDIDATE_OPENINGS = [
   "Salut ! Moi c'est Ori. Une offre à analyser, un entretien à préparer, une compétence à monter ? Dis-moi tout.",
   "Bonjour ! Prêt à avancer aujourd'hui ? Pose ta question, ou colle le lien d'une offre qui t'intéresse.",
   "Salut ! Besoin d'un coup de main : métiers, formations, CV, entretien ? Je m'occupe du reste.",
   "Bonjour ! Par quoi on commence : explorer des opportunités, monter en compétences, ou préparer une candidature ?",
+];
+
+const RECRUITER_OPENINGS = [
+  "Salut ! Moi c'est Ori, ton côté recrutement. Décris-moi un poste, je le structure en offre. Ou demande-moi des talents.",
+  "Bonjour ! On publie une offre, on cherche des talents, ou on fait le point sur les candidatures reçues ?",
 ];
 
 function ActionButtons({ actions, onExecuted }) {
@@ -97,17 +102,18 @@ export default function Assistant() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [engine, setEngine] = useState(null); // {mode, model, llm_enabled}
+  const openings = user?.role === "recruiter" ? RECRUITER_OPENINGS : CANDIDATE_OPENINGS;
   const [messages, setMessages] = useState(() => [
-    { role: "assistant", content: OPENINGS[Math.floor(Math.random() * OPENINGS.length)] },
+    { role: "assistant", content: openings[Math.floor(Math.random() * openings.length)] },
   ]);
   const [links, setLinks] = useState([]);
   const [actions, setActions] = useState([]);
-  const [suggestions, setSuggestions] = useState([
-    "Quels métiers puis-je viser ?",
-    "Quelles compétences me manquent ?",
-    "Trouve-moi les offres récentes.",
-    "Comment préparer ma candidature ?",
-  ]);
+  const [suggestions, setSuggestions] = useState(
+    user?.role === "recruiter"
+      ? ["Publie une offre depuis une description", "Montre-moi les talents disponibles"]
+      : ["Quels métiers puis-je viser ?", "Quelles compétences me manquent ?",
+         "Trouve-moi les offres récentes.", "Comment préparer ma candidature ?"]
+  );
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
   const bottomRef = useRef(null);
@@ -117,8 +123,10 @@ export default function Assistant() {
   }, [messages]);
 
   useEffect(() => {
-    api("/assistant/status").then(setEngine).catch(() => {});
-  }, []);
+    if (user?.role === "admin") {
+      api("/assistant/status").then(setEngine).catch(() => {});
+    }
+  }, [user?.role]);
 
   function assistantMessage(content) {
     setMessages((prev) => [...prev, { role: "assistant", content }]);
@@ -162,11 +170,12 @@ export default function Assistant() {
     <div className="page page-narrow">
       <h1>Assistant</h1>
       <p className="page-lead">
-        Discute naturellement avec Ori. Il s'appuie sur tes données, peut
-        fouiller le web, et agit avec toi : CV, lettre, entretien, profil.
+        {user?.role === "recruiter"
+          ? "Ton assistant recrutement : structure tes offres, cherche des talents, suit les candidatures reçues."
+          : "Discute naturellement avec Ori. Il s'appuie sur tes données, peut fouiller le web, et agit avec toi : CV, lettre, entretien, profil."}
       </p>
 
-      {engine && (
+      {engine && user?.role === "admin" && (
         engine.llm_enabled ? (
           <div className="alert alert-info" style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
             <span className="badge badge-strong">Modèle connecté</span>

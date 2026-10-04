@@ -36,7 +36,7 @@ export class ApiError extends Error {
 
 // Base de l'API : relative par défaut (proxy Vite en dev, rewrite Vercel
 // en production). Alternative : VITE_API_URL pour appeler l'API en direct.
-const API_BASE = import.meta.env.VITE_API_URL || "";
+const API_BASE = (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_URL) || "";
 
 // FastAPI renvoie detail = liste d'objets sur les 422 : on linéarise
 // en message lisible pour éviter tout crash de rendu React.

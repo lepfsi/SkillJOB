@@ -260,6 +260,19 @@ class _Context:
 
 def dynamic_suggestions(ctx: _Context) -> list[str]:
     """Suggestions de suivi calculées (aucune liste pré-écrite)."""
+    if ctx.role == "recruiter":
+        return [
+            "Publie une offre depuis une description",
+            "Montre-moi les talents disponibles en réseaux",
+            "Où en sont les candidatures reçues ?",
+            "Comment rédiger une offre claire ?",
+        ]
+    if ctx.role == "admin":
+        return [
+            "Où en sont les vérifications de profil ?",
+            "Publie une offre depuis une description",
+            "Quelles sont les tendances du marché ?",
+        ]
     if ctx.profile is None:
         base = ["Comment créer mon profil sans CV ?", "Quelles sont les tendances du marché ?"]
         return base
@@ -392,6 +405,62 @@ def _rules_reply(message: str, ctx: _Context) -> dict[str, Any]:
                     {"label": "Ouvrir la page", "href": url},
                     {"label": "Voir les offres similaires", "href": "/jobs"},
                 ],
+            }
+
+    # ---- Agent recruteur : talents, candidatures reçues, offres
+    if ctx.role == "recruiter":
+        if re.search(r"(candidatures? recues?|mes candidatures|qui a postul|postule|postule)", norm):
+            return {
+                "reply": (
+                    "Toutes les candidatures reçues sur tes offres sont "
+                    "sur ton espace : tu peux faire avancer le statut "
+                    "(partagé avec le candidat, avec notification "
+                    "automatique) ou contacter directement par messagerie."
+                ),
+                "suggestions": dynamic_suggestions(ctx),
+                "links": [
+                    {"label": "Mon espace recruteur", "href": "/recruiter"},
+                    {"label": "Candidatures reçues", "href": "/recruiter"},
+                ],
+            }
+        if re.search(r"(talent|candidat|profil|cherche des (gens|gens à)|cv|recrute quelqu|embauche)", norm):
+            skills = ctx.taxonomy.find_in_text(message)[:5]
+            if skills:
+                query = ",".join(skills)
+                return {
+                    "reply": (
+                        "Je repère dans ta demande : " + ", ".join(skills)
+                        + ". Lance la recherche de talents avec ces compétences "
+                        "— le matching est expliqué (couvertes, partielles, "
+                        "manquantes) et tu peux shortlister les meilleurs."
+                    ),
+                    "suggestions": dynamic_suggestions(ctx),
+                    "links": [
+                        {"label": "Rechercher ces talents",
+                         "href": "/recruiter/candidates?skills=" + query},
+                        {"label": "Mes shortlists", "href": "/recruiter/shortlists"},
+                    ],
+                }
+            return {
+                "reply": (
+                    "Précise les compétences que tu cherches (ex. "
+                    "« TCP/IP, Fortinet, Linux ») : la recherche de "
+                    "talents te donne le matching expliqué par candidat."
+                ),
+                "suggestions": dynamic_suggestions(ctx),
+                "links": [{"label": "Recherche de talents", "href": "/recruiter/candidates"}],
+            }
+        if re.search(r"(rédiger une offre|offre claire|comment.*offre|structurer une offre)", norm):
+            return {
+                "reply": (
+                    "Pour une offre efficace : un intitulé métier "
+                    "précis, les 3à5 compétences vraiment "
+                    "nécessaires (essentielles vs appréciées), la "
+                    "localisation et le type de contrat. Tu peux aussi me "
+                    "donner une description libre : je la structure en offre."
+                ),
+                "suggestions": dynamic_suggestions(ctx),
+                "links": [{"label": "Publier une offre", "href": "/recruiter/jobs"}],
             }
 
     # ---- Salutations : une vraie conversation commence simplement
@@ -752,7 +821,9 @@ def _rules_reply(message: str, ctx: _Context) -> dict[str, Any]:
     if re.search(
         r"(où j'en suis|mon bilan|fais le point|faire le point|le point sur|"
         r"ce que tu (vois|observes?|repères?|as repéré)|d'après ce que|"
-        r"bas[ée]e?? sur ce que|autour de moi|ta analyse|ton analyse|conseille[- ]moi)",
+        r"bas[ée]e?? sur ce que|autour de moi|ta analyse|ton analyse|conseille[- ]moi|"
+        r"pending|en attente|t[aâ]ches|pas accompli|non accomplpl?i|me reste|"
+        r"qu'est[- ]ce qui me reste|mon dashboard|tableau de bord|pas encore fait)",
         norm,
     ):
         blocked = no_profile_reply()
@@ -781,6 +852,16 @@ def _rules_reply(message: str, ctx: _Context) -> dict[str, Any]:
                 "Pour progresser, tes écarts prioritaires sont : "
                 + ", ".join(ctx.gaps[:3]) + "."
             )
+        ongoing = [
+            a for a in ctx.applications
+            if a.get("status") not in ("acceptee", "refusee", None)
+        ]
+        if ongoing:
+            detail = ", ".join(
+                f"« {a.get('job_title', '?')} » ({a.get('status')})"
+                for a in ongoing[:3]
+            )
+            lines.append("En cours de ton côté : " + detail + ".")
         interviews = [a for a in ctx.applications if a.get("status") == "entretien"]
         if interviews:
             lines.append(
@@ -867,7 +948,7 @@ def _llm_reply(
     messages = [{"role": "system", "content": system}]
     messages += [{"role": m["role"], "content": m["content"]} for m in history[-12:]]
     messages.append({"role": "user", "content": message})
-    return llm_client.chat_completion(db, messages, max_tokens=450)
+    return llm_client.chat_completion(db, messages, max_tokens=900)
 
 
 def answer(
@@ -886,6 +967,23 @@ def answer(
     """Point d'entrée : LLM si configuré (avec succès), sinon règles.
     Les suggestions sont TOUJOURS calculées depuis les données réelles.
     `mode` révèle à l'interface le moteur utilisé (« llm » ou « local »)."""
+    # Continuation d'une réponse interrompue ou tronquée : on relance
+    # la demande précédente au lieu de tomber dans le fallback.
+    if re.search(
+        r"(vas[- ]?y|continue|termine|finis|g[eè]n[eè]re la r[eé]ponse compl[eè]te|"
+        r"r[eé]ponse compl[eè]te|pas compl[eè]tement g[eé]n[eé]r[eé]e|tu t'es coup[eé])",
+        message, re.IGNORECASE,
+    ):
+        previous = [
+            m["content"] for m in history[-8:]
+            if m.get("role") == "user"
+            and not re.search(
+                r"(vas[- ]?y|continue|termine|finis|g[eè]n[eè]re la r[eé]ponse|"
+                r"compl[eè]tement g[eé]n[eé]r[eé]e)", m["content"], re.IGNORECASE)
+        ]
+        if previous:
+            message = previous[-1]
+
     # Fouille web bornée : si l'utilisateur demande une recherche, on
     # collecte AVANT de répondre. Le sujet vient du message courant,
     # ou de la question précédente (« et sur internet, il y a rien ? »).
@@ -918,5 +1016,8 @@ def answer(
                     {"label": label[:40] or "Lien", "href": url}
                 )
     rules.setdefault("actions", [])
-    rules["mode"] = "llm" if llm_text else "local"
+    if role == "admin":
+        rules["mode"] = "llm" if llm_text else "local"
+    else:
+        rules["mode"] = "orientskill"
     return rules

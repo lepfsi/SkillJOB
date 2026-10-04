@@ -44,7 +44,7 @@ a { color: var(--green); }
 .loader { padding: 2rem 0; text-align: center; }
 .mt-4 { margin-top: 0.5rem; }
 
-/* ---------------- Écran d'authentification ---------------- */
+/* ---------------- Écran d'authentification (premium) ---------------- */
 
 .auth-screen {
   min-height: 100vh;
@@ -52,14 +52,79 @@ a { color: var(--green); }
   align-items: center;
   justify-content: center;
   padding: 1rem;
-  background: linear-gradient(160deg, var(--green-dark), var(--green) 65%);
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(900px 600px at 12% -10%, rgba(230, 126, 34, 0.22), transparent 60%),
+    radial-gradient(800px 700px at 95% 15%, rgba(18, 117, 76, 0.45), transparent 55%),
+    linear-gradient(165deg, #071f15 0%, #0d2f21 55%, #103825 100%);
+}
+
+/* Trame + halos décoratifs derrière la carte */
+.auth-decor {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1px);
+  background-size: 26px 26px;
+  mask-image: radial-gradient(ellipse 75% 65% at 50% 42%, #000 30%, transparent 75%);
+  -webkit-mask-image: radial-gradient(ellipse 75% 65% at 50% 42%, #000 30%, transparent 75%);
+}
+.auth-decor::after {
+  content: "";
+  position: absolute;
+  width: 560px;
+  height: 560px;
+  right: -160px;
+  bottom: -220px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 0 0 90px rgba(255, 255, 255, 0.015);
+}
+
+/* Citation : élégante, discrète, renouvelée */
+.auth-hero {
+  position: absolute;
+  left: clamp(1.5rem, 6vw, 6rem);
+  bottom: clamp(2rem, 9vh, 5.5rem);
+  max-width: 420px;
+  z-index: 1;
+}
+.auth-quote {
+  margin: 0;
+  border: none;
+  padding-left: 1.1rem;
+  border-left: 2px solid rgba(230, 126, 34, 0.65);
+}
+.auth-quote p {
+  margin: 0;
+  font-size: clamp(1.05rem, 1.6vw, 1.3rem);
+  line-height: 1.5;
+  color: rgba(242, 248, 245, 0.92);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+.auth-quote cite {
+  display: block;
+  margin-top: 0.45rem;
+  font-style: normal;
+  font-size: 0.78rem;
+  color: rgba(231, 242, 236, 0.5);
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
 }
 
 .auth-card {
-  background: var(--panel);
-  border-radius: var(--radius);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.28);
-  padding: 2rem;
+  position: relative;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.985);
+  border: 1px solid rgba(13, 47, 33, 0.1);
+  border-radius: 14px;
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.45),
+    0 4px 14px rgba(0, 0, 0, 0.22);
+  padding: 2.1rem 2rem;
   width: min(420px, 100%);
 }
 
@@ -786,6 +851,12 @@ table.skills {
 }
 
 /* ---------------- Responsive ---------------- */
+
+@media (max-width: 760px) {
+  .auth-screen { flex-direction: column; justify-content: center; gap: 2rem; padding: 2rem 1rem; }
+  .auth-hero { position: static; max-width: 460px; text-align: left; order: -1; }
+  .auth-card { width: min(420px, 100%); }
+}
 
 @media (max-width: 900px) {
   .shell { flex-direction: column; }

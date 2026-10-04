@@ -1,11 +1,65 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { api, setSession } from "../api/client.js";
 
+// Écran de connexion : fond en couches (dégradé profond + halos doux +
+// trame discrète), citation inspirante qui se renouvelle, carte épurée.
+
+const QUOTES = [
+  {
+    text: "Ton parcours n'est pas un CV, c'est une histoire de compétences.",
+    author: "OrientSkill AI",
+  },
+  {
+    text: "Chaque petit boulot t'a appris quelque chose qu'un emploi recherchera demain.",
+    author: "OrientSkill AI",
+  },
+  {
+    text: "Comprendre le marché, c'est déjà prendre une longueur d'avance.",
+    author: "OrientSkill AI",
+  },
+  {
+    text: "L'absence de diplôme n'est pas l'absence de compétence.",
+    author: "OrientSkill AI",
+  },
+  {
+    text: "Le bon déclic, c'est la bonne compétence au bon moment.",
+    author: "OrientSkill AI",
+  },
+];
+
+function Quote() {
+  const [index, setIndex] = useState(
+    () => Math.floor(Math.random() * QUOTES.length)
+  );
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setVisible(false);
+      setTimeout(() => {
+        setIndex((i) => (i + 1) % QUOTES.length);
+        setVisible(true);
+      }, 600);
+    }, 7000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const quote = QUOTES[index];
+  return (
+    <blockquote
+      className="auth-quote"
+      style={{ opacity: visible ? 1 : 0, transition: "opacity 0.6s ease" }}
+    >
+      <p>{quote.text}</p>
+      <cite>{quote.author}</cite>
+    </blockquote>
+  );
+}
+
 export default function Login() {
   const { login } = useAuth();
-  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -36,7 +90,6 @@ export default function Login() {
       if (res.mfa_required) {
         setMfaToken(res.mfa_token);
       } else {
-        // Rafraîchit l'utilisateur côté contexte puis redirige
         await login(email.trim(), password).catch(() => {});
         finishLogin(res.token, res.user);
       }
@@ -67,6 +120,7 @@ export default function Login() {
   if (mfaToken) {
     return (
       <div className="auth-screen">
+        <div className="auth-decor" aria-hidden="true" />
         <form className="auth-card" onSubmit={onMfaSubmit}>
           <div className="auth-brand">
             OrientSkill <span>AI</span>
@@ -97,6 +151,10 @@ export default function Login() {
 
   return (
     <div className="auth-screen">
+      <div className="auth-decor" aria-hidden="true" />
+      <div className="auth-hero">
+        <Quote />
+      </div>
       <form className="auth-card" onSubmit={onSubmit}>
         <div className="auth-brand">
           OrientSkill <span>AI</span>
@@ -132,10 +190,6 @@ export default function Login() {
         </button>
         <p className="auth-alt">
           Pas encore de compte ? <Link to="/register">Créer un compte</Link>
-        </p>
-        <p className="auth-demo">
-          Comptes de démonstration : demo@orientskill.cm / demo1234 ·
-          admin@orientskill.cm / admin1234
         </p>
       </form>
     </div>

@@ -98,7 +98,7 @@ export default function App() {
       <Route path="/learning" element={<RequireCandidate><Learning /></RequireCandidate>} />
       <Route path="/documents" element={<RequireCandidate><Documents /></RequireCandidate>} />
       <Route path="/profil" element={<RequireCandidate><Profile /></RequireCandidate>} />
-      <Route path="/assistant" element={<RequireCandidate><Assistant /></RequireCandidate>} />
+      <Route path="/assistant" element={<RequireAny><Assistant /></RequireAny>} />
       <Route path="/onboarding" element={<RequireCandidate><Onboarding /></RequireCandidate>} />
       <Route path="/questionnaire" element={<RequireCandidate><Questionnaire /></RequireCandidate>} />
       <Route path="/validation-profil" element={<RequireCandidate><DraftReview /></RequireCandidate>} />

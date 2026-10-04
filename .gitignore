@@ -14,3 +14,7 @@ frontend/dist/
 .env
 .DS_Store
 *.log
+
+# Fichiers utilisateurs (photos, pièces d'identité) — JAMAIS dans git
+backend/uploads/
+.smoke/

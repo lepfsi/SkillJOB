@@ -281,21 +281,37 @@ def test_llm_links_become_buttons(client):
 # --------------------- Mode moteur + bilan + remises à niveau
 
 def test_response_reports_engine_mode(client):
-    """Transparence : chaque réponse indique son moteur (« local » ou
-    « llm »), pour ne plus jamais confondre les deux."""
+    """Confidentialité : l'utilisateur NE SAIT PAS s'il y a un modèle
+    derrière (mode neutre « orientskill »). Seul l'admin voit la réalité."""
     body = _ask(client, _demo_headers(client), "bonjour")
-    assert body["mode"] == "local"
+    assert body["mode"] == "orientskill"
+
+    # L'admin, lui, connaît le moteur réel
+    login = client.post("/api/auth/login", json={
+        "email": "admin@orientskill.cm", "password": "admin1234"})
+    aheaders = {"Authorization": f"Bearer {login.json()['token']}"}
+    body = _ask(client, aheaders, "bonjour")
+    assert body["mode"] == "local"  # pas de modèle configuré dans les tests
 
 
 def test_assistant_status_endpoint(client):
+    # Non-admin : AUCUNE information sur le modèle (ne sait même pas
+    # s'il y en a un)
     response = client.get("/api/assistant/status",
                           headers=_demo_headers(client))
     assert response.status_code == 200
     body = response.json()
-    assert body["mode"] in ("local", "llm")
-    assert "llm_enabled" in body
-    # Sans configuration admin : moteur local
+    assert body["mode"] == "orientskill"
+    assert "llm_enabled" not in body
+    assert "model" not in body
+
+    # Admin : réalité complète
+    login = client.post("/api/auth/login", json={
+        "email": "admin@orientskill.cm", "password": "admin1234"})
+    aheaders = {"Authorization": f"Bearer {login.json()['token']}"}
+    body = client.get("/api/assistant/status", headers=aheaders).json()
     assert body["llm_enabled"] is False
+    assert body["mode"] == "local"
 
 
 def test_bilan_intent_uses_observed_data(client):
@@ -354,3 +370,73 @@ def _ask_with_history(client, headers, previous, message):
     }, headers=headers)
     assert response.status_code == 200, response.text
     return response.json()
+
+
+# --------------------- Agent recruteur + compréhension
+
+def _recruiter_headers_v2(client, email="agent.recruiter@tgc.cm"):
+    reg = client.post("/api/auth/register/recruiter", json={
+        "email": email, "password": "pass1234",
+        "recruiter_type": "company",
+        "company_name": "Agent RH CM",
+        "company_sector": "Informatique / IT",
+        "company_description": "Test agent.",
+        "company_location": "Douala",
+    })
+    return {"Authorization": f"Bearer {reg.json()['token']}"}
+
+
+def test_recruiter_agent_talent_search(client):
+    rh = _recruiter_headers_v2(client)
+    body = _ask(client, rh,
+                "Montre-moi les talents disponibles en réseaux et firewall")
+    assert "talents" in body["reply"].lower() or "compétences" in body["reply"].lower()
+    # Lien vers la recherche pré-remplie avec les compétences détectées
+    talent_links = [l for l in body["links"] if "/recruiter/candidates" in l["href"]]
+    assert talent_links
+    assert "skills=" in talent_links[0]["href"]
+    # Suggestions adaptées au rôle recruteur
+    assert any("offre" in s.lower() for s in body["suggestions"])
+
+
+def test_recruiter_agent_received_applications(client):
+    rh = _recruiter_headers_v2(client, email="agent2@tgc.cm")
+    body = _ask(client, rh, "Où en sont les candidatures reçues ?")
+    assert "candidatures" in body["reply"].lower()
+    assert any("/recruiter" in l["href"] for l in body["links"])
+
+
+def test_recruiter_agent_offer_writing(client):
+    rh = _recruiter_headers_v2(client, email="agent3@tgc.cm")
+    body = _ask(client, rh, "Comment rédiger une offre claire ?")
+    assert "compétences" in body["reply"].lower()
+    assert any("/recruiter/jobs" in l["href"] for l in body["links"])
+
+
+def test_pending_dashboard_intent(client):
+    """« ce qu'il y a de pending sur mon dashboard, tâches non accomplies »
+    → vrai bilan des tâches en cours, pas un fallback."""
+    body = _ask(client, _demo_headers(client),
+                "Parle moi de ce qu'il y a de pending sur mon dashboard ou des tâches que je n'ai pas accomplies")
+    reply = body["reply"]
+    assert "Administrateur Systèmes" in reply or "En cours" in reply
+    assert "On commence par quoi ?" in reply
+    assert "pas saisi" not in reply.lower()
+
+
+def test_continuation_replays_previous_request(client):
+    """« Vas-y génère la réponse complète » après une réponse tronquée :
+    l'agent relance la demande précédente au lieu de tomber en fallback."""
+    body = client.post("/api/assistant", json={
+        "message": "Vas-y génère la réponse complète",
+        "history": [
+            {"role": "user", "content": "Parle moi de ce qu'il y a de pending sur mon dashboard"},
+            {"role": "assistant", "content": "Côté candidatures, tu as ton dossier d'Administrateur Systèmes et"},
+        ],
+    }, headers=_demo_headers(client))
+    assert body.status_code == 200
+    reply = body.json()["reply"]
+    assert "pas saisi" not in reply.lower()
+    assert "pas compris" not in reply.lower()
+    # La réponse régénère le contenu du bilan de la question précédente
+    assert "On commence par quoi ?" in reply or "candidature" in reply.lower()
