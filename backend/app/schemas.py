@@ -6,11 +6,33 @@ from pydantic import BaseModel, Field
 
 # ---------------------------------------------------------------- Auth
 
+GENDERS = Literal["homme", "femme"]
+
 
 class RegisterIn(BaseModel):
     email: str
     password: str = Field(min_length=4)
     full_name: str = Field(min_length=1)
+    gender: Optional[GENDERS] = None
+    region: Optional[str] = None
+    department: Optional[str] = None
+    arrondissement: Optional[str] = None
+    city: Optional[str] = None
+
+
+class RecruiterRegisterIn(RegisterIn):
+    """Inscription recruteur. Type ``company`` ou ``agency`` : le compte
+    représente l'ENTREPRISE (aucun champ personnel requis — le nom affiché
+    est celui de la structure). Type ``independent`` : recruteur
+    indépendant, tous les champs personnels s'appliquent."""
+
+    full_name: str = ""  # requis uniquement pour le type independent
+    recruiter_type: Literal["company", "agency", "independent"] = "company"
+    company_name: str = Field(min_length=1)
+    company_sector: str = ""
+    company_description: str = ""
+    company_location: str = ""
+    company_website: Optional[str] = None
 
 
 class LoginIn(BaseModel):
@@ -23,7 +45,15 @@ class UserOut(BaseModel):
     email: str
     full_name: str
     role: str
+    gender: Optional[str] = None
+    region: Optional[str] = None
+    department: Optional[str] = None
+    arrondissement: Optional[str] = None
+    city: Optional[str] = None
     created_at: datetime
+    mfa_enabled: bool = False
+    verification_status: str = "none"
+    photo_path: Optional[str] = None
 
     model_config = {"from_attributes": True}
 
@@ -31,6 +61,35 @@ class UserOut(BaseModel):
 class AuthResponse(BaseModel):
     token: str
     user: UserOut
+
+
+class LoginResponse(BaseModel):
+    """Login étape 1 : soit session directe, soit demande de code MFA."""
+
+    token: Optional[str] = None
+    user: Optional[UserOut] = None
+    mfa_required: bool = False
+    mfa_token: Optional[str] = None
+
+
+class MfaLoginIn(BaseModel):
+    mfa_token: str
+    code: str
+
+
+class MfaCodeIn(BaseModel):
+    code: str
+
+
+class MfaSetupOut(BaseModel):
+    secret: str
+    otpauth_uri: str
+    qr_data_url: str = ""
+
+
+class MfaEnabledOut(BaseModel):
+    recovery_codes: list[str]
+    message: str
 
 
 # ---------------------------------------------------------------- Profil
@@ -79,6 +138,7 @@ class ProjectItem(BaseModel):
     id: Optional[str] = None
     name: str = ""
     description: str = ""
+    url: Optional[str] = None
     skills: list[str] = Field(default_factory=list)
 
 
@@ -95,6 +155,7 @@ class Preferences(BaseModel):
     target_roles: list[str] = Field(default_factory=list)
     contract_types: list[str] = Field(default_factory=list)
     remote_ok: bool = False
+    linkedin_url: Optional[str] = None
 
 
 class ProfileOut(BaseModel):
@@ -208,6 +269,14 @@ class CareerMatch(BaseModel):
     recommended_actions: list[str]
 
 
+class RelatedJob(BaseModel):
+    id: int
+    title: str
+    company: str
+    location: str
+    contract_type: str
+
+
 class CareerOut(BaseModel):
     id: int
     title: str
@@ -215,6 +284,7 @@ class CareerOut(BaseModel):
     description: str
     required_skills: list[RequiredSkill]
     match: CareerMatch
+    related_jobs: list[RelatedJob] = Field(default_factory=list)
 
 
 # ---------------------------------------------------------------- Offres
@@ -235,6 +305,7 @@ class JobSummary(BaseModel):
     published_at: datetime
     source: JobSource
     match_score: Optional[int] = None
+    company_branding: Optional[JobCompanyOut] = None
 
 
 class JobDetail(BaseModel):
@@ -251,6 +322,7 @@ class JobDetail(BaseModel):
     deadline: Optional[datetime] = None
     source: JobSource
     salary: Optional[str] = None
+    company_branding: Optional[JobCompanyOut] = None
 
 
 class MatchOut(BaseModel):
@@ -310,6 +382,80 @@ class ApplicationStatusIn(BaseModel):
 
 # ---------------------------------------------------------------- Documents
 
+CV_TEMPLATES = ("classique", "ats", "moderne")
+
+
+class CvTemplateInfo(BaseModel):
+    id: str
+    name: str
+    description: str
+    ats_friendly: bool
+
+
+class CvGenerateIn(BaseModel):
+    template: str = "classique"
+
+
+class JobParseIn(BaseModel):
+    description: str = Field(min_length=10)
+
+
+class BusinessPlanIn(BaseModel):
+    activity: str = Field(min_length=3)
+    target: str = ""
+    capital: str = ""
+    location: str = ""
+
+
+class NotificationPrefsIn(BaseModel):
+    email_enabled: Optional[bool] = None
+    email: Optional[str] = None
+    whatsapp_enabled: Optional[bool] = None
+    whatsapp_number: Optional[str] = None
+    telegram_enabled: Optional[bool] = None
+    telegram_username: Optional[str] = None
+
+
+# ------------------------------------------------- Sources & collecte
+
+class SourceCreateIn(BaseModel):
+    name: str = Field(min_length=1)
+    kind: Literal["rss", "json"]
+    url: str = Field(min_length=8)
+    sector: str = ""
+    enabled: bool = True
+
+
+class SourceUpdateIn(BaseModel):
+    name: Optional[str] = None
+    kind: Optional[Literal["rss", "json"]] = None
+    url: Optional[str] = None
+    sector: Optional[str] = None
+    enabled: Optional[bool] = None
+
+
+class ImportUrlIn(BaseModel):
+    url: str = Field(min_length=8)
+
+
+# --------------------------------------------------- Shortlists (V2)
+
+class ShortlistOut(BaseModel):
+    id: int
+    name: str
+    note: str = ""
+    created_at: datetime
+    items: list[dict[str, Any]] = Field(default_factory=list)
+
+
+class ShortlistCreateIn(BaseModel):
+    name: str = Field(min_length=1)
+    note: str = ""
+
+
+class ShortlistItemIn(BaseModel):
+    candidate_id: int
+
 
 class DocumentOut(BaseModel):
     id: int
@@ -317,6 +463,7 @@ class DocumentOut(BaseModel):
     title: str
     content_markdown: str
     job_id: Optional[int] = None
+    template: str = "classique"
     created_at: datetime
 
     model_config = {"from_attributes": True}
@@ -337,6 +484,18 @@ class MarketTrendEntry(BaseModel):
     name: str
     trend: Literal["up", "stable", "down"]
     pct_change: int
+    count: int = 0
+
+
+class MarketWeek(BaseModel):
+    """Indicateurs réels de la semaine : chaque chiffre est traçable."""
+
+    offers_in_period: int
+    previous_period_offers: int = 0
+    period_start: Optional[datetime] = None
+    period_end: Optional[datetime] = None
+    period_label: str = ""
+    sectors: list[dict[str, Any]] = Field(default_factory=list)
 
 
 class NextAction(BaseModel):
@@ -344,6 +503,23 @@ class NextAction(BaseModel):
     type: Literal["adapt_cv", "learn", "apply", "prepare_interview"]
     job_id: Optional[int] = None
     skill: Optional[str] = None
+
+
+class ProfileCompleteness(BaseModel):
+    """État de complétude du profil : chaque case vérifiable."""
+
+    score: int
+    checked: list[dict[str, Any]] = Field(default_factory=list)
+    missing: list[str] = Field(default_factory=list)
+
+
+class TopMatchEntry(BaseModel):
+    id: int
+    title: str
+    company: str
+    location: str
+    contract_type: str
+    score: int
 
 
 class DashboardOut(BaseModel):
@@ -354,7 +530,11 @@ class DashboardOut(BaseModel):
     ongoing_applications: int
     interviews_to_prepare: int
     market_trends: list[MarketTrendEntry]
+    market_week: MarketWeek
     next_action: NextAction
+    ai_briefing: str = ""
+    profile_completeness: Optional[ProfileCompleteness] = None
+    top_matches: list[TopMatchEntry] = Field(default_factory=list)
 
 
 class InboxEvent(BaseModel):
@@ -386,10 +566,28 @@ class LearningItem(BaseModel):
     resources: list[LearningResourceOut]
 
 
+class SkillEvidence(BaseModel):
+    kind: Literal["experience", "project", "certification", "education"]
+    label: str
+
+
+class ProgressItem(BaseModel):
+    """Progression vérifiable par compétence (evidences + prochaine étape)."""
+
+    skill: str
+    level: str
+    status: str                       # "verifiee" | "a_confirmer" | "en_progression"
+    status_label: str
+    demand: int                       # offres actives demandant la compétence
+    evidences: list[SkillEvidence]
+    next_step: str
+
+
 class LearningOut(BaseModel):
     learn_now: list[LearningItem]
+    improve: list[LearningItem] = Field(default_factory=list)
     learn_next: list[LearningItem]
-    progress: list[dict[str, str]]
+    progress: list[ProgressItem]
 
 
 # ---------------------------------------------------------------- Assistant
@@ -414,3 +612,216 @@ class AssistantOut(BaseModel):
     reply: str
     suggestions: list[str]
     links: list[AssistantLink]
+
+
+# ---------------------------------------------- Vérification de profil
+
+class VerificationStatusOut(BaseModel):
+    status: Literal["none", "pending", "verified", "rejected"]
+    requested_at: Optional[datetime] = None
+    note: Optional[str] = None
+
+
+# ------------------------------------------------------------- Recruteur
+
+class CompanyOut(BaseModel):
+    id: int
+    name: str
+    sector: str = ""
+    description: str = ""
+    location: str = ""
+    website: Optional[str] = None
+    has_logo: bool = False
+
+
+class CompanyUpdateIn(BaseModel):
+    name: Optional[str] = None
+    sector: Optional[str] = None
+    description: Optional[str] = None
+    location: Optional[str] = None
+    website: Optional[str] = None
+
+
+class RecruiterCandidateOut(BaseModel):
+    user_id: int
+    full_name: str
+    title: Optional[str] = None
+    location: Optional[str] = None
+    verified: bool = False
+    summary: str = ""
+    skills: list[str] = []
+    match: dict[str, Any] = Field(default_factory=dict)
+
+
+class RecruiterApplicationOut(BaseModel):
+    id: int
+    job_id: int
+    job_title: str
+    candidate_id: int
+    candidate_name: str
+    candidate_verified: bool = False
+    status: str
+    timeline: list[TimelineEvent] = Field(default_factory=list)
+    created_at: datetime
+
+
+class JobCompanyOut(BaseModel):
+    id: int
+    name: str
+    sector: str = ""
+    description: str = ""
+    has_logo: bool = False
+
+
+# ---------------------------------------------------------------- Admin
+
+class MessageOut(BaseModel):
+    id: int
+    sender_id: int
+    recipient_id: int
+    body: str
+    job_id: Optional[int] = None
+    read: bool = False
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
+class MessageCreateIn(BaseModel):
+    recipient_id: int
+    body: str = Field(min_length=1)
+    job_id: Optional[int] = None
+
+
+class ThreadOut(BaseModel):
+    other_user_id: int
+    other_name: str
+    other_role: str
+    other_company: Optional[dict[str, Any]] = None
+    last_body: str
+    last_at: Optional[datetime] = None
+    unread: int
+
+
+class ThreadViewOut(BaseModel):
+    messages: list[MessageOut]
+    identity: dict[str, Any]
+
+class AdminUserOut(BaseModel):
+    id: int
+    email: str
+    full_name: str
+    role: str
+    gender: Optional[str] = None
+    mfa_enabled: bool = False
+    verification_status: str = "none"
+    created_at: datetime
+    has_profile: bool = False
+    applications_count: int = 0
+    documents_count: int = 0
+
+
+class AdminVerificationOut(BaseModel):
+    user_id: int
+    full_name: str
+    email: str
+    requested_at: Optional[datetime] = None
+    status: str
+    note: Optional[str] = None
+    doc_url: str
+    profile: Optional[dict[str, Any]] = None
+
+
+class VerificationDecisionIn(BaseModel):
+    """Décision de vérification : le motif est OBLIGATOIRE pour un refus
+    (visible du candidat) et optionnel pour une approbation."""
+    note: str = ""
+
+
+# ---------------- Contenus publics (Programmes, Entrepreneuriat)
+
+class InstitutionalCreateIn(BaseModel):
+    category: Literal["fne", "minfop", "minpme", "concours"]
+    subcategory: Optional[str] = None
+    title: str = Field(min_length=1)
+    description: str = ""
+    eligibility: str = ""
+    url: Optional[str] = None
+    deadline: Optional[str] = None
+
+
+class EntrepreneurCreateIn(BaseModel):
+    kind: Literal["concours", "accompagnement", "financement", "formation"]
+    title: str = Field(min_length=1)
+    description: str = ""
+    organizer: str = ""
+    url: Optional[str] = None
+    sectors: list[str] = Field(default_factory=list)
+
+
+class AdminStats(BaseModel):
+    users: int
+    profiles: int
+    jobs: int
+    applications: int
+    documents: int
+    learning_resources: int
+    llm_enabled: bool
+    smtp_enabled: bool
+
+
+class AdminSettingsOut(BaseModel):
+    smtp: dict[str, Any]
+    llm: dict[str, Any]
+    aggregators: dict[str, Any]
+
+
+class AdminSettingsUpdate(BaseModel):
+    """Mise à jour d'un groupe (fusion) ; secrets vides = inchangés."""
+
+    data: dict[str, Any]
+
+
+class TestResult(BaseModel):
+    ok: bool
+    detail: str
+
+
+class ConnectorStatus(BaseModel):
+    id: str
+    name: str
+    kind: str            # llm | smtp | messaging | jobs | credentials | data
+    status: str          # operationnel | configure | roadmap
+    phase: str           # V1 | V2 | V3
+    description: str
+    configurable: bool
+
+
+class AdminJobCreate(BaseModel):
+    title: str = Field(min_length=1)
+    company: str = Field(min_length=1)
+    location: str = ""
+    sector: str = ""
+    contract_type: str = "CDI"
+    description: str = ""
+    requirements: str = ""
+    required_skills: list[RequiredSkill] = Field(default_factory=list)
+    source_name: str = "Saisie manuelle"
+    source_url: str = ""
+    salary: Optional[str] = None
+    deadline: Optional[datetime] = None
+
+
+class AdminJobUpdate(BaseModel):
+    title: Optional[str] = None
+    company: Optional[str] = None
+    location: Optional[str] = None
+    sector: Optional[str] = None
+    contract_type: Optional[str] = None
+    description: Optional[str] = None
+    requirements: Optional[str] = None
+    required_skills: Optional[list[RequiredSkill]] = None
+    source_name: Optional[str] = None
+    source_url: Optional[str] = None
+    salary: Optional[str] = None
+    deadline: Optional[datetime] = None

@@ -1,0 +1,407 @@
+[
+  {
+    "title": "Administrateur Systèmes et Réseaux",
+    "company": "Traçabilité Grand Cameroun (TGC)",
+    "location": "Douala",
+    "sector": "Informatique / IT",
+    "contract_type": "CDI",
+    "description": "Nous recherchons un administrateur systèmes et réseaux pour assurer la disponibilité de notre infrastructure (serveurs Windows, réseau LAN/WAN, pare-feu). Vous gérez les sauvegardes, les incidents et la sécurité de premier niveau.",
+    "requirements": "Maîtrise de TCP/IP, du routage et de la commutation, de Windows Server et de l'administration de pare-feu. Des connaissances Fortinet, Linux et Azure sont un plus. Expérience de 2 ans exigée (stages et missions acceptés).",
+    "required_skills": [
+      {"name": "TCP/IP", "importance": "core"},
+      {"name": "Routage et commutation", "importance": "core"},
+      {"name": "Windows Server", "importance": "core"},
+      {"name": "Administration de pare-feu", "importance": "core"},
+      {"name": "Fortinet", "importance": "preferred"},
+      {"name": "Linux", "importance": "preferred"},
+      {"name": "Microsoft Azure", "importance": "preferred"},
+      {"name": "Sauvegarde et restauration", "importance": "preferred"}
+    ],
+    "published_at": "2026-09-28T09:00:00",
+    "deadline": "2026-10-25T23:59:00",
+    "source": {"name": "Emploi.cm", "url": "https://www.emploi.cm/offre/administrateur-systemes-reseaux-tgc"},
+    "salary": "250 000 - 400 000 FCFA/mois"
+  },
+  {
+    "title": "Technicien support IT",
+    "company": "Express Union",
+    "location": "Douala",
+    "sector": "Informatique / IT",
+    "contract_type": "CDD",
+    "description": "Assistance aux utilisateurs des agences : dépannage postes, installation de logiciels, gestion des tickets d'incident. Bon relationnel exigé.",
+    "requirements": "Support informatique, gestion des incidents, Windows Server, relation client. Linux apprécié.",
+    "required_skills": [
+      {"name": "Support informatique", "importance": "core"},
+      {"name": "Gestion des incidents", "importance": "core"},
+      {"name": "Windows Server", "importance": "core"},
+      {"name": "Relation client", "importance": "core"},
+      {"name": "Linux", "importance": "preferred"}
+    ],
+    "published_at": "2026-09-26T10:30:00",
+    "deadline": "2026-10-20T23:59:00",
+    "source": {"name": "Site carrière Express Union", "url": "https://www.expressunion.cm/careers/support-it"},
+    "salary": "150 000 - 220 000 FCFA/mois"
+  },
+  {
+    "title": "Analyste SOC junior",
+    "company": "MTN Cameroun",
+    "location": "Yaoundé",
+    "sector": "Informatique / IT",
+    "contract_type": "CDI",
+    "description": "Au sein de notre centre opérationnel de sécurité, vous surveillez les alertes SIEM, qualifiez les incidents et participez à leur traitement.",
+    "requirements": "Cybersécurité, SOC / SIEM, Linux, administration de pare-feu. Fortinet et TCP/IP appréciés. Débutant accepté avec motivation démontrée.",
+    "required_skills": [
+      {"name": "Cybersécurité", "importance": "core"},
+      {"name": "SOC / SIEM", "importance": "core"},
+      {"name": "Linux", "importance": "core"},
+      {"name": "Administration de pare-feu", "importance": "core"},
+      {"name": "Fortinet", "importance": "preferred"},
+      {"name": "TCP/IP", "importance": "preferred"}
+    ],
+    "published_at": "2026-09-24T08:00:00",
+    "source": {"name": "Jobartis", "url": "https://www.jobartis.com/offre/analyste-soc-junior-mtn"}
+  },
+  {
+    "title": "Développeur web full-stack",
+    "company": "Djamo CI (antenne Douala)",
+    "location": "Douala",
+    "sector": "Informatique / IT",
+    "contract_type": "CDI",
+    "description": "Développement de nouvelles fonctionnalités web (front et back) pour une fintech en croissance. Stack moderne, équipe jeune.",
+    "requirements": "HTML/CSS, JavaScript, Git, SQL ; PHP ou Python appréciés. Portfolio de projets bienvenu.",
+    "required_skills": [
+      {"name": "HTML/CSS", "importance": "core"},
+      {"name": "JavaScript", "importance": "core"},
+      {"name": "Git", "importance": "core"},
+      {"name": "SQL", "importance": "core"},
+      {"name": "Python", "importance": "preferred"},
+      {"name": "PHP", "importance": "preferred"},
+      {"name": "DevOps", "importance": "preferred"}
+    ],
+    "published_at": "2026-09-30T14:00:00",
+    "deadline": "2026-11-01T23:59:00",
+    "source": {"name": "LinkedIn (offre publique)", "url": "https://www.linkedin.com/jobs/view/dev-fullstack-djamo"},
+    "salary": "350 000 - 600 000 FCFA/mois"
+  },
+  {
+    "title": "Stagiaire développeur web",
+    "company": "Startup Factory Douala",
+    "location": "Douala",
+    "sector": "Informatique / IT",
+    "contract_type": "Stage",
+    "description": "Stage de 6 mois : participation au développement d'applications web et au suivi qualité. Encadrement assuré.",
+    "requirements": "Bases en HTML/CSS et JavaScript ; Git apprécié.",
+    "required_skills": [
+      {"name": "HTML/CSS", "importance": "core"},
+      {"name": "JavaScript", "importance": "core"},
+      {"name": "Git", "importance": "preferred"}
+    ],
+    "published_at": "2026-09-15T09:00:00",
+    "source": {"name": "Emploi.cm", "url": "https://www.emploi.cm/offre/stage-developpeur-web-startup-factory"}
+  },
+  {
+    "title": "Data Analyst",
+    "company": "FinaTech Cameroun",
+    "location": "Douala",
+    "sector": "Finance / Fintech",
+    "contract_type": "CDI",
+    "description": "Production de tableaux de bord et d'analyses pour le pilotage de l'activité. Restitution auprès des équipes métiers.",
+    "requirements": "Analyse de données, Excel avancé, SQL, statistiques ; Power BI ou Tableau apprécié, Python un plus.",
+    "required_skills": [
+      {"name": "Analyse de données", "importance": "core"},
+      {"name": "Excel avancé", "importance": "core"},
+      {"name": "SQL", "importance": "core"},
+      {"name": "Statistiques", "importance": "core"},
+      {"name": "Power BI", "importance": "preferred"},
+      {"name": "Python", "importance": "preferred"}
+    ],
+    "published_at": "2026-09-20T11:00:00",
+    "source": {"name": "Jobartis", "url": "https://www.jobartis.com/offre/data-analyst-finatech"},
+    "salary": "300 000 - 450 000 FCFA/mois"
+  },
+  {
+    "title": "Comptable",
+    "company": "Cabinet Expert Conseil Douala",
+    "location": "Douala",
+    "sector": "Finance / Comptabilité",
+    "contract_type": "CDI",
+    "description": "Tenue comptable de dossiers clients PME : saisie, révision, déclarations fiscales.",
+    "requirements": "Comptabilité générale, comptabilité OHADA, Excel avancé ; Sage apprécié. Rigueur indispensable.",
+    "required_skills": [
+      {"name": "Comptabilité générale", "importance": "core"},
+      {"name": "Comptabilité OHADA", "importance": "core"},
+      {"name": "Excel avancé", "importance": "core"},
+      {"name": "Sage", "importance": "preferred"},
+      {"name": "Fiscalité", "importance": "preferred"},
+      {"name": "Rigueur", "importance": "preferred"}
+    ],
+    "published_at": "2026-09-10T08:30:00",
+    "source": {"name": "Emploi.cm", "url": "https://www.emploi.cm/offre/comptable-expert-conseil"},
+    "salary": "200 000 - 300 000 FCFA/mois"
+  },
+  {
+    "title": "Gestionnaire de paie",
+    "company": "BICEC (direction RH)",
+    "location": "Yaoundé",
+    "sector": "Finance / Banque",
+    "contract_type": "CDD",
+    "description": "Élaboration des paies, suivi des contrats et déclarations sociales.",
+    "requirements": "Gestion de la paie, comptabilité générale, Excel avancé ; Sage apprécié.",
+    "required_skills": [
+      {"name": "Gestion de la paie", "importance": "core"},
+      {"name": "Comptabilité générale", "importance": "core"},
+      {"name": "Excel avancé", "importance": "core"},
+      {"name": "Sage", "importance": "preferred"}
+    ],
+    "published_at": "2026-09-05T09:00:00",
+    "source": {"name": "Site carrière BICEC", "url": "https://www.bicec.com/recrutement/gestionnaire-paie"},
+    "salary": "250 000 - 350 000 FCFA/mois"
+  },
+  {
+    "title": "Chargé de marketing digital",
+    "company": "Agence Wogo",
+    "location": "Bafoussam",
+    "sector": "Marketing / Communication",
+    "contract_type": "CDI",
+    "description": "Animation des réseaux sociaux, rédaction de contenus et pilotage de campagnes publicitaires en ligne pour nos clients de l'Ouest.",
+    "requirements": "Marketing digital, community management, rédaction web ; SEO et publicité en ligne appréciés.",
+    "required_skills": [
+      {"name": "Marketing digital", "importance": "core"},
+      {"name": "Community management", "importance": "core"},
+      {"name": "Rédaction web", "importance": "core"},
+      {"name": "SEO", "importance": "preferred"},
+      {"name": "Publicité en ligne", "importance": "preferred"}
+    ],
+    "published_at": "2026-09-27T15:00:00",
+    "source": {"name": "Option Carrière", "url": "https://www.optioncarriere.cm/offre/charge-marketing-digital-wogo"},
+    "salary": "150 000 - 250 000 FCFA/mois"
+  },
+  {
+    "title": "Community manager (freelance)",
+    "company": "Maquis Le Chaudron",
+    "location": "Douala",
+    "sector": "Marketing / Communication",
+    "contract_type": "Freelance",
+    "description": "Animation des réseaux sociaux d'un établissement de restauration : publications, réponses aux clients, promotions.",
+    "requirements": "Community management, rédaction web ; marketing digital apprécié. Missions renouvelables.",
+    "required_skills": [
+      {"name": "Community management", "importance": "core"},
+      {"name": "Rédaction web", "importance": "core"},
+      {"name": "Marketing digital", "importance": "preferred"}
+    ],
+    "published_at": "2026-09-22T18:00:00",
+    "source": {"name": "Page Facebook (offre publique)", "url": "https://www.facebook.com/lechaudron.dla/jobs"}
+  },
+  {
+    "title": "Conducteur de travaux",
+    "company": "SOGEC Constructions",
+    "location": "Douala",
+    "sector": "BTP / Construction",
+    "contract_type": "CDI",
+    "description": "Conduite de chantiers de bâtiments : planification, suivi des équipes, contrôle qualité et respect des délais.",
+    "requirements": "Conduite de chantier, lecture de plans, génie civil, gestion de projet ; AutoCAD apprécié.",
+    "required_skills": [
+      {"name": "Conduite de chantier", "importance": "core"},
+      {"name": "Lecture de plans", "importance": "core"},
+      {"name": "Génie civil", "importance": "core"},
+      {"name": "Gestion de projet", "importance": "core"},
+      {"name": "AutoCAD", "importance": "preferred"}
+    ],
+    "published_at": "2026-09-12T07:30:00",
+    "source": {"name": "Njorku", "url": "https://www.njorku.com/offre/conducteur-travaux-sogec"},
+    "salary": "300 000 - 500 000 FCFA/mois"
+  },
+  {
+    "title": "Dessinateur-projeteur AutoCAD",
+    "company": "BET Ingénierie Yaoundé",
+    "location": "Yaoundé",
+    "sector": "BTP / Construction",
+    "contract_type": "CDD",
+    "description": "Production de plans d'exécution pour projets de bâtiments et voiries.",
+    "requirements": "AutoCAD, lecture de plans, génie civil ; rigueur exigée.",
+    "required_skills": [
+      {"name": "AutoCAD", "importance": "core"},
+      {"name": "Lecture de plans", "importance": "core"},
+      {"name": "Génie civil", "importance": "core"},
+      {"name": "Rigueur", "importance": "preferred"}
+    ],
+    "published_at": "2026-09-18T10:00:00",
+    "source": {"name": "Emploi.cm", "url": "https://www.emploi.cm/offre/dessinateur-autocad-bet"}
+  },
+  {
+    "title": "Responsable logistique",
+    "company": "Padouk Transit",
+    "location": "Douala",
+    "sector": "Logistique / Transport",
+    "contract_type": "CDI",
+    "description": "Pilotage des flux import/export et de l'entrepôt : stocks, transit, relation transitaires et douane.",
+    "requirements": "Supply chain, gestion des stocks, transport et transit ; connaissance des formalités douanières appréciée.",
+    "required_skills": [
+      {"name": "Supply chain", "importance": "core"},
+      {"name": "Gestion des stocks", "importance": "core"},
+      {"name": "Transport et transit", "importance": "core"},
+      {"name": "Douane", "importance": "preferred"},
+      {"name": "Excel avancé", "importance": "preferred"}
+    ],
+    "published_at": "2026-09-29T08:00:00",
+    "deadline": "2026-10-30T23:59:00",
+    "source": {"name": "Emploi.cm", "url": "https://www.emploi.cm/offre/responsable-logistique-padouk"},
+    "salary": "350 000 - 550 000 FCFA/mois"
+  },
+  {
+    "title": "Gestionnaire de stocks",
+    "company": "Brasserie Cam Sarl",
+    "location": "Bafoussam",
+    "sector": "Logistique / Distribution",
+    "contract_type": "CDD",
+    "description": "Gestion du magasin : réceptions, inventaires, préparation des livraisons.",
+    "requirements": "Gestion des stocks, rigueur, sens de l'organisation ; Excel avancé apprécié.",
+    "required_skills": [
+      {"name": "Gestion des stocks", "importance": "core"},
+      {"name": "Rigueur", "importance": "core"},
+      {"name": "Sens de l'organisation", "importance": "core"},
+      {"name": "Excel avancé", "importance": "preferred"}
+    ],
+    "published_at": "2026-08-30T09:00:00",
+    "source": {"name": "Option Carrière", "url": "https://www.optioncarriere.cm/offre/gestionnaire-stocks-brassem"}
+  },
+  {
+    "title": "Ingénieur agronome production",
+    "company": "SODECAM — Société Camerounaise des Cultures",
+    "location": "Bafoussam",
+    "sector": "Agriculture / Agribusiness",
+    "contract_type": "CDI",
+    "description": "Suivi technique des plantations (maraîchage et vivrier), encadrement des équipes, planification des intrants.",
+    "requirements": "Agronomie, agribusiness, gestion de projet ; irrigation appréciée.",
+    "required_skills": [
+      {"name": "Agronomie", "importance": "core"},
+      {"name": "Agribusiness", "importance": "core"},
+      {"name": "Gestion de projet", "importance": "core"},
+      {"name": "Irrigation", "importance": "preferred"},
+      {"name": "Transformation agroalimentaire", "importance": "preferred"}
+    ],
+    "published_at": "2026-09-16T08:00:00",
+    "source": {"name": "Site carrière SODECAM", "url": "https://www.sodecam.cm/recrutement/ingenieur-agronome"},
+    "salary": "300 000 - 450 000 FCFA/mois"
+  },
+  {
+    "title": "Technicien de transformation agroalimentaire",
+    "company": "Njoka Foods",
+    "location": "Douala",
+    "sector": "Agriculture / Agribusiness",
+    "contract_type": "CDD",
+    "description": "Transformation de fruits et légumes : contrôle qualité, hygiène, conditionnement pour le marché local et l'export.",
+    "requirements": "Transformation agroalimentaire, rigueur ; agronomie appréciée.",
+    "required_skills": [
+      {"name": "Transformation agroalimentaire", "importance": "core"},
+      {"name": "Rigueur", "importance": "core"},
+      {"name": "Agronomie", "importance": "preferred"}
+    ],
+    "published_at": "2026-08-22T10:00:00",
+    "source": {"name": "Njorku", "url": "https://www.njorku.com/offre/technicien-transformation-njoka"}
+  },
+  {
+    "title": "Infirmier d'État",
+    "company": "Clinique Les Cocotiers",
+    "location": "Yaoundé",
+    "sector": "Santé",
+    "contract_type": "CDI",
+    "description": "Soins infirmiers en hospitalisation et consultations externes ; participation aux urgences.",
+    "requirements": "Soins infirmiers, premiers secours ; santé publique appréciée. Bon relationnel exigé.",
+    "required_skills": [
+      {"name": "Soins infirmiers", "importance": "core"},
+      {"name": "Premiers secours", "importance": "core"},
+      {"name": "Santé publique", "importance": "preferred"},
+      {"name": "Communication", "importance": "preferred"}
+    ],
+    "published_at": "2026-09-08T08:00:00",
+    "source": {"name": "Site carrière Clinique Les Cocotiers", "url": "https://www.cliniquelescocotiers.cm/recrutement/infirmier"},
+    "salary": "180 000 - 280 000 FCFA/mois"
+  },
+  {
+    "title": "Chargé de programme santé communautaire",
+    "company": "ONG Santé Pour Tous",
+    "location": "Yaoundé",
+    "sector": "ONG / International",
+    "contract_type": "CDD",
+    "description": "Mise en œuvre d'activités de santé communautaire auprès des jeunes : sensibilisation, suivi, rapports narratives.",
+    "requirements": "Santé publique, communication, gestion de projet ; rédaction de rapports exigée.",
+    "required_skills": [
+      {"name": "Santé publique", "importance": "core"},
+      {"name": "Communication", "importance": "core"},
+      {"name": "Gestion de projet", "importance": "core"},
+      {"name": "Rédaction web", "importance": "preferred"}
+    ],
+    "published_at": "2026-09-25T09:00:00",
+    "deadline": "2026-10-15T23:59:00",
+    "source": {"name": "Reliefweb", "url": "https://reliefweb.int/job/sante-pour-tous-charge-programme"}
+  },
+  {
+    "title": "Enseignant en informatique",
+    "company": "Collège Adventiste de Douala",
+    "location": "Douala",
+    "sector": "Éducation / Formation",
+    "contract_type": "CDD",
+    "description": "Enseignement de l'informatique au secondaire : algorithmique, bureautique, initiation aux réseaux.",
+    "requirements": "Enseignement, pédagogie, compétences informatiques (HTML/CSS, réseaux appréciés).",
+    "required_skills": [
+      {"name": "Enseignement", "importance": "core"},
+      {"name": "Pédagogie", "importance": "core"},
+      {"name": "HTML/CSS", "importance": "preferred"},
+      {"name": "Réseaux informatiques", "importance": "preferred"}
+    ],
+    "published_at": "2026-08-25T08:00:00",
+    "source": {"name": "Emploi.cm", "url": "https://www.emploi.cm/offre/enseignant-informatique-college-adventiste"}
+  },
+  {
+    "title": "Formateur en bureautique (missions ponctuelles)",
+    "company": "Centre de formation ProSkills",
+    "location": "Yaoundé",
+    "sector": "Éducation / Formation",
+    "contract_type": "Freelance",
+    "description": "Animation de sessions de formation bureautique (Excel avancé, rédaction professionnelle) pour des salariés d'entreprises.",
+    "requirements": "Pédagogie, conception de formations, Excel avancé, communication.",
+    "required_skills": [
+      {"name": "Pédagogie", "importance": "core"},
+      {"name": "Conception de formations", "importance": "core"},
+      {"name": "Excel avancé", "importance": "core"},
+      {"name": "Communication", "importance": "preferred"}
+    ],
+    "published_at": "2026-09-19T14:00:00",
+    "source": {"name": "LinkedIn (page publique)", "url": "https://www.linkedin.com/company/proskills-yaounde/jobs"}
+  },
+  {
+    "title": "Électricien bâtiment",
+    "company": "Entreprise Ndogmo & Fils",
+    "location": "Douala",
+    "sector": "BTP / Construction",
+    "contract_type": "CDD",
+    "description": "Installations électriques sur chantiers de bâtiments résidentiels et tertiaires.",
+    "requirements": "Électricité bâtiment, lecture de plans, rigueur.",
+    "required_skills": [
+      {"name": "Électricité bâtiment", "importance": "core"},
+      {"name": "Lecture de plans", "importance": "core"},
+      {"name": "Rigueur", "importance": "preferred"}
+    ],
+    "published_at": "2026-08-15T07:00:00",
+    "source": {"name": "Petites annonces locales", "url": "https://www.jumia.cm/deals/electricien-batiment-ndogmo"}
+  },
+  {
+    "title": "Assistant administratif et financier",
+    "company": "ONG Horizon Jeunes",
+    "location": "Douala",
+    "sector": "ONG / International",
+    "contract_type": "Stage",
+    "description": "Appui à la gestion administrative : suivi budgétaire, bons de commande, classement des pièces comptables.",
+    "requirements": "Comptabilité générale, Excel avancé, sens de l'organisation ; OHADA apprécié.",
+    "required_skills": [
+      {"name": "Comptabilité générale", "importance": "core"},
+      {"name": "Excel avancé", "importance": "core"},
+      {"name": "Sens de l'organisation", "importance": "core"},
+      {"name": "Comptabilité OHADA", "importance": "preferred"}
+    ],
+    "published_at": "2026-10-01T09:00:00",
+    "deadline": "2026-10-20T23:59:00",
+    "source": {"name": "Reliefweb", "url": "https://reliefweb.int/job/horizon-jeunes-assistant-admin"}
+  }
+]

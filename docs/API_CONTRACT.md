@@ -147,7 +147,118 @@ Document { id, kind: "cv"|"cover_letter", title, content_markdown: string, job_i
 Body : `{ "message": string, "history": [{ "role": "user"|"assistant", "content": string }] }`
 → `{ "reply": string, "suggestions": string[], "links": [{ label, href }] }`
 
-Moteur hybride : réponses par règles sur les intentions courantes (métiers compatibles, écarts, offres récentes, préparation CV…), bascule vers un LLM si `LLM_PROVIDER`/`LLM_API_KEY` sont configurés (sinon fallback règles). Jamais de données inventées.
+Moteur hybride : réponses par règles ancrées sur les données réelles, suggestions DYNAMIQUES calculées depuis l'état du profil et du marché ; bascule vers un LLM si configuré via l'admin (sinon fallback règles). Jamais de données inventées.
+
+## 10. Learning (progression vérifiable)
+
+`GET /api/learning` →
+
+```text
+{ learn_now: [...], learn_next: [...],
+  progress: [{ skill, level, status: "verifiee"|"a_confirmer"|"en_progression",
+               status_label, demand: int,
+               evidences: [{ kind: "experience"|"project"|"certification"|"education", label }],
+               next_step: string }] }
+```
+
+`status = "verifiee"` : la compétence est appuyée par des preuves issues du
+profil (expériences, projets, certifications). `next_step` donne l'action
+concrète pour renforcer la vérifiabilité.
+
+## 11. Carrières
+
+`GET /api/careers` inclut pour chaque métier :
+`related_jobs: [{ id, title, company, location, contract_type }]` (offres actives liées).
+
+## 12. Administration (rôle `admin` uniquement, 403 sinon)
+
+### GET /api/admin/stats → `{ users, profiles, jobs, applications, documents, learning_resources, llm_enabled, smtp_enabled }`
+### GET /api/admin/settings → `{ smtp, llm, aggregators }` (secrets JAMAIS renvoyés : `*_set: bool`)
+### PUT /api/admin/settings/{group} — group ∈ `smtp | llm | aggregators`
+Body : `{ "data": { ... } }` (fusion) → `{ {group}: config_masquée }`.
+Un secret soumis vide (`""`) CONSERVE la valeur existante.
+
+Configurations :
+
+```text
+smtp:        { host, port, username, password*, from_email, use_tls, enabled }
+llm:         { provider: "rules"|"openai", model, base_url, api_key*, enabled }
+aggregators: { telegram: { bot_token*, chat_id, enabled },
+               whatsapp: { provider, api_key*, phone_number_id, enabled } }
+```
+
+`*` = secret (masqué en lecture).
+
+### POST /api/admin/test-llm → `{ ok, detail }` (ping réel du LLM configuré)
+### POST /api/admin/test-smtp → `{ ok, detail }` (poignée de main SMTP + STARTTLS + LOGIN)
+### GET /api/admin/connecteurs → catalogue formalisé V1/V2/V3 :
+
+```text
+[{ id, name, kind, status: "operationnel"|"configure"|"roadmap", phase, description, configurable }]
+```
+
+### GET /api/admin/jobs — liste complète (vue back-office)
+### POST /api/admin/jobs — création (title, company, …, required_skills, source_name, source_url)
+### PUT /api/admin/jobs/{id} — mise à jour partielle
+### DELETE /api/admin/jobs/{id} — suppression (candidatures/documents liés supprimés)
+
+Comptes seed : `demo@orientskill.cm / demo1234` (candidat) ·
+`admin@orientskill.cm / admin1234` (administrateur).
+
+## 13. Export PDF
+
+`GET /api/documents/{id}/export?format=pdf` produit un PDF A4 mis en page
+professionnellement (CV : en-tête, compétences ciblées, expériences datées ;
+lettre : conventions épistolaires FR) via `reportlab` (installé par défaut).
+Repli markdown si la bibliothèque est absente.
+
+## 14. Sources & collecte multi-source (V2, admin)
+
+- `GET/POST /api/admin/sources`, `PUT/DELETE /api/admin/sources/{id}` — connecteurs RSS/JSON.
+- `POST /api/admin/sources/{id}/run` → `{imported, skipped}` (dédup incluse) ;
+  `POST /api/admin/sources/run-all` → tous les connecteurs actifs.
+- Chaque source expose sa **fiabilité** : runs, failures, offers_imported/skipped,
+  last_run_at, last_status (§51).
+- `POST /api/admin/import-url {url}` → brouillon d'offre extrait du balisage
+  JSON-LD public de la page (LinkedIn ou autre) : à valider avant publication.
+
+## 15. Shortlists & candidatures côté recruteur (V2)
+
+- `GET/POST /api/recruiter/shortlists`, `DELETE /api/recruiter/shortlists/{id}`,
+  `POST/DELETE /api/recruiter/shortlists/{id}/items` — listes privées par entreprise.
+- `PATCH /api/recruiter/applications/{id} {status}` — **statut partagé** :
+  la mise à jour est journalisée dans la timeline (visible du candidat) et
+  déclenche sa notification multi-canaux.
+
+## 16. Cloisonnement des rôles
+
+Les pages sont strictement séparées par rôle (candidat / recruteur / admin).
+L'admin n'a pas de profil candidat ; un recruteur ne voit que son espace ;
+les exceptions neutres sont la messagerie interne et les **Paramètres**
+(MFA, notifications, vérification de profil), accessibles à tous les rôles.
+
+## 17. Vérification de profil (refonte)
+
+- Dépôt en **deux temps** : sélection du fichier → aperçu → confirmation
+  explicite (le fichier n'est envoyé qu'au clic « Confirmer »).
+- Côté admin : `GET /api/admin/verifications` inclut le **profil déclaré**
+  (titre, localisation, diplômes, certifications) pour la comparaison
+  profil ↔ pièce.
+- `POST /api/admin/verifications/{id}/approve {note?}` et
+  `POST /api/admin/verifications/{id}/reject {note}` : **le motif du rejet
+  est OBLIGATOIRE (≥ 5 caractères)** et communiqué au candidat.
+
+## 18. V3 — Intelligence (admin)
+
+- `GET /api/admin/institutional-dashboard` : agrégats **anonymisés**
+  (volume d'usage, offre/demande de compétences, écarts avec ratio de
+  tension, régions, secteurs, candidatures par étape).
+- `GET /api/admin/skill-graph` : points d'entrée (compétences
+  structurantes). `GET /api/admin/skill-graph?skill=X` : nœud complet
+  (métiers, offres, vivier par niveau, compétences voisines, formations).
+- `GET/POST/PUT/DELETE /api/admin/public-content/institutional[/{id}]` et
+  `/api/admin/public-content/entrepreneurship[/{id}]` : gestion des
+  contenus Programmes publics et Entrepreneuriat.
 
 ## Codes d'erreur
 

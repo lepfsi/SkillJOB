@@ -1,0 +1,189 @@
+[
+  {
+    "title": "Technicien support informatique",
+    "family": "Informatique / IT",
+    "description": "Assistance aux utilisateurs, dépannage de postes et de périphériques, maintenance de premier niveau. Métier très demandé dans les PME, banques et administrations camerounaises.",
+    "required_skills": [
+      {"name": "Support informatique", "importance": "core"},
+      {"name": "Gestion des incidents", "importance": "core"},
+      {"name": "Windows Server", "importance": "core"},
+      {"name": "Relation client", "importance": "core"},
+      {"name": "Linux", "importance": "preferred"},
+      {"name": "Sauvegarde et restauration", "importance": "preferred"},
+      {"name": "TCP/IP", "importance": "preferred"}
+    ],
+    "education_types": ["CAP/BEP informatique", "BTS/DUT informatique", "Licence informatique", "Formation professionnelle"]
+  },
+  {
+    "title": "Administrateur réseaux et systèmes",
+    "family": "Informatique / IT",
+    "description": "Administration des serveurs, réseaux et pare-feu d'entreprise. Forte demande à Douala et Yaoundé (télécoms, banques, industries).",
+    "required_skills": [
+      {"name": "TCP/IP", "importance": "core"},
+      {"name": "Routage et commutation", "importance": "core"},
+      {"name": "Windows Server", "importance": "core"},
+      {"name": "Administration de pare-feu", "importance": "core"},
+      {"name": "Linux", "importance": "core"},
+      {"name": "Fortinet", "importance": "preferred"},
+      {"name": "Cisco", "importance": "preferred"},
+      {"name": "Microsoft Azure", "importance": "preferred"},
+      {"name": "Sauvegarde et restauration", "importance": "preferred"}
+    ],
+    "education_types": ["BTS/DUT Systèmes et réseaux", "Licence informatique", "Cycle ingénieur", "Certification Cisco/Fortinet"]
+  },
+  {
+    "title": "Analyste cybersécurité",
+    "family": "Informatique / IT",
+    "description": "Surveillance de la sécurité, analyse des incidents, durcissement des systèmes. Métier émergent sur le marché camerounais (banques, télécoms, administrations).",
+    "required_skills": [
+      {"name": "Cybersécurité", "importance": "core"},
+      {"name": "SOC / SIEM", "importance": "core"},
+      {"name": "Administration de pare-feu", "importance": "core"},
+      {"name": "Linux", "importance": "core"},
+      {"name": "Fortinet", "importance": "preferred"},
+      {"name": "TCP/IP", "importance": "preferred"},
+      {"name": "Gestion des incidents", "importance": "preferred"}
+    ],
+    "education_types": ["Licence/Master informatique", "Certification sécurité", "Formation professionnelle"]
+  },
+  {
+    "title": "Développeur web",
+    "family": "Informatique / IT",
+    "description": "Conception et maintenance de sites et applications web pour entreprises, startups et ONG.",
+    "required_skills": [
+      {"name": "HTML/CSS", "importance": "core"},
+      {"name": "JavaScript", "importance": "core"},
+      {"name": "Git", "importance": "core"},
+      {"name": "PHP", "importance": "preferred"},
+      {"name": "Python", "importance": "preferred"},
+      {"name": "SQL", "importance": "preferred"},
+      {"name": "DevOps", "importance": "preferred"}
+    ],
+    "education_types": ["Licence informatique", "BTS informatique", "Formation professionnelle", "Autoformation"]
+  },
+  {
+    "title": "Data analyst",
+    "family": "Data / Analyse",
+    "description": "Analyse de données, tableaux de bord et rapports d'aide à la décision pour banques, ONG et entreprises.",
+    "required_skills": [
+      {"name": "Analyse de données", "importance": "core"},
+      {"name": "Excel avancé", "importance": "core"},
+      {"name": "SQL", "importance": "core"},
+      {"name": "Statistiques", "importance": "core"},
+      {"name": "Power BI", "importance": "preferred"},
+      {"name": "Python", "importance": "preferred"},
+      {"name": "Tableau", "importance": "preferred"}
+    ],
+    "education_types": ["Licence/Master statistiques ou informatique", "Formation professionnelle data"]
+  },
+  {
+    "title": "Comptable",
+    "family": "Finance / Comptabilité",
+    "description": "Tenue des comptes, déclarations fiscales, paie. Présent dans toutes les entreprises et cabinets comptables.",
+    "required_skills": [
+      {"name": "Comptabilité générale", "importance": "core"},
+      {"name": "Comptabilité OHADA", "importance": "core"},
+      {"name": "Excel avancé", "importance": "core"},
+      {"name": "Sage", "importance": "preferred"},
+      {"name": "Fiscalité", "importance": "preferred"},
+      {"name": "Gestion budgétaire", "importance": "preferred"},
+      {"name": "Rigueur", "importance": "preferred"}
+    ],
+    "education_types": ["BTS/DUT comptabilité", "Licence gestion", "DCG/DSCG", "Formation professionnelle"]
+  },
+  {
+    "title": "Chargé de marketing digital",
+    "family": "Marketing / Communication",
+    "description": "Gestion de la présence en ligne, campagnes publicitaires et contenus pour PME, startups et ONG.",
+    "required_skills": [
+      {"name": "Marketing digital", "importance": "core"},
+      {"name": "Community management", "importance": "core"},
+      {"name": "Rédaction web", "importance": "core"},
+      {"name": "SEO", "importance": "preferred"},
+      {"name": "Publicité en ligne", "importance": "preferred"},
+      {"name": "Études de marché", "importance": "preferred"}
+    ],
+    "education_types": ["Licence marketing/communication", "Formation professionnelle", "Autoformation"]
+  },
+  {
+    "title": "Conducteur de travaux",
+    "family": "BTP / Construction",
+    "description": "Pilotage de chantiers de construction, coordination des équipes et lecture de plans. Secteur dynamique dans les grandes villes.",
+    "required_skills": [
+      {"name": "Conduite de chantier", "importance": "core"},
+      {"name": "Lecture de plans", "importance": "core"},
+      {"name": "Génie civil", "importance": "core"},
+      {"name": "Gestion de projet", "importance": "core"},
+      {"name": "AutoCAD", "importance": "preferred"},
+      {"name": "Rigueur", "importance": "preferred"}
+    ],
+    "education_types": ["BTS bâtiment", "Licence génie civil", "Cycle ingénieur"]
+  },
+  {
+    "title": "Responsable logistique",
+    "family": "Logistique / Transport",
+    "description": "Organisation des stocks, du transport et du transit, notamment autour du port de Douala.",
+    "required_skills": [
+      {"name": "Supply chain", "importance": "core"},
+      {"name": "Gestion des stocks", "importance": "core"},
+      {"name": "Transport et transit", "importance": "core"},
+      {"name": "Douane", "importance": "preferred"},
+      {"name": "Excel avancé", "importance": "preferred"},
+      {"name": "Gestion de projet", "importance": "preferred"}
+    ],
+    "education_types": ["BTS logistique", "Licence transport/logistique", "Formation professionnelle"]
+  },
+  {
+    "title": "Ingénieur agronome",
+    "family": "Agriculture / Agribusiness",
+    "description": "Pilotage de la production agricole et agro-industrielle (palmier, cacao, maraîchage), filière majeure au Cameroun.",
+    "required_skills": [
+      {"name": "Agronomie", "importance": "core"},
+      {"name": "Agribusiness", "importance": "core"},
+      {"name": "Irrigation", "importance": "preferred"},
+      {"name": "Transformation agroalimentaire", "importance": "preferred"},
+      {"name": "Gestion de projet", "importance": "preferred"},
+      {"name": "Excel avancé", "importance": "preferred"}
+    ],
+    "education_types": ["Ingénieur agronome", "Licence sciences agronomiques", "Formation professionnelle"]
+  },
+  {
+    "title": "Infirmier d'État",
+    "family": "Santé",
+    "description": "Soins infirmiers en hôpitaux, cliniques et programmes de santé communautaire.",
+    "required_skills": [
+      {"name": "Soins infirmiers", "importance": "core"},
+      {"name": "Premiers secours", "importance": "core"},
+      {"name": "Santé publique", "importance": "preferred"},
+      {"name": "Communication", "importance": "preferred"},
+      {"name": "Rigueur", "importance": "preferred"}
+    ],
+    "education_types": ["Concours écoles de santé", "Diplôme d'État infirmier", "Licence sciences de la santé"]
+  },
+  {
+    "title": "Formateur professionnel",
+    "family": "Éducation / Formation",
+    "description": "Conception et animation de formations professionnelles et techniques (bureautique, numérique, métiers).",
+    "required_skills": [
+      {"name": "Pédagogie", "importance": "core"},
+      {"name": "Conception de formations", "importance": "core"},
+      {"name": "Communication", "importance": "core"},
+      {"name": "Enseignement", "importance": "preferred"},
+      {"name": "Marketing digital", "importance": "preferred"}
+    ],
+    "education_types": ["Licence/Master", "Certification formatrice", "Formation professionnelle"]
+  },
+  {
+    "title": "Gestionnaire de paie",
+    "family": "Finance / Comptabilité",
+    "description": "Préparation des paies, gestion sociale et déclarations, dans les entreprises et cabinets d'externalisation RH.",
+    "required_skills": [
+      {"name": "Gestion de la paie", "importance": "core"},
+      {"name": "Comptabilité générale", "importance": "core"},
+      {"name": "Excel avancé", "importance": "core"},
+      {"name": "Sage", "importance": "preferred"},
+      {"name": "Fiscalité", "importance": "preferred"}
+    ],
+    "education_types": ["BTS comptabilité", "Licence gestion/RH", "Formation professionnelle"]
+  }
+]

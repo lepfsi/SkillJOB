@@ -1,0 +1,119 @@
+[
+  {
+    "category": "concours",
+    "subcategory": "fonction_publique",
+    "title": "Concours directs de la fonction publique",
+    "description": "Recrutements annuels dans les administrations de l'État : MINFOP, MINEDUB, MINTP, MINFI, ministères techniques. Sessions publiées par le MINFOP et les départements ministériels concernés.",
+    "eligibility": "Selon les grades : de l'inscription au concours d'entrée aux niveaux licence (grade I) jusqu'aux grades supérieurs ; âge et diplômes exigés par chaque concours.",
+    "url": "https://www.minfop.gov.cm",
+    "deadline": "Sessions annuelles, calendriers officiels"
+  },
+  {
+    "category": "concours",
+    "subcategory": "fonction_publique",
+    "title": "Examen professionnel de la fonction publique",
+    "description": "Examen professionnel pour l'avancement et l'intégration des contractuels de l'État.",
+    "eligibility": "Agents en poste remplissant les conditions de stage.",
+    "url": "https://www.minfop.gov.cm",
+    "deadline": "Sessions annuelles"
+  },
+  {
+    "category": "concours",
+    "subcategory": "grandes_ecoles",
+    "title": "Concours des grandes écoles (MINESUP) : Polytechnique, ENSET, FMI",
+    "description": "Concours d'entrée dans les grandes écoles relevant du MINESUP : École Polytechnique de Yaoundé, ENSET de Yaoundé, Douala, Kumba et Bandja, FMI (Institut des Mines), ENS (Écoles Normales Supérieures), IAIs, CRIT etc.",
+    "eligibility": "Baccalauréat (séries scientifiques et techniques selon les écoles) ; âge limite selon les concours.",
+    "url": "https://www.minesup.gov.cm",
+    "deadline": "Sessions annuelles"
+  },
+  {
+    "category": "concours",
+    "subcategory": "grandes_ecoles",
+    "title": "Concours ENSUP et instituts universitaires",
+    "description": "Concours des instituts universitaires et écoles normales supérieures (ENS Yaoundé, Bambili, Maroua) pour les filières de formation des enseignants.",
+    "eligibility": "Baccalauréat ou licence selon le cycle.",
+    "url": "https://www.minesup.gov.cm",
+    "deadline": "Sessions annuelles"
+  },
+  {
+    "category": "concours",
+    "subcategory": "sante",
+    "title": "Concours du personnel de la santé (MINSANTE)",
+    "description": "Concours de recrutement des personnels de santé : infirmiers, sages-femmes, techniciens de laboratoire, aides-soignants. Écoles des paramédicaux et universités de médecine.",
+    "eligibility": "Niveaux requis selon les filières : du BEPC (aides-soignants) au baccalauréat et au-delà (infirmiers diplômés d'État).",
+    "url": "https://www.minsante.cm",
+    "deadline": "Sessions annuelles et selon les écoles"
+  },
+  {
+    "category": "concours",
+    "subcategory": "forets_faune",
+    "title": "Concours Eaux, Forêts et Faune (MINEF)",
+    "description": "Recrutement des agents des eaux et forêts et de la faune : gardes-chasse, ingénieurs des eaux et forêts, techniciens. École de faune de Garoua et concours administratifs.",
+    "eligibility": "Selon les grades : du BEPC au niveau ingénieur.",
+    "url": "https://www.minef.gov.cm",
+    "deadline": "Sessions périodiques"
+  },
+  {
+    "category": "concours",
+    "subcategory": "armees",
+    "title": "Concours des forces de défense et de sécurité",
+    "description": "Recrutements dans les armées (ARM, Gendarmerie nationale, Police) et la sécurité : concours directs et semi-directs, écoles militaires (ESIG, EMAA, police).",
+    "eligibility": "Conditions physiques, morales et scolaires précisées par chaque concours ; âge limite strict.",
+    "url": "https://www.defense.gouv.cm",
+    "deadline": "Recrutements périodiques selon les armées"
+  },
+  {
+    "category": "fne",
+    "subcategory": "offres_emploi",
+    "title": "Offres d'emploi et stages du Fonds National de l'Emploi",
+    "description": "Le FNE publie régulièrement des offres d'emploi, stages et contrats préprofessionnels pour les jeunes camerounais, dans tous les secteurs. Inscription conseillée en agence FNE de votre région.",
+    "eligibility": "Jeunes demandeurs d'emploi inscrits auprès du FNE.",
+    "url": "https://www.emploi.cm",
+    "deadline": "Appels publiés en continu"
+  },
+  {
+    "category": "fne",
+    "subcategory": "offres_emploi",
+    "title": "Programme contrats préprofessionnels FNE",
+    "description": "Contrats de 6 à 24 mois associant travail en entreprise et formation complémentaire, pris en charge par le FNE.",
+    "eligibility": "Jeunes diplômés sans expérience professionnelle significative.",
+    "url": "https://www.emploi.cm",
+    "deadline": "Campagnes régulières"
+  },
+  {
+    "category": "minfop",
+    "subcategory": "bourses",
+    "title": "Bourses de formation professionnelle (MINFOP)",
+    "description": "Bourses couvrant la formation dans les centres professionnels publics : métiers du bâtiment, mécanique auto, hôtellerie-restauration, couture, agriculture, numérique.",
+    "eligibility": "Jeunes de 15 à 35 ans, sur dossier. Les niveaux d'études ne sont pas éliminatoires : recyclages et formations courtes sont éligibles.",
+    "url": "https://www.minfop.gov.cm",
+    "deadline": "Rentrée des sessions"
+  },
+  {
+    "category": "minfop",
+    "subcategory": "bourses",
+    "title": "Certification des compétences acquises sur le terrain (VAE)",
+    "description": "Le MINFOP permet de faire reconnaître officiellement les compétences acquises par l'expérience (plombiers, chauffeurs, maçons, gardiens, mécaniciens…) sans retourner à l'école.",
+    "eligibility": "Professionnels justifiant d'une expérience pratique documentée.",
+    "url": "https://www.minfop.gov.cm",
+    "deadline": "Toute l'année"
+  },
+  {
+    "category": "minpme",
+    "subcategory": "accompagnement_pme",
+    "title": "Accompagnement à la création de PME (MINPME)",
+    "description": "Appui-conseil, formalisation des entreprises et accès aux dispositifs de financement pour les très petites entreprises.",
+    "eligibility": "Porteurs de projets et jeunes entreprises.",
+    "url": "https://www.minpme.gov.cm",
+    "deadline": "Guichet permanent"
+  },
+  {
+    "category": "minpme",
+    "subcategory": "accompagnement_pme",
+    "title": "Programme économique spécial jeunes (PEA-Jeunes)",
+    "description": "Dispositif d'appui aux jeunes entrepreneurs : financement partiel, formation à la gestion et suivi des jeunes entreprises.",
+    "eligibility": "Jeunes porteurs de projets économiques viables.",
+    "url": "https://www.minpme.gov.cm",
+    "deadline": "Campagnes de sélection"
+  }
+]

@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+
+# Base locale — ne jamais committer
+backend/skilljob.db
+
+# Node
+node_modules/
+frontend/dist/
+
+# Divers
+.env
+.DS_Store
+*.log

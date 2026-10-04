@@ -36,12 +36,13 @@ def verify_password(password: str, stored: str) -> bool:
     return hmac.compare_digest(digest.hex(), expected)
 
 
-def create_token(user_id: int) -> str:
+def create_token(user_id: int, minutes: int | None = None) -> str:
     now = datetime.now(timezone.utc)
+    expires = timedelta(minutes=minutes) if minutes else timedelta(hours=config.TOKEN_EXPIRE_HOURS)
     payload = {
         "sub": str(user_id),
         "iat": now,
-        "exp": now + timedelta(hours=config.TOKEN_EXPIRE_HOURS),
+        "exp": now + expires,
     }
     return jwt.encode(payload, config.SECRET_KEY, algorithm=config.JWT_ALGORITHM)
 
@@ -74,6 +75,13 @@ def get_optional_user(
 ) -> Optional[models.User]:
     """Authentification optionnelle : None si pas de jeton valide (endpoints publics)."""
     return _resolve_user(db, creds)
+
+
+def require_admin(user: models.User = Depends(get_current_user)) -> models.User:
+    """Accès réservé au rôle ``admin`` (403 sinon)."""
+    if user.role != "admin":
+        raise HTTPException(status_code=403, detail="Accès réservé aux administrateurs")
+    return user
 
 
 def _resolve_user(

@@ -1,0 +1,670 @@
+{
+ "regions": [
+  {
+   "name": "Adamaoua",
+   "departments": [
+    {
+     "name": "Djérem",
+     "arrondissements": [
+      "Mbe",
+      "Ngaoundal",
+      "Tabati",
+      "Tibati"
+     ]
+    },
+    {
+     "name": "Faro-et-Déo",
+     "arrondissements": [
+      "Galim-Tignère",
+      "Samba-Bourti",
+      "Tignère"
+     ]
+    },
+    {
+     "name": "Mayo-Banyo",
+     "arrondissements": [
+      "Banyo",
+      "Doumba",
+      "Mayo-Banyo",
+      "Salo"
+     ]
+    },
+    {
+     "name": "MBéré",
+     "arrondissements": [
+      "Djohong",
+      "Meiganga",
+      "Ngaoui",
+      "Ngaoundéré rural"
+     ]
+    },
+    {
+     "name": "Vina",
+     "arrondissements": [
+      "Dang",
+      "Martap",
+      "Mbideng",
+      "Ngaoundéré I",
+      "Ngaoundéré II",
+      "Ngaoundéré III",
+      "Ngaoundéré IV",
+      "Ngbalamdjé"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Centre",
+   "departments": [
+    {
+     "name": "Haute-Sanaga",
+     "arrondissements": [
+      "Mbandjok",
+      "Mini",
+      "Ndikiniméki",
+      "Nkoteng"
+     ]
+    },
+    {
+     "name": "Lekié",
+     "arrondissements": [
+      "Batcham",
+      "Bokito",
+      "Obala",
+      "Okola",
+      "Sa'a"
+     ]
+    },
+    {
+     "name": "Mbam-et-Inoubou",
+     "arrondissements": [
+      "Bafia",
+      "Deuk",
+      "Kon-Yambetta",
+      "Makondo",
+      "Ngambè-Tikar",
+      "Ombessa"
+     ]
+    },
+    {
+     "name": "Mbam-et-Kim",
+     "arrondissements": [
+      "Mfamosing",
+      "Ngorin",
+      "Ntui",
+      "Yoko"
+     ]
+    },
+    {
+     "name": "Méfou-et-Afamba",
+     "arrondissements": [
+      "Bikok",
+      "Mfou",
+      "Ngoumou",
+      "Nkolafamba",
+      "Obon",
+      "Soa"
+     ]
+    },
+    {
+     "name": "Méfou-et-Akono",
+     "arrondissements": [
+      "Akono",
+      "Bikok",
+      "Mbankomo",
+      "Ngoumou"
+     ]
+    },
+    {
+     "name": "Mfoundi",
+     "arrondissements": [
+      "Yaoundé I",
+      "Yaoundé II",
+      "Yaoundé III",
+      "Yaoundé IV",
+      "Yaoundé V",
+      "Yaoundé VI",
+      "Yaoundé VII"
+     ]
+    },
+    {
+     "name": "Nyong-et-Kellé",
+     "arrondissements": [
+      "Biyem-Assi",
+      "Biyouha",
+      "Bogso",
+      "Dibang",
+      "Makak",
+      "Ngambè",
+      "Éséka"
+     ]
+    },
+    {
+     "name": "Nyong-et-Mfoumou",
+     "arrondissements": [
+      "Akonolinga",
+      "Meyomessala",
+      "Ndogbagna"
+     ]
+    },
+    {
+     "name": "Nyong-et-Soo",
+     "arrondissements": [
+      "Akoeman",
+      "Mbalmayo",
+      "Ngomedzap",
+      "Sangmélima"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Est",
+   "departments": [
+    {
+     "name": "Boumba-et-Ngoko",
+     "arrondissements": [
+      "Moloundou",
+      "Salapoumbe",
+      "Yokadouma"
+     ]
+    },
+    {
+     "name": "Haut-Nyong",
+     "arrondissements": [
+      "Abong-Mbang",
+      "Angossas",
+      "Doumé",
+      "Messamena",
+      "Mimbom",
+      "Nguelemendouka",
+      "Somalomo"
+     ]
+    },
+    {
+     "name": "Kadey",
+     "arrondissements": [
+      "Batouri",
+      "Bertoua",
+      "Kette",
+      "Mbang",
+      "Ngarbela",
+      "Nguélélé"
+     ]
+    },
+    {
+     "name": "Lom-et-Djérem",
+     "arrondissements": [
+      "Bertoua rural",
+      "Bélabo",
+      "Diang",
+      "Garoua-Boulaï",
+      "Mandjou"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Extrême-Nord",
+   "departments": [
+    {
+     "name": "Diamaré",
+     "arrondissements": [
+      "Bogo",
+      "Djarengol",
+      "Maroua I",
+      "Maroua II",
+      "Maroua III",
+      "Meri",
+      "Moutourwa",
+      "Ndoukoula",
+      "Pouss",
+      "Salak"
+     ]
+    },
+    {
+     "name": "Logone-et-Chari",
+     "arrondissements": [
+      "Goulfey",
+      "Hile-Alifa",
+      "Kousséri",
+      "Logone-Birni",
+      "Makary",
+      "Zina"
+     ]
+    },
+    {
+     "name": "Mayo-Danay",
+     "arrondissements": [
+      "Datcheka",
+      "Gobo",
+      "Guémé",
+      "Kalfou",
+      "Maga",
+      "Tchévi",
+      "Yagoua"
+     ]
+    },
+    {
+     "name": "Mayo-Kani",
+     "arrondissements": [
+      "Kaélé",
+      "Maza-Mboko",
+      "Mindenlé",
+      "Mindif",
+      "Moulvoudaye",
+      "Porhi",
+      "Toulféri"
+     ]
+    },
+    {
+     "name": "Mayo-Sava",
+     "arrondissements": [
+      "Goudéblang",
+      "Mora",
+      "Souédé",
+      "Tokombéré",
+      "Zamay"
+     ]
+    },
+    {
+     "name": "Mayo-Tsanaga",
+     "arrondissements": [
+      "Bourrha",
+      "Ghinghin",
+      "Koza",
+      "Mogodé",
+      "Mokolo",
+      "Mozogo"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Littoral",
+   "departments": [
+    {
+     "name": "Moungo",
+     "arrondissements": [
+      "Baré",
+      "Dibombari",
+      "Lombé",
+      "Loum",
+      "Manjo",
+      "Mbanga",
+      "Melong",
+      "Ndong",
+      "Nkongsamba",
+      "Nlonako"
+     ]
+    },
+    {
+     "name": "Nkam",
+     "arrondissements": [
+      "Ndobian",
+      "Ndogbobak",
+      "Tongea",
+      "Yabassi"
+     ]
+    },
+    {
+     "name": "Sanaga-Maritime",
+     "arrondissements": [
+      "Dibamba",
+      "Mouanko",
+      "Ndom",
+      "Ngambè",
+      "Pouma",
+      "Razel",
+      "Édéa I",
+      "Édéa II"
+     ]
+    },
+    {
+     "name": "Wouri",
+     "arrondissements": [
+      "Bwinga",
+      "Douala I",
+      "Douala II",
+      "Douala III",
+      "Douala IV",
+      "Douala V",
+      "Douala VI",
+      "Manjo"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Nord",
+   "departments": [
+    {
+     "name": "Bénoué",
+     "arrondissements": [
+      "Bilfoukou",
+      "Békaï",
+      "Garoua I",
+      "Garoua II",
+      "Garoua III",
+      "Lagdo",
+      "Malba",
+      "Mayo-Baldeo",
+      "Pitoa",
+      "Rey-Bouba"
+     ]
+    },
+    {
+     "name": "Faro",
+     "arrondissements": [
+      "Békaï",
+      "Kontcha",
+      "Tchéboa",
+      "Voko"
+     ]
+    },
+    {
+     "name": "Mayo-Louti",
+     "arrondissements": [
+      "Figuil",
+      "Guider",
+      "Lamorde",
+      "Mayo-Oulo",
+      "Quare"
+     ]
+    },
+    {
+     "name": "Mayo-Rey",
+     "arrondissements": [
+      "Madingring",
+      "Rey-Bouba",
+      "Tcholliré",
+      "WongONGO"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Nord-Ouest",
+   "departments": [
+    {
+     "name": "Bui",
+     "arrondissements": [
+      "Jakiri",
+      "Kumbo I",
+      "Kumbo II",
+      "Mbiame",
+      "Nkum",
+      "Noni",
+      "Tadu"
+     ]
+    },
+    {
+     "name": "Donga-Mantung",
+     "arrondissements": [
+      "Ako",
+      "Konchou",
+      "Misaje",
+      "Ndu",
+      "Nkambe",
+      "Nwa"
+     ]
+    },
+    {
+     "name": "Menchum",
+     "arrondissements": [
+      "Benakuma",
+      "Fungom",
+      "Furu Awa",
+      "Furu-Awa",
+      "Wum",
+      "Zhoa"
+     ]
+    },
+    {
+     "name": "Mezam",
+     "arrondissements": [
+      "Bafut",
+      "Bali",
+      "Bamenda I",
+      "Bamenda II",
+      "Bamenda III",
+      "Mbatu",
+      "Nkwen",
+      "Santa",
+      "Tubah"
+     ]
+    },
+    {
+     "name": "Momo",
+     "arrondissements": [
+      "Andek",
+      "Batibo",
+      "Mbengwi",
+      "Ngie",
+      "Njikwa",
+      "Widikum"
+     ]
+    },
+    {
+     "name": "Ngo-Ketunjia",
+     "arrondissements": [
+      "Babessi",
+      "Balikumbat",
+      "Ndop"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Ouest",
+   "departments": [
+    {
+     "name": "Bamboutos",
+     "arrondissements": [
+      "Babadjou",
+      "Bafoussam",
+      "Bamougoum",
+      "Batcham",
+      "Galim",
+      "Mbouda"
+     ]
+    },
+    {
+     "name": "Haut-Nkam",
+     "arrondissements": [
+      "Bafang",
+      "Bakou",
+      "Bandja",
+      "Bantoum",
+      "Kekem",
+      "Ngoumou",
+      "Nkong-Ni"
+     ]
+    },
+    {
+     "name": "Hauts-Plateaux",
+     "arrondissements": [
+      "Bafou",
+      "Baham",
+      "Bakou",
+      "Bamendjou",
+      "Batcheu"
+     ]
+    },
+    {
+     "name": "Koung-Khi",
+     "arrondissements": [
+      "Bamenduguoko",
+      "Bandrefam",
+      "Bangangté",
+      "Batoufam",
+      "Bayangam",
+      "Tougang"
+     ]
+    },
+    {
+     "name": "Menoua",
+     "arrondissements": [
+      "Dschang",
+      "Fogo-Fogo",
+      "Fomopea",
+      "Fongo-Tongo",
+      "Nkong-Ni",
+      "Santchou"
+     ]
+    },
+    {
+     "name": "Mifi",
+     "arrondissements": [
+      "Bafoussam I",
+      "Bafoussam II",
+      "Bafoussam III",
+      "Baleng",
+      "Kamkop"
+     ]
+    },
+    {
+     "name": "Ndé",
+     "arrondissements": [
+      "Bamena",
+      "Bangangté",
+      "Bazou",
+      "Ndiengdam",
+      "Tonga"
+     ]
+    },
+    {
+     "name": "Noun",
+     "arrondissements": [
+      "Bangourain",
+      "Foumban",
+      "Foumbot",
+      "Kouosing",
+      "Koutaba",
+      "Magba",
+      "Malantouen",
+      "Massagam",
+      "Njimom"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Sud",
+   "departments": [
+    {
+     "name": "Dja-et-Lobo",
+     "arrondissements": [
+      "Bengbis",
+      "Djoum",
+      "Meyomessi",
+      "Mintom",
+      "Oveng",
+      "Sangmélima",
+      "Zoétélé"
+     ]
+    },
+    {
+     "name": "Mvila",
+     "arrondissements": [
+      "Ambam",
+      "Bikok",
+      "Ebolowa I",
+      "Ebolowa II",
+      "Mvang",
+      "Mvangan",
+      "Ngovayang"
+     ]
+    },
+    {
+     "name": "Océan",
+     "arrondissements": [
+      "Akom II",
+      "Bipindi",
+      "Kribi I",
+      "Kribi II",
+      "Lolodorf",
+      "Mvengué"
+     ]
+    },
+    {
+     "name": "Vallée-du-Ntem",
+     "arrondissements": [
+      "Ambam",
+      "Kyé-ossi",
+      "Ma'an",
+      "Mintom",
+      "Olamze"
+     ]
+    }
+   ]
+  },
+  {
+   "name": "Sud-Ouest",
+   "departments": [
+    {
+     "name": "Fako",
+     "arrondissements": [
+      "Buea",
+      "Idenau",
+      "Limbé I",
+      "Limbé II",
+      "Limbé III",
+      "Muyuka",
+      "Tiko",
+      "West Coast"
+     ]
+    },
+    {
+     "name": "Koupé-Manengouba",
+     "arrondissements": [
+      " Tombel",
+      "Bangem",
+      "Mununé",
+      "Nguti",
+      "Tombel"
+     ]
+    },
+    {
+     "name": "Lebialem",
+     "arrondissements": [
+      "Alou",
+      "Fontem",
+      "Menji",
+      "Nwametaw"
+     ]
+    },
+    {
+     "name": "Manyu",
+     "arrondissements": [
+      "Eyumodjock",
+      "Mamfe",
+      "Tinto",
+      "Upper Bayang"
+     ]
+    },
+    {
+     "name": "Meme",
+     "arrondissements": [
+      "Kumba I",
+      "Kumba II",
+      "Kumba III",
+      "Mbonge",
+      "Nake Bome"
+     ]
+    },
+    {
+     "name": "Ndian",
+     "arrondissements": [
+      "Bakassi",
+      "Bomana",
+      "Ekondo-Titi",
+      "Isangele",
+      "Mundemba",
+      "Tokô"
+     ]
+    }
+   ]
+  }
+ ]
+}

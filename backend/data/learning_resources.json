@@ -1,0 +1,1130 @@
+{
+ "Linux": [
+  {
+   "title": "Linux Essentials",
+   "provider": "Cisco Networking Academy",
+   "type": "free",
+   "url": "https://www.netacad.com/courses/linux-essentials"
+  },
+  {
+   "title": "Administration Linux (cours complet)",
+   "provider": "Grafikart / YouTube",
+   "type": "free",
+   "url": "https://grafikart.fr/tutoriels/linux"
+  },
+  {
+   "title": "Projet : installer un serveur Linux personnel",
+   "provider": "Projet pratique",
+   "type": "project",
+   "url": null
+  },
+  {
+   "title": "Introduction to Linux (LFS101)",
+   "provider": "Linux Foundation / edX",
+   "type": "free",
+   "url": "https://www.edx.org/learn/linux-foundation"
+  },
+  {
+   "title": "Linux Administration",
+   "provider": "Coursera",
+   "type": "course",
+   "url": "https://www.coursera.org/search?query=linux+administration"
+  },
+  {
+   "title": "Devenir administrateur systèmes Linux",
+   "provider": "OpenClassrooms",
+   "type": "course",
+   "url": "https://openclassrooms.com/fr/courses"
+  }
+ ],
+ "Fortinet": [
+  {
+   "title": "Fortinet NSE 1 & 2 (gratuit)",
+   "provider": "Fortinet Training Institute",
+   "type": "free",
+   "url": "https://www.fortinet.com/training"
+  },
+  {
+   "title": "Certification NSE 4 Network Security Professional",
+   "provider": "Fortinet Training Institute",
+   "type": "certification",
+   "url": "https://www.fortinet.com/training/technical-training-courses"
+  },
+  {
+   "title": "Fortinet Certified Fundamentals (Cybersecurity)",
+   "provider": "Fortinet Training Institute",
+   "type": "certification",
+   "url": "https://www.fortinet.com/training-certification"
+  }
+ ],
+ "Microsoft Azure": [
+  {
+   "title": "Microsoft Azure Fundamentals AZ-900",
+   "provider": "Microsoft Learn",
+   "type": "free",
+   "url": "https://learn.microsoft.com/training/courses/az-900t00"
+  },
+  {
+   "title": "Certification AZ-900",
+   "provider": "Microsoft",
+   "type": "certification",
+   "url": "https://learn.microsoft.com/certifications/exams/az-900"
+  },
+  {
+   "title": "Azure Fundamentals (AZ-900)",
+   "provider": "Microsoft Learn",
+   "type": "free",
+   "url": "https://learn.microsoft.com/fr-fr/training/paths/azure-fundamentals/"
+  },
+  {
+   "title": "Microsoft Azure Administration",
+   "provider": "Coursera",
+   "type": "course",
+   "url": "https://www.coursera.org/search?query=microsoft+azure"
+  },
+  {
+   "title": "AWS Cloud Practitioner Essentials",
+   "provider": "AWS Skill Builder",
+   "type": "free",
+   "url": "https://skillbuilder.aws/"
+  }
+ ],
+ "Cisco": [
+  {
+   "title": "CCNA : Introduction to Networks",
+   "provider": "Cisco Networking Academy",
+   "type": "course",
+   "url": "https://www.netacad.com/courses/ccna-introduction-networks"
+  },
+  {
+   "title": "Certification CCNA",
+   "provider": "Cisco",
+   "type": "certification",
+   "url": "https://www.cisco.com/c/en/us/training-events/training-certifications/certifications/associate/ccna.html"
+  }
+ ],
+ "Cybersécurité": [
+  {
+   "title": "Introduction to Cybersecurity",
+   "provider": "Cisco Networking Academy",
+   "type": "free",
+   "url": "https://www.netacad.com/courses/introduction-to-cybersecurity"
+  },
+  {
+   "title": "Google Cybersecurity Professional Certificate",
+   "provider": "Coursera",
+   "type": "certification",
+   "url": "https://www.coursera.org/professional-certificates/google-cybersecurity"
+  },
+  {
+   "title": "Protégez vos données et votre vie privée en ligne",
+   "provider": "OpenClassrooms",
+   "type": "free",
+   "url": "https://openclassrooms.com/fr/courses"
+  },
+  {
+   "title": "IBM Cybersecurity Analyst",
+   "provider": "Coursera",
+   "type": "certification",
+   "url": "https://www.coursera.org/search?query=ibm+cybersecurity+analyst"
+  }
+ ],
+ "SOC / SIEM": [
+  {
+   "title": "SOC Level 1 Learning Path",
+   "provider": "TryHackMe",
+   "type": "course",
+   "url": "https://tryhackme.com/r/paths"
+  },
+  {
+   "title": "Projet : monter un mini-SOC avec Sysmon et un SIEM libre",
+   "provider": "Projet pratique",
+   "type": "project",
+   "url": null
+  },
+  {
+   "title": "Google Cybersecurity Certificate",
+   "provider": "Coursera",
+   "type": "certification",
+   "url": "https://www.coursera.org/search?query=google+cybersecurity"
+  },
+  {
+   "title": "Security Operations (SOC)",
+   "provider": "Microsoft Learn",
+   "type": "free",
+   "url": "https://learn.microsoft.com/fr-fr/training/"
+  }
+ ],
+ "Python": [
+  {
+   "title": "Python for Everybody",
+   "provider": "freeCodeCamp",
+   "type": "free",
+   "url": "https://www.freecodecamp.org/learn/scientific-computing-with-python/"
+  },
+  {
+   "title": "Python (cours complet)",
+   "provider": "OpenClassrooms",
+   "type": "course",
+   "url": "https://openclassrooms.com/fr/courses/7168871-apprenez-les-bases-du-langage-python"
+  },
+  {
+   "title": "Apprendre le Python : premiers pas",
+   "provider": "OpenClassrooms",
+   "type": "free",
+   "url": "https://openclassrooms.com/fr/courses"
+  },
+  {
+   "title": "Scientific Computing with Python",
+   "provider": "freeCodeCamp",
+   "type": "certification",
+   "url": "https://www.freecodecamp.org/learn/"
+  }
+ ],
+ "JavaScript": [
+  {
+   "title": "JavaScript Algorithms and Data Structures",
+   "provider": "freeCodeCamp",
+   "type": "free",
+   "url": "https://www.freecodecamp.org/learn/javascript-algorithms-and-data-structures/"
+  },
+  {
+   "title": "Apprenez à coder avec JavaScript",
+   "provider": "OpenClassrooms",
+   "type": "course",
+   "url": "https://openclassrooms.com/fr/courses/6175841-apprenez-a-programmer-avec-javascript"
+  },
+  {
+   "title": "Écrivez votre code JavaScript proprement",
+   "provider": "OpenClassrooms",
+   "type": "free",
+   "url": "https://openclassrooms.com/fr/courses"
+  },
+  {
+   "title": "JavaScript",
+   "provider": "edX",
+   "type": "course",
+   "url": "https://www.edx.org/learn/javascript"
+  }
+ ],
+ "HTML/CSS": [
+  {
+   "title": "Responsive Web Design",
+   "provider": "freeCodeCamp",
+   "type": "free",
+   "url": "https://www.freecodecamp.org/learn/2022/responsive-web-design/"
+  },
+  {
+   "title": "Projet : créer son portfolio en ligne",
+   "provider": "Projet pratique",
+   "type": "project",
+   "url": null
+  },
+  {
+   "title": "Créez votre site web avec HTML5 et CSS3",
+   "provider": "OpenClassrooms",
+   "type": "free",
+   "url": "https://openclassrooms.com/fr/courses"
+  }
+ ],
+ "SQL": [
+  {
+   "title": "SQL (requêtes et modélisation)",
+   "provider": "OpenClassrooms",
+   "type": "course",
+   "url": "https://openclassrooms.com/fr/courses/6971126-implementez-vos-bases-de-donnees-relationnelles-avec-sql"
+  },
+  {
+   "title": "SQLBolt (exercices interactifs)",
+   "provider": "SQLBolt",
+   "type": "free",
+   "url": "https://sqlbolt.com/"
+  },
+  {
+   "title": "Concevez votre base de données SQL",
+   "provider": "OpenClassrooms",
+   "type": "free",
+   "url": "https://openclassrooms.com/fr/courses"
+  },
+  {
+   "title": "Databases and SQL",
+   "provider": "edX",
+   "type": "course",
+   "url": "https://www.edx.org/learn/sql"
+  },
+  {
+   "title": "Introduction to SQL",
+   "provider": "Coursera",
+   "type": "course",
+   "url": "https://www.coursera.org/search?query=introduction+to+sql"
+  }
+ ],
+ "Git": [
+  {
+   "title": "Gérez du code avec Git et GitHub",
+   "provider": "OpenClassrooms",
+   "type": "course",
+   "url": "https://openclassrooms.com/fr/courses/7162856-gerez-du-code-avec-git-et-github"
+  },
+  {
+   "title": "Version Control with Git",
+   "provider": "Coursera (Atlassian)",
+   "type": "course",
+   "url": "https://www.coursera.org/search?query=version+control+with+git"
+  }
+ ],
+ "Docker": [
+  {
+   "title": "Docker Essentials",
+   "provider": "IBM / Coursera",
+   "type": "course",
+   "url": "https://www.coursera.org/learn/ibm-docker-kubernetes-openshift-crc"
+  },
+  {
+   "title": "Projet : conteneuriser une application web",
+   "provider": "Projet pratique",
+   "type": "project",
+   "url": null
+  },
+  {
+   "title": "Introduction to Containers",
+   "provider": "Coursera (IBM)",
+   "type": "course",
+   "url": "https://www.coursera.org/search?query=introduction+to+containers"
+  }
+ ],
+ "DevOps": [
+  {
+   "title": "Introduction à DevOps",
+   "provider": "Coursera",
+   "type": "course",
+   "url": "https://www.coursera.org/learn/intro-to-devops"
+  },
+  {
+   "title": "Projet : pipeline CI/CD avec GitHub Actions",
+   "provider": "Projet pratique",
+   "type": "project",
+   "url": null
+  },
+  {
+   "title": "Introduction to DevOps",
+   "provider": "edX (Linux Foundation)",
+   "type": "course",
+   "url": "https://www.edx.org/learn/devops"
+  },
+  {
+   "title": "DevOps, cloud et méthodes agiles",
+   "provider": "OpenClassrooms",
+   "type": "course",
+   "url": "https://openclassrooms.com/fr/courses"
+  }
+ ],
+ "Analyse de données": [
+  {
+   "title": "Data Analysis with Python",
+   "provider": "freeCodeCamp",
+   "type": "free",
+   "url": "https://www.freecodecamp.org/learn/data-analysis-with-python/"
+  },
+  {
+   "title": "Google Data Analytics Certificate",
+   "provider": "Coursera",
+   "type": "certification",
+   "url": "https://www.coursera.org/professional-certificates/google-data-analytics"
+  },
+  {
+   "title": "Analysez vos données avec Python",
+   "provider": "OpenClassrooms",
+   "type": "free",
+   "url": "https://openclassrooms.com/fr/courses"
+  }
+ ],
+ "Power BI": [
+  {
+   "title": "Power BI pour débutants",
+   "provider": "Microsoft Learn",
+   "type": "free",
+   "url": "https://learn.microsoft.com/training/powerplatform/power-bi"
+  },
+  {
+   "title": "Certification Microsoft PL-300",
+   "provider": "Microsoft",
+   "type": "certification",
+   "url": "https://learn.microsoft.com/certifications/data-analyst-associate/"
+  },
+  {
+   "title": "Power BI Data Analyst (PL-300)",
+   "provider": "Microsoft Learn",
+   "type": "free",
+   "url": "https://learn.microsoft.com/fr-fr/training/courses/pl-300t00/"
+  },
+  {
+   "title": "Microsoft Power BI Data Analyst",
+   "provider": "Coursera (Microsoft)",
+   "type": "certification",
+   "url": "https://www.coursera.org/search?query=power+bi+data+analyst"
+  }
+ ],
+ "Statistiques": [
+  {
+   "title": "Statistiques descriptives",
+   "provider": "OpenClassrooms",
+   "type": "course",
+   "url": "https://openclassrooms.com/fr/courses/4525296-maitrisez-les-bases-des-probabilites"
+  },
+  {
+   "title": "Statistics with Python",
+   "provider": "Coursera (Michigan)",
+   "type": "course",
+   "url": "https://www.coursera.org/search?query=statistics+with+python"
+  },
+  {
+   "title": "Introduction to Statistics",
+   "provider": "edX",
+   "type": "free",
+   "url": "https://www.edx.org/learn/statistics"
+  }
+ ],
+ "Excel avancé": [
+  {
+   "title": "Excel avancé : TCD et fonctions",
+   "provider": "OpenClassrooms",
+   "type": "course",
+   "url": "https://openclassrooms.com/fr/courses/7168336-maitrisez-les-fonctions-excel-les-plus-utilisees"
+  },
+  {
+   "title": "Tutoriels Excel gratuits",
+   "provider": "Excel-Pratique",
+   "type": "free",
+   "url": "https://www.excel-pratique.com/fr/formation-excel"
+  },
+  {
+   "title": "Maîtrisez les fondamentaux d'Excel",
+   "provider": "OpenClassrooms",
+   "type": "free",
+   "url": "https://openclassrooms.com/fr/courses"
+  },
+  {
+   "title": "Excel Skills for Business",
+   "provider": "Coursera (Macquarie University)",
+   "type": "certification",
+   "url": "https://www.coursera.org/search?query=excel+skills+for+business"
+  }
+ ],
+ "Comptabilité générale": [
+  {
+   "title": "Découvrez les bases de la comptabilité",
+   "provider": "OpenClassrooms",
+   "type": "course",
+   "url": "https://openclassrooms.com/fr/courses/3314321-decouvrez-les-bases-de-la-comptabilite"
+  },
+  {
+   "title": "Introduction to Financial Accounting",
+   "provider": "Coursera (Wharton)",
+   "type": "course",
+   "url": "https://www.coursera.org/search?query=financial+accounting"
+  },
+  {
+   "title": "Initiez-vous à la comptabilité générale",
+   "provider": "OpenClassrooms",
+   "type": "free",
+   "url": "https://openclassrooms.com/fr/courses"
+  },
+  {
+   "title": "Accounting",
+   "provider": "edX",
+   "type": "free",
+   "url": "https://www.edx.org/learn/accounting"
+  }
+ ],
+ "Comptabilité OHADA": [
+  {
+   "title": "Formation SYSCOHADA révisé",
+   "provider": "Cabinet partenaire local",
+   "type": "course",
+   "url": null
+  },
+  {
+   "title": "Textes OHADA (référence gratuite)",
+   "provider": "OHADA.org",
+   "type": "free",
+   "url": "https://www.ohada.org/"
+  },
+  {
+   "title": "Référentiel et normes comptables OHADA",
+   "provider": "OHADA (source officielle)",
+   "type": "free",
+   "url": "https://www.ohada.org"
+  }
+ ],
+ "Sage": [
+  {
+   "title": "Prise en main Sage 100 Comptabilité",
+   "provider": "Centre de formation agréé Sage",
+   "type": "course",
+   "url": "https://www.sage.com/fr-fr/"
+  }
+ ],
+ "Fiscalité": [
+  {
+   "title": "Initiation à la fiscalité camerounaise",
+   "provider": "Centre de formation locale (Douala)",
+   "type": "course",
+   "url": null
+  },
+  {
+   "title": "Business Foundations (finance et fiscalité)",
+   "provider": "Coursera (Wharton)",
+   "type": "course",
+   "url": "https://www.coursera.org/search?query=business+foundations"
+  }
+ ],
+ "Gestion de la paie": [
+  {
+   "title": "Élaborer les paies et déclarations sociales",
+   "provider": "Centre de formation locale",
+   "type": "course",
+   "url": null
+  },
+  {
+   "title": "Gérez la paie et les obligations sociales",
+   "provider": "OpenClassrooms",
+   "type": "course",
+   "url": "https://openclassrooms.com/fr/courses"
+  }
+ ],
+ "Marketing digital": [
+  {
+   "title": "Fondamentaux du marketing numérique",
+   "provider": "Google Ateliers Numériques",
+   "type": "free",
+   "url": "https://learndigital.withgoogle.com/"
+  },
+  {
+   "title": "Meta Certified Digital Marketing Associate",
+   "provider": "Meta / Coursera",
+   "type": "certification",
+   "url": "https://www.coursera.org/professional-certificates/facebook-marketing-science"
+  },
+  {
+   "title": "Fundamentals of Digital Marketing",
+   "provider": "Google Ateliers Numériques",
+   "type": "certification",
+   "url": "https://grow.google/intl/africa_fr/"
+  },
+  {
+   "title": "Menez une stratégie de marketing digital",
+   "provider": "OpenClassrooms",
+   "type": "free",
+   "url": "https://openclassrooms.com/fr/courses"
+  },
+  {
+   "title": "Digital Marketing Specialization",
+   "provider": "Coursera (Illinois)",
+   "type": "course",
+   "url": "https://www.coursera.org/search?query=digital+marketing"
+  }
+ ],
+ "SEO": [
+  {
+   "title": "SEO : référencement naturel",
+   "provider": "OpenClassrooms",
+   "type": "course",
+   "url": "https://openclassrooms.com/fr/courses/5924986-optimisez-votre-referencement-naturel-seo"
+  },
+  {
+   "title": "Projet : référencer un site local",
+   "provider": "Projet pratique",
+   "type": "project",
+   "url": null
+  },
+  {
+   "title": "Optimisez votre site web avec le SEO",
+   "provider": "OpenClassrooms",
+   "type": "free",
+   "url": "https://openclassrooms.com/fr/courses"
+  },
+  {
+   "title": "SEO Certification",
+   "provider": "HubSpot Academy",
+   "type": "certification",
+   "url": "https://academy.hubspot.com/"
+  }
+ ],
+ "Community management": [
+  {
+   "title": "Devenez community manager",
+   "provider": "OpenClassrooms",
+   "type": "course",
+   "url": "https://openclassrooms.com/fr/courses/3481201-devenez-community-manager"
+  },
+  {
+   "title": "Social Media Marketing",
+   "provider": "Coursera",
+   "type": "course",
+   "url": "https://www.coursera.org/search?query=social+media+marketing"
+  }
+ ],
+ "Publicité en ligne": [
+  {
+   "title": "Google Ads : les bases",
+   "provider": "Google Skillshop",
+   "type": "free",
+   "url": "https://skillshop.withgoogle.com/"
+  },
+  {
+   "title": "Google Ads Certification",
+   "provider": "Google Skillshop",
+   "type": "certification",
+   "url": "https://skillshop.withgoogle.com/"
+  },
+  {
+   "title": "Menez une campagne publicitaire en ligne",
+   "provider": "OpenClassrooms",
+   "type": "course",
+   "url": "https://openclassrooms.com/fr/courses"
+  }
+ ],
+ "Rédaction web": [
+  {
+   "title": "Adoptez la rédaction web",
+   "provider": "OpenClassrooms",
+   "type": "course",
+   "url": "https://openclassrooms.com/fr/courses/1312136-adoptez-la-redaction-web"
+  },
+  {
+   "title": "Améliorez l'impact de vos écrits professionnels",
+   "provider": "OpenClassrooms",
+   "type": "free",
+   "url": "https://openclassrooms.com/fr/courses"
+  }
+ ],
+ "AutoCAD": [
+  {
+   "title": "AutoCAD : initiation",
+   "provider": "Tutoriels GRATIS (vidéo)",
+   "type": "free",
+   "url": "https://www.youtube.com/results?search_query=apprendre+autocad+francais"
+  },
+  {
+   "title": "Projet : dessiner le plan d'une maison simple",
+   "provider": "Projet pratique",
+   "type": "project",
+   "url": null
+  },
+  {
+   "title": "Parcours de formation AutoCAD",
+   "provider": "Autodesk",
+   "type": "free",
+   "url": "https://www.autodesk.com/learning"
+  }
+ ],
+ "Conduite de chantier": [
+  {
+   "title": "Organisation et gestion de chantier",
+   "provider": "Centre professionnel du BTP",
+   "type": "course",
+   "url": null
+  }
+ ],
+ "Génie civil": [
+  {
+   "title": "Fondamentaux du génie civil",
+   "provider": "ENSAM / formation locale",
+   "type": "course",
+   "url": null
+  },
+  {
+   "title": "Construction Management Specialization",
+   "provider": "Coursera (Columbia)",
+   "type": "course",
+   "url": "https://www.coursera.org/search?query=construction+management"
+  }
+ ],
+ "Supply chain": [
+  {
+   "title": "Supply Chain Fundamentals",
+   "provider": "edX",
+   "type": "course",
+   "url": "https://www.edx.org/learn/supply-chain-management"
+  },
+  {
+   "title": "Supply Chain Management Specialization",
+   "provider": "Coursera (Rutgers)",
+   "type": "course",
+   "url": "https://www.coursera.org/search?query=supply+chain+management"
+  },
+  {
+   "title": "Supply Chain Management",
+   "provider": "edX",
+   "type": "course",
+   "url": "https://www.edx.org/learn/supply-chain-management"
+  }
+ ],
+ "Gestion des stocks": [
+  {
+   "title": "Gestion des stocks et inventaires",
+   "provider": "Centre de formation locale",
+   "type": "course",
+   "url": null
+  },
+  {
+   "title": "Projet : tableau de bord de stock sous Excel",
+   "provider": "Projet pratique",
+   "type": "project",
+   "url": null
+  },
+  {
+   "title": "Operations Management (stocks et flux)",
+   "provider": "Coursera (Wharton)",
+   "type": "course",
+   "url": "https://www.coursera.org/search?query=operations+management"
+  }
+ ],
+ "Transport et transit": [
+  {
+   "title": "Transit et logistique portuaire",
+   "provider": "Institut de formation logistique",
+   "type": "course",
+   "url": null
+  }
+ ],
+ "Douane": [
+  {
+   "title": "Formalités douanières au Cameroun",
+   "provider": "Formation professionnelle locale",
+   "type": "course",
+   "url": null
+  },
+  {
+   "title": "Cours e-learning commerce et facilitation",
+   "provider": "FAO elearning Academy",
+   "type": "free",
+   "url": "https://elearning.fao.org/"
+  }
+ ],
+ "Agronomie": [
+  {
+   "title": "Fondamentaux de l'agronomie tropicale",
+   "provider": "Université partenaire / cours en ligne",
+   "type": "course",
+   "url": "https://www.fun-mooc.fr/"
+  },
+  {
+   "title": "Projet : mini-ferme pilote ou jardin maraîcher",
+   "provider": "Projet pratique",
+   "type": "project",
+   "url": null
+  },
+  {
+   "title": "Cours e-learning agriculture durable",
+   "provider": "FAO elearning Academy",
+   "type": "free",
+   "url": "https://elearning.fao.org/"
+  }
+ ],
+ "Agribusiness": [
+  {
+   "title": "Entrepreneuriat agricole",
+   "provider": "MINJEC / programmes jeunes",
+   "type": "free",
+   "url": null
+  },
+  {
+   "title": "Cours e-learning agriculture et développement rural",
+   "provider": "FAO elearning Academy",
+   "type": "free",
+   "url": "https://elearning.fao.org/"
+  },
+  {
+   "title": "Agribusiness Management",
+   "provider": "edX",
+   "type": "course",
+   "url": "https://www.edx.org/learn/agribusiness"
+  }
+ ],
+ "Irrigation": [
+  {
+   "title": "Techniques d'irrigation et maîtrise de l'eau",
+   "provider": "Formation agricole locale",
+   "type": "course",
+   "url": null
+  }
+ ],
+ "Transformation agroalimentaire": [
+  {
+   "title": "Hygiène et transformation des produits agricoles",
+   "provider": "Centre de formation agroalimentaire",
+   "type": "course",
+   "url": null
+  }
+ ],
+ "Soins infirmiers": [
+  {
+   "title": "Formation en soins infirmiers",
+   "provider": "École de santé publique",
+   "type": "certification",
+   "url": null
+  },
+  {
+   "title": "Clinical Terminology for International Students",
+   "provider": "edX",
+   "type": "free",
+   "url": "https://www.edx.org/learn/clinical-terminology"
+  }
+ ],
+ "Premiers secours": [
+  {
+   "title": "Formation premiers secours (PSC1)",
+   "provider": "Croix-Rouge camerounaise",
+   "type": "certification",
+   "url": "https://www.croixrouge.cm/"
+  },
+  {
+   "title": "Projet : animer une session de sensibilisation",
+   "provider": "Projet pratique",
+   "type": "project",
+   "url": null
+  },
+  {
+   "title": "Cours OpenWHO premiers secours et santé",
+   "provider": "Organisation Mondiale de la Santé",
+   "type": "free",
+   "url": "https://openwho.org/"
+  }
+ ],
+ "Santé publique": [
+  {
+   "title": "Introduction à la santé publique",
+   "provider": "Coursera",
+   "type": "course",
+   "url": "https://www.coursera.org/learn/foundations-of-public-health-practice"
+  },
+  {
+   "title": "Cours OpenWHO de santé publique",
+   "provider": "Organisation Mondiale de la Santé",
+   "type": "free",
+   "url": "https://openwho.org/"
+  },
+  {
+   "title": "Epidemiology in Public Health",
+   "provider": "Coursera (Johns Hopkins)",
+   "type": "course",
+   "url": "https://www.coursera.org/search?query=epidemiology+public+health"
+  }
+ ],
+ "Pédagogie": [
+  {
+   "title": "Ingénierie pédagogique : les bases",
+   "provider": "Centre de formation de formateurs",
+   "type": "course",
+   "url": null
+  },
+  {
+   "title": "Learning How to Learn",
+   "provider": "Coursera",
+   "type": "course",
+   "url": "https://www.coursera.org/search?query=learning+how+to+learn"
+  },
+  {
+   "title": "Concevez une formation en blended learning",
+   "provider": "OpenClassrooms",
+   "type": "course",
+   "url": "https://openclassrooms.com/fr/courses"
+  }
+ ],
+ "Conception de formations": [
+  {
+   "title": "Concevoir une formation efficace",
+   "provider": "OpenClassrooms",
+   "type": "course",
+   "url": "https://openclassrooms.com/fr/courses/4167841-concevez-une-formation-en-ligne"
+  },
+  {
+   "title": "Instructional Design Foundations",
+   "provider": "Coursera (Illinois)",
+   "type": "course",
+   "url": "https://www.coursera.org/search?query=instructional+design"
+  }
+ ],
+ "TCP/IP": [
+  {
+   "title": "Les fondamentaux du réseau TCP/IP",
+   "provider": "Cisco Networking Academy",
+   "type": "free",
+   "url": "https://www.netacad.com/courses/networking-essentials"
+  },
+  {
+   "title": "Computer Communications (réseaux TCP/IP)",
+   "provider": "edX",
+   "type": "free",
+   "url": "https://www.edx.org/learn/computer-communications"
+  }
+ ],
+ "Routage et commutation": [
+  {
+   "title": "CCNA : Switching, Routing and Wireless Essentials",
+   "provider": "Cisco Networking Academy",
+   "type": "course",
+   "url": "https://www.netacad.com/courses/ccna-srwe"
+  },
+  {
+   "title": "Projet : lab VLAN + routage inter-VLAN sous Packet Tracer",
+   "provider": "Projet pratique",
+   "type": "project",
+   "url": null
+  },
+  {
+   "title": "Introduction aux réseaux TCP/IP",
+   "provider": "Cisco Networking Academy",
+   "type": "free",
+   "url": "https://www.netacad.com/"
+  },
+  {
+   "title": "Networking Basics",
+   "provider": "Coursera",
+   "type": "course",
+   "url": "https://www.coursera.org/search?query=networking+basics"
+  }
+ ],
+ "Windows Server": [
+  {
+   "title": "Administration Windows Server (cours en ligne)",
+   "provider": "Microsoft Learn",
+   "type": "free",
+   "url": "https://learn.microsoft.com/training/browse/?terms=windows%20server"
+  },
+  {
+   "title": "Parcours administrateur Windows Server",
+   "provider": "Microsoft Learn",
+   "type": "free",
+   "url": "https://learn.microsoft.com/fr-fr/training/browse/roles/administrator/"
+  }
+ ],
+ "Support informatique": [
+  {
+   "title": "Google IT Support Professional Certificate",
+   "provider": "Coursera",
+   "type": "certification",
+   "url": "https://www.coursera.org/professional-certificates/google-it-support"
+  },
+  {
+   "title": "Google IT Support Certificate",
+   "provider": "Coursera",
+   "type": "certification",
+   "url": "https://www.coursera.org/search?query=google+it+support"
+  },
+  {
+   "title": "Devenir technicien support informatique",
+   "provider": "OpenClassrooms",
+   "type": "course",
+   "url": "https://openclassrooms.com/fr/courses"
+  }
+ ],
+ "Sauvegarde et restauration": [
+  {
+   "title": "Stratégies de sauvegarde (Nakivo/Veeam)",
+   "provider": "Documentation éditeur + labo",
+   "type": "free",
+   "url": "https://www.veeam.com/"
+  }
+ ],
+ "Communication": [
+  {
+   "title": "Développez vos soft skills",
+   "provider": "OpenClassrooms",
+   "type": "course",
+   "url": "https://openclassrooms.com/fr/courses/4746796-developpez-vos-soft-skills"
+  },
+  {
+   "title": "Improving Communication Skills",
+   "provider": "Coursera (Wharton)",
+   "type": "course",
+   "url": "https://www.coursera.org/search?query=improving+communication+skills"
+  },
+  {
+   "title": "Communiquez avec efficacité",
+   "provider": "OpenClassrooms",
+   "type": "free",
+   "url": "https://openclassrooms.com/fr/courses"
+  }
+ ],
+ "Gestion de projet": [
+  {
+   "title": "Gérez un projet avec une équipe",
+   "provider": "OpenClassrooms",
+   "type": "course",
+   "url": "https://openclassrooms.com/fr/courses/7246401-gerez-un-projet-avec-une-equipe"
+  },
+  {
+   "title": "Projet : organiser un événement associatif ou communautaire",
+   "provider": "Projet pratique",
+   "type": "project",
+   "url": null
+  },
+  {
+   "title": "Google Project Management Certificate",
+   "provider": "Coursera",
+   "type": "certification",
+   "url": "https://www.coursera.org/search?query=google+project+management"
+  },
+  {
+   "title": "Gérez vos projets avec efficacité",
+   "provider": "OpenClassrooms",
+   "type": "free",
+   "url": "https://openclassrooms.com/fr/courses"
+  },
+  {
+   "title": "Project Management",
+   "provider": "edX",
+   "type": "course",
+   "url": "https://www.edx.org/learn/project-management"
+  }
+ ],
+ "Entrepreneuriat": [
+  {
+   "title": "Programme d'appui à l'entrepreneuriat des jeunes",
+   "provider": "MINJEC",
+   "type": "free",
+   "url": "https://www.minjec.cm/"
+  },
+  {
+   "title": "Projet : rédiger un business model canvas",
+   "provider": "Projet pratique",
+   "type": "project",
+   "url": null
+  },
+  {
+   "title": "De l'idée au business model",
+   "provider": "OpenClassrooms",
+   "type": "course",
+   "url": "https://openclassrooms.com/fr/courses"
+  },
+  {
+   "title": "Entrepreneurship Specialization",
+   "provider": "Coursera (Wharton)",
+   "type": "course",
+   "url": "https://www.coursera.org/search?query=entrepreneurship"
+  },
+  {
+   "title": "Ateliers numériques Google : réussir en ligne",
+   "provider": "Google",
+   "type": "free",
+   "url": "https://grow.google/intl/africa_fr/"
+  }
+ ],
+ "Plomberie": [
+  {
+   "title": "Formations courtes métiers du bâtiment (plomberie)",
+   "provider": "Centres professionnels MINFOP",
+   "type": "free",
+   "url": "https://www.minfop.gov.cm"
+  },
+  {
+   "title": "Projet : rénover une installation sanitaire complète",
+   "provider": "Projet pratique",
+   "type": "project",
+   "url": null
+  }
+ ],
+ "Conduite de véhicules": [
+  {
+   "title": "Permis de conduire et code (auto-écoles agréées)",
+   "provider": "Auto-écoles / MINTRANSPORT",
+   "type": "certification",
+   "url": null
+  },
+  {
+   "title": "Conduite économique et sécurité routière",
+   "provider": "Coursera / OpenClassrooms",
+   "type": "course",
+   "url": "https://www.coursera.org/search?query=conduite+s%C3%A9curit%C3%A9+routi%C3%A8re"
+  }
+ ],
+ "Manœuvre de chantier": [
+  {
+   "title": "Hygiène et sécurité sur chantier",
+   "provider": "Alison (gratuit)",
+   "type": "free",
+   "url": "https://alison.com/"
+  },
+  {
+   "title": "Certification compétences de terrain (VAE)",
+   "provider": "MINFOP",
+   "type": "certification",
+   "url": "https://www.minfop.gov.cm"
+  }
+ ],
+ "Gardiennage et sécurité": [
+  {
+   "title": "Formations gardiens de sécurité et vigiles",
+   "provider": "Centres agréés / MINFOP",
+   "type": "certification",
+   "url": "https://www.minfop.gov.cm"
+  },
+  {
+   "title": "Secourisme au travail",
+   "provider": "OpenWHO",
+   "type": "free",
+   "url": "https://openwho.org/"
+  }
+ ],
+ "Mécanique automobile": [
+  {
+   "title": "Apprendre la mécanique auto (bases)",
+   "provider": "YouTube FR",
+   "type": "free",
+   "url": "https://www.youtube.com/results?search_query=apprendre+mecanique+automobile"
+  },
+  {
+   "title": "Certification maintenance véhicule",
+   "provider": "Centres professionnels MINFOP",
+   "type": "certification",
+   "url": "https://www.minfop.gov.cm"
+  }
+ ],
+ "Couture et confection": [
+  {
+   "title": "Apprendre la couture : bases et patrons",
+   "provider": "YouTube FR / ateliers locaux",
+   "type": "free",
+   "url": "https://www.youtube.com/results?search_query=apprendre+la+couture"
+  },
+  {
+   "title": "Confection et entrepreneuriat textile",
+   "provider": "Centres professionnels MINFOP",
+   "type": "course",
+   "url": "https://www.minfop.gov.cm"
+  }
+ ],
+ "Cuisine et restauration": [
+  {
+   "title": "Hôtellerie-restauration : formations professionnelles",
+   "provider": "Centres MINFOP",
+   "type": "course",
+   "url": "https://www.minfop.gov.cm"
+  },
+  {
+   "title": "Hygiène alimentaire HACCP (gratuit)",
+   "provider": "Alison",
+   "type": "free",
+   "url": "https://alison.com/"
+  }
+ ],
+ "Coiffure et esthétique": [
+  {
+   "title": "Coiffure et esthétique : centres de formation professionnelle",
+   "provider": "MINFOP",
+   "type": "course",
+   "url": "https://www.minfop.gov.cm"
+  }
+ ],
+ "Agriculture pratique": [
+  {
+   "title": "Cours e-learning agriculture durable",
+   "provider": "FAO elearning Academy",
+   "type": "free",
+   "url": "https://elearning.fao.org/"
+  }
+ ]
+}

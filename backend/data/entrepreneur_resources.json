@@ -1,0 +1,66 @@
+[
+  {
+    "kind": "concours",
+    "title": "Concours nationaux de l'entrepreneuriat des jeunes",
+    "description": "Compétitions périodiques récompensant les meilleurs projets de jeunes entrepreneurs : dotation, visibilité et mentorat pour les lauréats. Surveillez les appels à projets des incubateurs et des ministères.",
+    "organizer": "MINJEC / incubateurs nationaux",
+    "url": "https://www.minjec.gov.cm",
+    "sectors": ["Tous secteurs"]
+  },
+  {
+    "kind": "concours",
+    "title": "Appels à projets agricoles et agribusiness",
+    "description": "Appels à projets réguliers pour les jeunes des filières agriculture, élevage et transformation : financements de démarrage et appui technique.",
+    "organizer": "Programmes publics et partenaires (FIDA, PARM)",
+    "url": null,
+    "sectors": ["Agriculture / Agribusiness"]
+  },
+  {
+    "kind": "accompagnement",
+    "title": "Incubateurs et espaces de co-working",
+    "description": "Structures d'accompagnement des startups : ActivSpaces (Douala, Bafoussam, Buea), Jokkolabs et espaces universitaires accompagnent de la idée au lancement : mentorat, mise en réseau, hébergement.",
+    "organizer": "ActivSpaces et partenaires",
+    "url": "https://activspaces.com",
+    "sectors": ["Numérique", "Innovation"]
+  },
+  {
+    "kind": "accompagnement",
+    "title": "Appui-conseil du MINPME",
+    "description": "Accompagnement gratuit à la formalisation, au business plan et à la gestion des très petites entreprises.",
+    "organizer": "MINPME",
+    "url": "https://www.minpme.gov.cm",
+    "sectors": ["Tous secteurs"]
+  },
+  {
+    "kind": "financement",
+    "title": "Programme économique spécial jeunes (PEA-Jeunes)",
+    "description": "Financement partiel de jeunes entreprises avec formation à la gestion et suivi renforcé.",
+    "organizer": "MINPME / MINJEC",
+    "url": "https://www.minpme.gov.cm",
+    "sectors": ["Tous secteurs"]
+  },
+  {
+    "kind": "financement",
+    "title": "Microfinance et fonds de garantie",
+    "description": "Microcrédits et fonds de garantie facilitant l'accès au crédit bancaire pour les jeunes promoteurs sans garanties importantes.",
+    "organizer": "Réseau des institutions de microfinance (IMF)",
+    "url": null,
+    "sectors": ["Tous secteurs"]
+  },
+  {
+    "kind": "formation",
+    "title": "Formations entrepreneuriales gratuites",
+    "description": "Modules gratuits sur la comptabilité simplifiée, l'étude de marché, la tarification et le marketing digital, adaptés aux réalités locales.",
+    "organizer": "Google Ateliers Numériques, OpenClassrooms",
+    "url": "https://grow.google/intl/africa_fr/",
+    "sectors": ["Tous secteurs"]
+  },
+  {
+    "kind": "formation",
+    "title": "Coopératives et GIC",
+    "description": "Se regrouper en GIC ou coopérative pour mutualiser le matériel, accéder aux marchés et renforcer la bancabilité du projet.",
+    "organizer": "Ministères techniques et ONG partenaires",
+    "url": null,
+    "sectors": ["Agriculture / Agribusiness", "Commerce / Vente"]
+  }
+]

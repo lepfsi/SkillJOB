@@ -1,0 +1,872 @@
+[
+ {
+  "name": "Python",
+  "category": "IT",
+  "aliases": [
+   "python3",
+   "langage python"
+  ]
+ },
+ {
+  "name": "JavaScript",
+  "category": "IT",
+  "aliases": [
+   "js",
+   "node.js",
+   "nodejs",
+   "ecmascript"
+  ]
+ },
+ {
+  "name": "Java",
+  "category": "IT",
+  "aliases": [
+   "java ee",
+   "j2ee"
+  ]
+ },
+ {
+  "name": "PHP",
+  "category": "IT",
+  "aliases": [
+   "laravel",
+   "symfony"
+  ]
+ },
+ {
+  "name": "SQL",
+  "category": "IT",
+  "aliases": [
+   "mysql",
+   "postgresql",
+   "sql server",
+   "bases de données sql",
+   "base de données"
+  ]
+ },
+ {
+  "name": "HTML/CSS",
+  "category": "IT",
+  "aliases": [
+   "html",
+   "css",
+   "html5",
+   "css3",
+   "intégration web"
+  ]
+ },
+ {
+  "name": "Git",
+  "category": "IT",
+  "aliases": [
+   "git",
+   "github",
+   "gitlab",
+   "gestion de versions"
+  ]
+ },
+ {
+  "name": "Linux",
+  "category": "IT",
+  "aliases": [
+   "ubuntu",
+   "debian",
+   "centos",
+   "administration linux"
+  ]
+ },
+ {
+  "name": "Windows Server",
+  "category": "IT",
+  "aliases": [
+   "windows server",
+   "administration windows",
+   "active directory"
+  ]
+ },
+ {
+  "name": "TCP/IP",
+  "category": "IT",
+  "aliases": [
+   "tcp/ip",
+   "protocole tcp ip"
+  ]
+ },
+ {
+  "name": "Routage et commutation",
+  "category": "IT",
+  "aliases": [
+   "routing",
+   "switching",
+   "routage",
+   "commutation",
+   "vlan",
+   "routeurs",
+   "réseau local"
+  ]
+ },
+ {
+  "name": "Administration de pare-feu",
+  "category": "IT",
+  "aliases": [
+   "firewall",
+   "firewalls",
+   "pare-feu",
+   "pare feu",
+   "firewall administration",
+   "pfsense"
+  ]
+ },
+ {
+  "name": "Fortinet",
+  "category": "IT",
+  "aliases": [
+   "fortigate",
+   "fortinet nse"
+  ]
+ },
+ {
+  "name": "Cisco",
+  "category": "IT",
+  "aliases": [
+   "ccna",
+   "ccnp",
+   "cisco networking",
+   "routeurs cisco"
+  ]
+ },
+ {
+  "name": "Cybersécurité",
+  "category": "IT",
+  "aliases": [
+   "cybersecurity",
+   "sécurité informatique",
+   "cybersecurite",
+   "sécurité des systèmes d'information"
+  ]
+ },
+ {
+  "name": "SOC / SIEM",
+  "category": "IT",
+  "aliases": [
+   "soc",
+   "siem",
+   "supervision sécurité",
+   "centre opérationnel de sécurité"
+  ]
+ },
+ {
+  "name": "Microsoft Azure",
+  "category": "IT",
+  "aliases": [
+   "azure",
+   "cloud azure",
+   "microsoft cloud"
+  ]
+ },
+ {
+  "name": "AWS",
+  "category": "IT",
+  "aliases": [
+   "amazon web services",
+   "cloud aws",
+   "amazon aws"
+  ]
+ },
+ {
+  "name": "Cloud computing",
+  "category": "IT",
+  "aliases": [
+   "cloud",
+   "informatique en nuage",
+   "cloud public"
+  ]
+ },
+ {
+  "name": "Docker",
+  "category": "IT",
+  "aliases": [
+   "conteneurs",
+   "conteneurisation",
+   "kubernetes"
+  ]
+ },
+ {
+  "name": "DevOps",
+  "category": "IT",
+  "aliases": [
+   "ci/cd",
+   "intégration continue",
+   "devsecops"
+  ]
+ },
+ {
+  "name": "Support informatique",
+  "category": "IT",
+  "aliases": [
+   "it support",
+   "helpdesk",
+   "support utilisateurs",
+   "assistance utilisateurs",
+   "assistance informatique",
+   "dépannage informatique"
+  ]
+ },
+ {
+  "name": "Administration systèmes",
+  "category": "IT",
+  "aliases": [
+   "administration système",
+   "system administration",
+   "sysadmin",
+   "administrateur systèmes"
+  ]
+ },
+ {
+  "name": "Sauvegarde et restauration",
+  "category": "IT",
+  "aliases": [
+   "backup",
+   "backup & recovery",
+   "sauvegarde",
+   "nakivo",
+   "veeam"
+  ]
+ },
+ {
+  "name": "Gestion des incidents",
+  "category": "IT",
+  "aliases": [
+   "incident management",
+   "gestion d'incidents",
+   "tickets d'incident"
+  ]
+ },
+ {
+  "name": "Réseaux informatiques",
+  "category": "IT",
+  "aliases": [
+   "networking",
+   "réseau informatique",
+   "network",
+   "systèmes et réseaux",
+   "systemes et reseaux"
+  ]
+ },
+ {
+  "name": "Analyse de données",
+  "category": "Data",
+  "aliases": [
+   "data analysis",
+   "analyse des données",
+   "data analyst",
+   "analyser les données"
+  ]
+ },
+ {
+  "name": "Machine Learning",
+  "category": "Data",
+  "aliases": [
+   "ml",
+   "apprentissage automatique",
+   "deep learning"
+  ]
+ },
+ {
+  "name": "Power BI",
+  "category": "Data",
+  "aliases": [
+   "powerbi",
+   "microsoft power bi"
+  ]
+ },
+ {
+  "name": "Tableau",
+  "category": "Data",
+  "aliases": [
+   "tableau software",
+   "tableau public"
+  ]
+ },
+ {
+  "name": "Statistiques",
+  "category": "Data",
+  "aliases": [
+   "statistique",
+   "analyse statistique",
+   "statistiques descriptives"
+  ]
+ },
+ {
+  "name": "Excel avancé",
+  "category": "Data",
+  "aliases": [
+   "advanced excel",
+   "excel",
+   "tcd",
+   "tableaux croisés dynamiques",
+   "bureautique"
+  ]
+ },
+ {
+  "name": "Gestion de projet",
+  "category": "Business",
+  "aliases": [
+   "project management",
+   "gestion de projets",
+   "chef de projet",
+   "conduite de projet"
+  ]
+ },
+ {
+  "name": "Comptabilité générale",
+  "category": "Comptabilité",
+  "aliases": [
+   "accounting",
+   "comptabilité",
+   "tenue des comptes"
+  ]
+ },
+ {
+  "name": "Comptabilité OHADA",
+  "category": "Comptabilité",
+  "aliases": [
+   "ohada",
+   "syscohada",
+   "syscoa"
+  ]
+ },
+ {
+  "name": "Fiscalité",
+  "category": "Comptabilité",
+  "aliases": [
+   "tax",
+   "impôts",
+   "déclarations fiscales",
+   "fiscalite"
+  ]
+ },
+ {
+  "name": "Analyse financière",
+  "category": "Comptabilité",
+  "aliases": [
+   "financial analysis",
+   "analyse financiere",
+   "analyse des états financiers"
+  ]
+ },
+ {
+  "name": "Gestion budgétaire",
+  "category": "Comptabilité",
+  "aliases": [
+   "budgeting",
+   "gestion de budget",
+   "élaboration budgétaire"
+  ]
+ },
+ {
+  "name": "Audit",
+  "category": "Comptabilité",
+  "aliases": [
+   "audit interne",
+   "audit financier",
+   "contrôle de gestion"
+  ]
+ },
+ {
+  "name": "Gestion de la paie",
+  "category": "Comptabilité",
+  "aliases": [
+   "payroll",
+   "paie",
+   "bulletins de paie"
+  ]
+ },
+ {
+  "name": "Sage",
+  "category": "Comptabilité",
+  "aliases": [
+   "sage saari",
+   "sage comptabilité",
+   "sage 100"
+  ]
+ },
+ {
+  "name": "Marketing digital",
+  "category": "Marketing",
+  "aliases": [
+   "digital marketing",
+   "marketing numérique",
+   "webmarketing"
+  ]
+ },
+ {
+  "name": "SEO",
+  "category": "Marketing",
+  "aliases": [
+   "référencement naturel",
+   "referencement",
+   "référencement web"
+  ]
+ },
+ {
+  "name": "Community management",
+  "category": "Marketing",
+  "aliases": [
+   "gestion des réseaux sociaux",
+   "social media",
+   "community manager",
+   "réseaux sociaux"
+  ]
+ },
+ {
+  "name": "Publicité en ligne",
+  "category": "Marketing",
+  "aliases": [
+   "online advertising",
+   "facebook ads",
+   "google ads",
+   "publicité digitale"
+  ]
+ },
+ {
+  "name": "Rédaction web",
+  "category": "Marketing",
+  "aliases": [
+   "content writing",
+   "rédaction de contenu",
+   "copywriting",
+   "rédaction"
+  ]
+ },
+ {
+  "name": "Études de marché",
+  "category": "Marketing",
+  "aliases": [
+   "market research",
+   "étude de marché",
+   "études marketing"
+  ]
+ },
+ {
+  "name": "AutoCAD",
+  "category": "BTP",
+  "aliases": [
+   "autocad",
+   "dao",
+   "dessin assisté par ordinateur"
+  ]
+ },
+ {
+  "name": "Génie civil",
+  "category": "BTP",
+  "aliases": [
+   "civil engineering",
+   "travaux publics",
+   "génie civil bâtiment"
+  ]
+ },
+ {
+  "name": "Conduite de chantier",
+  "category": "BTP",
+  "aliases": [
+   "conduite de travaux",
+   "gestion de chantier",
+   "suivi de chantier"
+  ]
+ },
+ {
+  "name": "Lecture de plans",
+  "category": "BTP",
+  "aliases": [
+   "plan reading",
+   "lecture de plan",
+   "plans d'exécution"
+  ]
+ },
+ {
+  "name": "Électricité bâtiment",
+  "category": "BTP",
+  "aliases": [
+   "electricite batiment",
+   "installation électrique",
+   "électricien bâtiment"
+  ]
+ },
+ {
+  "name": "Maçonnerie",
+  "category": "BTP",
+  "aliases": [
+   "masonry",
+   "gros œuvre",
+   "maçon"
+  ]
+ },
+ {
+  "name": "Agronomie",
+  "category": "Agriculture",
+  "aliases": [
+   "agronomy",
+   "sciences agronomiques",
+   "production végétale"
+  ]
+ },
+ {
+  "name": "Élevage",
+  "category": "Agriculture",
+  "aliases": [
+   "livestock",
+   "production animale",
+   "aviculture",
+   "pisciculture"
+  ]
+ },
+ {
+  "name": "Agribusiness",
+  "category": "Agriculture",
+  "aliases": [
+   "agro-business",
+   "entrepreneuriat agricole",
+   "agrobusiness"
+  ]
+ },
+ {
+  "name": "Transformation agroalimentaire",
+  "category": "Agriculture",
+  "aliases": [
+   "food processing",
+   "transformation des produits agricoles",
+   "agroalimentaire"
+  ]
+ },
+ {
+  "name": "Irrigation",
+  "category": "Agriculture",
+  "aliases": [
+   "irrigation agricole",
+   "maîtrise de l'eau"
+  ]
+ },
+ {
+  "name": "Soins infirmiers",
+  "category": "Santé",
+  "aliases": [
+   "nursing",
+   "soins",
+   "infirmier"
+  ]
+ },
+ {
+  "name": "Santé publique",
+  "category": "Santé",
+  "aliases": [
+   "public health",
+   "santé communautaire",
+   "sante publique"
+  ]
+ },
+ {
+  "name": "Gestion de pharmacie",
+  "category": "Santé",
+  "aliases": [
+   "pharmacy management",
+   "gestion officine",
+   "pharmacien"
+  ]
+ },
+ {
+  "name": "Biologie médicale",
+  "category": "Santé",
+  "aliases": [
+   "medical laboratory",
+   "analyses médicales",
+   "laboratoire médical",
+   "technicien de laboratoire"
+  ]
+ },
+ {
+  "name": "Premiers secours",
+  "category": "Santé",
+  "aliases": [
+   "first aid",
+   "soins d'urgence",
+   "secourisme"
+  ]
+ },
+ {
+  "name": "Pédagogie",
+  "category": "Éducation",
+  "aliases": [
+   "pedagogy",
+   "didactique",
+   "ingénierie pédagogique"
+  ]
+ },
+ {
+  "name": "Conception de formations",
+  "category": "Éducation",
+  "aliases": [
+   "instructional design",
+   "conception pédagogique",
+   "création de cours"
+  ]
+ },
+ {
+  "name": "Enseignement",
+  "category": "Éducation",
+  "aliases": [
+   "teaching",
+   "enseigner",
+   "professeur"
+  ]
+ },
+ {
+  "name": "Supply chain",
+  "category": "Logistique",
+  "aliases": [
+   "chaîne logistique",
+   "chaine logistique",
+   "logistique"
+  ]
+ },
+ {
+  "name": "Gestion des stocks",
+  "category": "Logistique",
+  "aliases": [
+   "inventory management",
+   "stock management",
+   "gestion de stock",
+   "magasinage"
+  ]
+ },
+ {
+  "name": "Transport et transit",
+  "category": "Logistique",
+  "aliases": [
+   "transport",
+   "transit",
+   "freight forwarding",
+   "commissionnaire de transport"
+  ]
+ },
+ {
+  "name": "Douane",
+  "category": "Logistique",
+  "aliases": [
+   "customs",
+   "dédouanement",
+   "formalités douanières"
+  ]
+ },
+ {
+  "name": "Communication",
+  "category": "Soft skills",
+  "aliases": [
+   "communication orale",
+   "communication écrite"
+  ]
+ },
+ {
+  "name": "Travail en équipe",
+  "category": "Soft skills",
+  "aliases": [
+   "teamwork",
+   "esprit d'équipe",
+   "collaboration"
+  ]
+ },
+ {
+  "name": "Rigueur",
+  "category": "Soft skills",
+  "aliases": [
+   "rigoureux",
+   "sens de la rigueur"
+  ]
+ },
+ {
+  "name": "Autonomie",
+  "category": "Soft skills",
+  "aliases": [
+   "autonome",
+   "indépendance"
+  ]
+ },
+ {
+  "name": "Gestion du temps",
+  "category": "Soft skills",
+  "aliases": [
+   "time management",
+   "organisation du temps"
+  ]
+ },
+ {
+  "name": "Résolution de problèmes",
+  "category": "Soft skills",
+  "aliases": [
+   "problem solving",
+   "esprit d'analyse",
+   "dépannage"
+  ]
+ },
+ {
+  "name": "Leadership",
+  "category": "Soft skills",
+  "aliases": [
+   "management d'équipe",
+   "encadrement"
+  ]
+ },
+ {
+  "name": "Relation client",
+  "category": "Soft skills",
+  "aliases": [
+   "customer service",
+   "sens du service client",
+   "service client",
+   "accueil client"
+  ]
+ },
+ {
+  "name": "Adaptabilité",
+  "category": "Soft skills",
+  "aliases": [
+   "capacité d'adaptation",
+   "flexibilité"
+  ]
+ },
+ {
+  "name": "Sens de l'organisation",
+  "category": "Soft skills",
+  "aliases": [
+   "organisation",
+   "méthode et organisation"
+  ]
+ },
+ {
+  "name": "Entrepreneuriat",
+  "category": "Business",
+  "aliases": [
+   "entrepreneurship",
+   "création d'entreprise",
+   "entrepreneuriat"
+  ]
+ },
+ {
+  "name": "Plomberie",
+  "category": "BTP",
+  "aliases": [
+   "plomberie",
+   "installation sanitaire",
+   "fuites d'eau",
+   "robinetterie",
+   "plumber",
+   "sanitaire"
+  ]
+ },
+ {
+  "name": "Conduite de véhicules",
+  "category": "Transport",
+  "aliases": [
+   "conduite",
+   "chauffeur",
+   "permis b",
+   "permis c",
+   "permis d",
+   "conducteur",
+   "driving",
+   "livraison"
+  ]
+ },
+ {
+  "name": "Manœuvre de chantier",
+  "category": "BTP",
+  "aliases": [
+   "manœuvre",
+   "manoeuvre",
+   "aide-maçon",
+   "manoeuvre chantier",
+   "ouvrier de chantier",
+   "manutention",
+   "labourer"
+  ]
+ },
+ {
+  "name": "Gardiennage et sécurité",
+  "category": "Sécurité / Gardiennage",
+  "aliases": [
+   "gardien",
+   "vigile",
+   "gardiennage",
+   "surveillance",
+   "sécurité des biens",
+   "agent de sécurité",
+   "security guard",
+   "gardien de nuit"
+  ]
+ },
+ {
+  "name": "Mécanique automobile",
+  "category": "Industrie",
+  "aliases": [
+   "mécanicien",
+   "mecanique auto",
+   "mécanique auto",
+   "réparation véhicule",
+   "vidange",
+   "diagnostic auto",
+   "auto mechanic"
+  ]
+ },
+ {
+  "name": "Couture et confection",
+  "category": "Artisanat",
+  "aliases": [
+   "couture",
+   "couturière",
+   "confection",
+   "tailleur",
+   "shoeshine",
+   "sewing",
+   "retouche"
+  ]
+ },
+ {
+  "name": "Cuisine et restauration",
+  "category": "Hôtellerie / Restauration",
+  "aliases": [
+   "cuisine",
+   "cuisinier",
+   "restauration",
+   "traiteur",
+   "pâtisserie",
+   "cook",
+   "braise",
+   "grill"
+  ]
+ },
+ {
+  "name": "Coiffure et esthétique",
+  "category": "Artisanat",
+  "aliases": [
+   "coiffure",
+   "coiffeur",
+   "barbier",
+   "tissage",
+   "esthétique",
+   "braiding",
+   "hairdresser"
+  ]
+ },
+ {
+  "name": "Agriculture pratique",
+  "category": "Agriculture",
+  "aliases": [
+   "cultures maraîchères",
+   "élevage",
+   "semis",
+   "récolte",
+   "plantation",
+   "market gardening"
+  ]
+ }
+]
