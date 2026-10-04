@@ -346,6 +346,22 @@ def _rules_reply(message: str, ctx: _Context) -> dict[str, Any]:
                 seen.append(s)
         return seen[:4]
 
+    # ---- Résultats de recherche web (collectés dans answer())
+    if ctx.web_results:
+        lines = ["Voilà ce que j'ai trouvé sur le web :"]
+        for r in ctx.web_results[:3]:
+            line = f"- [{r['title']}]({r['url']})"
+            if r.get("snippet"):
+                line += f" — {r['snippet'][:120]}"
+            lines.append(line)
+        links = [{"label": r["title"][:40], "href": r["url"]}
+                 for r in ctx.web_results[:3]]
+        return {
+            "reply": "\n".join(lines),
+            "suggestions": dynamic_suggestions(ctx),
+            "links": links,
+        }
+
     # ---- Analyse d'une page web (accès internet BORNÉ : une seule page,
     # fournie par l'utilisateur — jamais de collecte de masse)
     url_match = re.search(r"https?://[^\s]+", message)
@@ -362,14 +378,19 @@ def _rules_reply(message: str, ctx: _Context) -> dict[str, Any]:
                 ],
             }
 
-    # ---- Salutations
-    if re.search(r"\b(bonjour|salut|hello|bonsoir|mbote)\b", norm):
-        reply = "Bonjour ! Je suis votre assistant OrientSkill AI. "
-        reply += no_profile_reply() or (
-            "Je connais votre profil : demandez-moi vos métiers compatibles, "
-            "vos compétences manquantes, les offres récentes ou la préparation "
-            "de votre CV."
-        )
+    # ---- Salutations : une vraie conversation commence simplement
+    if re.search(r"\b(bonjour|salut|hello|bonsoir|mbote|coucou|yo)\b", norm):
+        if ctx.profile is None:
+            reply = (
+                "Salut ! Bienvenue. Le plus simple pour commencer : importe "
+                "ton CV ou réponds au questionnaire, et je m'occupe du reste."
+            )
+        else:
+            reply = (
+                "Salut, ça va ? Qu'est-ce qu'on fait aujourd'hui : chercher "
+                "des offres, progresser sur une compétence, ou préparer un "
+                "entretien ?"
+            )
         links = [{"label": "Mon profil", "href": "/profile"}]
         return {"reply": reply, "suggestions": dynamic_suggestions(ctx), "links": links}
 

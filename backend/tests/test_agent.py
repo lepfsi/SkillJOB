@@ -122,3 +122,87 @@ def test_assistant_url_fetch_failure_is_honest(client, monkeypatch):
     body = _ask(client, _demo_headers(client),
                 "analyse https://site-injoignable.cm")
     assert "pas pu ouvrir" in body["reply"]
+
+
+# ------------------------------------- Agent conversationnel + web
+
+def test_greeting_is_casual_not_a_report(client):
+    """« Bonjour » → une vraie salutation, pas un état des lieux."""
+    body = _ask(client, _demo_headers(client), "Bonjour")
+    reply = body["reply"]
+    assert reply.startswith("Salut")
+    assert len(reply) < 250           # conversation, pas un dump
+    assert "correspondance" not in reply.lower()
+    assert "écarts" not in reply.lower()
+
+
+def test_detect_search_queries():
+    from app.services.assistant import _detect_search
+
+    q = _detect_search("Cherche-moi des informations sur les bourses MINFOP")
+    assert q and "bourses" in q and "MINFOP" in q
+    assert _detect_search("Quelles sont mes compétences ?") is None
+
+
+def test_web_search_parsing(client, monkeypatch):
+    """Fouille web : DuckDuckGo HTML → titres + vraies URL dépliées."""
+    from app.services import assistant as svc
+
+    HTML = """
+    <a class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fwww.minfop.gov.cm%2Fbourses&rut=abc">Bourses MINFOP 2026</a>
+    <a class="result__snippet">Conditions d'éligibilité et calendrier officiel.</a>
+    """
+    class FakeResponse:
+        def __enter__(self):
+            return self
+        def __exit__(self, *a):
+            return False
+        def read(self, limit=None):
+            return HTML.encode("utf-8")
+
+    monkeypatch.setattr(svc.urllib.request, "urlopen", lambda req, timeout=10: FakeResponse())
+    results = svc._web_search("bourses minfop")
+    assert len(results) == 1
+    assert results[0]["url"] == "https://www.minfop.gov.cm/bourses"
+    assert results[0]["title"] == "Bourses MINFOP 2026"
+    assert "éligibilité" in results[0]["snippet"]
+
+
+def test_search_request_returns_web_results(client, monkeypatch):
+    """« Cherche-moi X » : l'agent fouille le web et répond AVEC liens,
+    même sans LLM configuré (moteur de règles)."""
+    from app.services import assistant as svc
+
+    HTML = """
+    <a class="result__a" href="https://www.emploi.cm/offre/123">Offre technicien Douala</a>
+    <a class="result__snippet">Poste de technicien support à Douala, CDI.</a>
+    """
+    class FakeResponse:
+        def __enter__(self):
+            return self
+        def __exit__(self, *a):
+            return False
+        def read(self, limit=None):
+            return HTML.encode("utf-8")
+
+    monkeypatch.setattr(svc.urllib.request, "urlopen", lambda req, timeout=10: FakeResponse())
+    body = _ask(client, _demo_headers(client),
+                "Cherche-moi des offres de technicien support sur internet")
+    assert "trouvé sur le web" in body["reply"]
+    assert "](https://" in body["reply"]
+    assert any(l["href"].startswith("https://") for l in body["links"])
+
+
+def test_web_search_failure_is_honest(client, monkeypatch):
+    from app.services import assistant as svc
+
+    def boom(req, timeout=10):
+        raise OSError("no network")
+
+    monkeypatch.setattr(svc.urllib.request, "urlopen", boom)
+    body = _ask(client, _demo_headers(client),
+                "cherche les actualités sur l'emploi au Cameroun")
+    # Pas de résultats web → réponse normale du moteur (pas de plantage,
+    # pas de résultats inventés)
+    assert "reply" in body
+    assert "trouvé sur le web" not in body["reply"]

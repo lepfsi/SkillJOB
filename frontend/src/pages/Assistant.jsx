@@ -11,7 +11,7 @@ export default function Assistant() {
     {
       role: "assistant",
       content:
-        "Bonjour ! Je suis votre assistant OrientSkill. Je connais votre profil, vos métiers recommandés, vos écarts et les formations disponibles avec leurs liens. Posez vos questions, ou collez l'URL d'une offre pour que je l'analyse.",
+        "Salut ! Je suis Ori, ton assistant personnel. Je connais ton profil, tes métiers recommandés et tes écarts, et je peux fouiller le web pour toi. Pose ta question, ou colle l'URL d'une offre à analyser.",
     },
   ]);
   const [links, setLinks] = useState([]);
