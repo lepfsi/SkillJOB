@@ -65,6 +65,14 @@ export default function Login() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
 
+  // Recours : quand le compte est suspendu, la personne peut contester
+  // sans perdre ses données (le compte reste intact).
+  const [banned, setBanned] = useState(false);
+  const [appeal, setAppeal] = useState("");
+  const [appealBusy, setAppealBusy] = useState(false);
+  const [appealDone, setAppealDone] = useState("");
+  const [appealError, setAppealError] = useState("");
+
   // Étape 2 (MFA)
   const [mfaToken, setMfaToken] = useState(null);
   const [code, setCode] = useState("");
@@ -94,9 +102,37 @@ export default function Login() {
         finishLogin(res.token, res.user);
       }
     } catch (err) {
-      setError(err.detail || "Connexion impossible");
+      const detail = err.detail || "Connexion impossible";
+      setError(detail);
+      if (/suspendu/i.test(detail)) setBanned(true);
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function submitAppeal() {
+    setAppealBusy(true);
+    setAppealError("");
+    setAppealDone("");
+    try {
+      const row = await api("/auth/appeal", {
+        method: "POST",
+        body: {
+          email: email.trim(),
+          password,
+          message: appeal.trim(),
+        },
+      });
+      setAppealDone(
+        row.status === "pending"
+          ? "Votre recours est enregistré. L'administration l'examine ; votre compte et vos données restent intacts en attendant."
+          : "Votre recours a été pris en compte."
+      );
+      setAppeal("");
+    } catch (err) {
+      setAppealError(err.detail || "Envoi impossible");
+    } finally {
+      setAppealBusy(false);
     }
   }
 
@@ -188,6 +224,43 @@ export default function Login() {
         <button className="btn btn-primary btn-block" disabled={busy}>
           {busy ? "Connexion…" : "Se connecter"}
         </button>
+
+        {banned && (
+          <section className="auth-appeal">
+            <h2>Contester la suspension</h2>
+            {appealDone ? (
+              <div className="alert alert-success">{appealDone}</div>
+            ) : (
+              <>
+                <p>
+                  Votre compte et vos données restent enregistrés. Expliquez
+                  votre situation : l'administration examinera votre recours.
+                </p>
+                {appealError && <div className="alert alert-error">{appealError}</div>}
+                <label className="field">
+                  <span>Votre explication (20 caractères minimum)</span>
+                  <textarea
+                    rows={4}
+                    minLength={20}
+                    maxLength={2000}
+                    value={appeal}
+                    onChange={(e) => setAppeal(e.target.value)}
+                    placeholder="Expliquez ce qui s'est passé et pourquoi votre compte devrait être réactivé."
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="btn btn-outline btn-block"
+                  disabled={appealBusy || appeal.trim().length < 20}
+                  onClick={submitAppeal}
+                >
+                  {appealBusy ? "Envoi…" : "Envoyer mon recours"}
+                </button>
+              </>
+            )}
+          </section>
+        )}
+
         <p className="auth-alt">
           Pas encore de compte ? <Link to="/register">Créer un compte</Link>
         </p>

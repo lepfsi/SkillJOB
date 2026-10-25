@@ -1,9 +1,9 @@
-# OrientSkill AI — Feuille de route V2 / V3
+# OrientSkill AI: Feuille de route V2 / V3
 
 **Document de formalisation des évolutions post-MVP.**
 Référentiel maître : `projet_ia_minjec_formalisation-1.md` (ci-après « le cahier des charges »).
 État de départ : MVP V1 livré (profil intelligent, extraction CV/questionnaire, matching
-explicable, base d'offres locale, CV ciblé/lettre, assistant, dashboard — §55).
+explicable, base d'offres locale, CV ciblé/lettre, assistant, dashboard, §55).
 Le présent document formalise les modules réservés à l'évolution (§55-57, §76).
 Document de conception uniquement : aucun engagement d'implémentation.
 
@@ -11,8 +11,8 @@ Document de conception uniquement : aucun engagement d'implémentation.
 
 | Phase | Périmètre | Modules | Principes directeurs |
 |---|---|---|---|
-| V2 — Élargissement opérationnel | Collecte automatisée multi-source ; connecteur LinkedIn autorisé ; espace recruteur complet ; canaux WhatsApp/Telegram (notifications puis conversation) | 1, 2, 3, 4 | Connecter la plateforme au marché réel ; ouvrir le côté demande ; accès 100 % via mécanismes autorisés (§67) |
-| V3 — Infrastructure d'intelligence | Skill Graph national ; vérification de credentials ; données institutionnelles à grande échelle | 5, 6, 7 | Devenir une infrastructure d'intelligence emploi-compétences (§72) ; ancrage national ; gouvernance renforcée |
+| V2: Élargissement opérationnel | Collecte automatisée multi-source ; connecteur LinkedIn autorisé ; espace recruteur complet ; canaux WhatsApp/Telegram (notifications puis conversation) | 1, 2, 3, 4 | Connecter la plateforme au marché réel ; ouvrir le côté demande ; accès 100 % via mécanismes autorisés (§67) |
+| V3: Infrastructure d'intelligence | Skill Graph national ; vérification de credentials ; données institutionnelles à grande échelle | 5, 6, 7 | Devenir une infrastructure d'intelligence emploi-compétences (§72) ; ancrage national ; gouvernance renforcée |
 
 Règle de dépendance : aucun module V3 ne démarre tant que les critères d'acceptation des
 modules 2 et 3 ne sont pas atteints (le Skill Graph et le dashboard institutionnel consomment
@@ -35,7 +35,7 @@ leurs données).
 | R11 | Dérive « boîte noire » des recommandations V3 | 5, 6, 7 | Élevée | Moyenne | Explicabilité obligatoire (§47) ; audits ; contrôle humain préservé |
 | R12 | Coût infrastructure (graphe, ingestion, LLM) | 2, 5, 7 | Moyenne | Moyenne | Priorisation modulaire ; ingestion incrémentale ; modèles locaux si qualité suffisante |
 
-## 3. Module 1 — Connecteur LinkedIn
+## 3. Module 1: Connecteur LinkedIn
 
 ### 3.1 Objectif fonctionnel
 Collecter des offres et suivre des pages carrière via les mécanismes autorisés uniquement :
@@ -48,7 +48,7 @@ Connecteur derrière l'interface générique du module 2 (contrat `JobSourceConn
 activable par configuration. OAuth 2.0, jetons chiffrés, rotation automatique.
 Worker d'ingestion asynchrone respectant les rate limits documentées, backoff
 exponentiel. Mode dégradé : connecteur inactif = service fonctionnel sur les autres
-sources — critère d'acceptation.
+sources: critère d'acceptation.
 
 ### 3.3 Modèle de données / API indicatifs
 ```text
@@ -67,15 +67,15 @@ Approbation d'une application LinkedIn (et contrat partner si applicable) ; avis
 ### 3.5 Conformité / risques
 ToS LinkedIn strictement respectées : aucune collecte hors API, pas de revente,
 attribution systématique. Aucune donnée de profil LinkedIn d'individus collectée.
-Risques R1, R2 — mitigés par le mode dégradé et l'audit de code.
+Risques R1, R2, mitigés par le mode dégradé et l'audit de code.
 
-### 3.6 Phase et critères d'acceptation — V2
+### 3.6 Phase et critères d'acceptation: V2
 1. 100 % des offres LinkedIn en base ont source, URL, dates publication/collecte.
 2. Taux d'erreur d'ingestion < 2 % sur 30 jours ; zéro violation de rate limit non gérée.
 3. Désactivation testée sans interruption de service.
 4. Zéro requête réseau vers LinkedIn hors API officielle (audit de code).
 
-## 4. Module 2 — Collecte multi-source automatisée
+## 4. Module 2: Collecte multi-source automatisée
 
 ### 4.1 Objectif fonctionnel
 Industrialiser la collecte : APIs partenaires, sites carrière, flux RSS, partenaires
@@ -113,14 +113,14 @@ déduplication. Le pipeline doit fonctionner sans LinkedIn (aucune dépendance m
 Chaque source documentée : base légale, CGU, fréquence autorisée. Offres frauduleuses :
 scoring + signalement + retrait manuel. Risques R1, R5.
 
-### 4.6 Phase et critères d'acceptation — V2
+### 4.6 Phase et critères d'acceptation: V2
 1. Au moins 3 sources distinctes en production dont 1 API et 1 flux RSS.
 2. Doublons résiduels < 5 % (audit manuel de 100 offres).
 3. 100 % des offres avec source, URL originale, 3 dates (§51).
 4. Offres non vérifiées depuis 30 jours marquées automatiquement « à vérifier ».
 5. Base active >= 200 offres camerounaises de moins de 60 jours.
 
-## 5. Module 3 — Espace recruteur complet
+## 5. Module 3: Espace recruteur complet
 
 ### 5.1 Objectif fonctionnel
 Ouvrir le côté demande (§20-21, §60) : compte entreprise, publication d'offres,
@@ -158,17 +158,17 @@ process léger de vérification des entreprises (anti-offres frauduleuses).
 ### 5.5 Conformité / risques
 Visibilité des profils strictement subordonnée au consentement du jeune (§22, §46) ;
 défaut = invisible ; éléments masquables. Recherche excluant par conception tout critère
-sensible (âge, genre, origine, établissement — §48). Contact par messagerie interne
+sensible (âge, genre, origine, établissement, §48). Contact par messagerie interne
 uniquement ; jamais de revente de coordonnées. Risques R3, R6.
 
-### 5.6 Phase et critères d'acceptation — V2
+### 5.6 Phase et critères d'acceptation: V2
 1. 20 entreprises vérifiées dont 10 ayant publié 1 offre structurée par l'IA.
 2. Talent search : précision@10 >= 70 % sur un jeu d'évaluation (jugement humain).
 3. 100 % des matchs recruteur affichent covered/partial/missing + explication (§12).
 4. 100 % des profils contactables avec consentement de visibilité actif et horodaté.
 5. Zéro critère sensible utilisable comme filtre (test automatisé).
 
-## 6. Module 4 — Canaux WhatsApp / Telegram
+## 6. Module 4: Canaux WhatsApp / Telegram
 
 ### 6.1 Objectif fonctionnel
 Atteindre les jeunes sur leurs canaux quotidiens (§25, §25bis) via API officielles
@@ -205,7 +205,7 @@ message, effectif immédiat. Numéros : minimisation, chiffrement au repos, jama
 WhatsApp ToS : respect des templates et de la fenêtre de service 24 h ; aucun message
 promotionnel hors template. Risques R3, R4, R7, R8.
 
-### 6.6 Phase et critères d'acceptation — V2 (notifications), V2.5 (conversationnel)
+### 6.6 Phase et critères d'acceptation: V2 (notifications), V2.5 (conversationnel)
 1. 100 % des messages avec consentement actif horodaté au moment de l'envoi.
 2. Opt-out traité en < 5 minutes ; zéro message après opt-out (test automatisé).
 3. Taux de livraison >= 95 % sur 30 jours.
@@ -213,7 +213,7 @@ promotionnel hors template. Risques R3, R4, R7, R8.
 5. Conversationnel : 80 % des conversations sans collecte de donnée personnelle
    nouvelle sans re-validation web.
 
-## 7. Module 5 — Skill Graph national
+## 7. Module 5: Skill Graph national
 
 ### 7.1 Objectif fonctionnel
 Construire le graphe métiers ↔ compétences ↔ formations ↔ offres ↔ talents (§40-41).
@@ -255,7 +255,7 @@ exposés. Chaque trajectoire recommandée liste les compétences de chaque pas d
 Tendances toujours fondées sur des données identifiables et datées (§5bis.2). Risques
 R11, R12.
 
-### 7.6 Phase et critères d'acceptation — V3
+### 7.6 Phase et critères d'acceptation: V3
 1. Graphe couvrant >= 150 compétences, >= 40 métiers, >= 500 offres historisées.
 2. Pertinence des trajectoires >= 70 % sur 30 cas évalués par des experts métier.
 3. Liste mensuelle de compétences émergentes avec volume d'appui daté, jamais
@@ -263,7 +263,7 @@ R11, R12.
 4. 100 % des réponses de trajectoire incluent compétences manquantes + formations.
 5. Temps de réponse des endpoints graphe < 2 s au 95e percentile.
 
-## 8. Module 6 — Vérification de credentials
+## 8. Module 6: Vérification de credentials
 
 ### 8.1 Objectif fonctionnel
 Passer d'un CV déclaratif à un profil fondé sur les preuves (§23-24) : vérification des
@@ -304,17 +304,17 @@ strict nécessaire (minimisation). Justificatifs sensibles : chiffrement au repo
 journalisé, durée de conservation définie. Le badge valorise sans jamais stigmatiser
 l'absence de preuve. Risques R3, R4, R9.
 
-### 8.6 Phase et critères d'acceptation — V3
+### 8.6 Phase et critères d'acceptation: V3
 1. Au moins 2 conventions de vérification opérationnelles.
 2. 100 % des vérifications avec consentement horodaté, spécifique, révocable.
 3. 100 % des badges vérifiables publiquement par signature ; révocation testée.
 4. Non-régression : le matching fonctionne pour les profils sans credential vérifié.
 5. Délai moyen consentement → résultat < 10 jours ouvrés, documenté.
 
-## 9. Module 7 — Données institutionnelles à grande échelle
+## 9. Module 7: Données institutionnelles à grande échelle
 
 ### 9.1 Objectif fonctionnel
-Fournir aux institutions (MINJEC, structures d'accompagnement — §39, §61) un dashboard
+Fournir aux institutions (MINJEC, structures d'accompagnement, §39, §61) un dashboard
 agrégé et anonymisé : jeunes inscrits/actifs, compétences disponibles vs demandées,
 écarts par secteur et région, tendances du marché, formations suivies, candidatures et
 placements lorsque mesurables. Répondre à la question de niveau 4 (§72) : « où se
@@ -352,7 +352,7 @@ uniquement pour l'analyse d'équité (§48), sous accès restreint et journalis�
 d'opposition des jeunes aux exports institutionnels, sans perte de fonctionnalités.
 Risques R3, R4, R10.
 
-### 9.6 Phase et critères d'acceptation — V3
+### 9.6 Phase et critères d'acceptation: V3
 1. 100 % des cellules publiées respectent k-anonymat >= 10 (test automatisé).
 2. 100 % des consultations journalisées (utilisateur, filtre, horodatage).
 3. Au moins 6 familles d'indicateurs exposées : inscrits/actifs, compétences
@@ -364,7 +364,7 @@ Risques R3, R4, R10.
 
 1. **Construire le socle d'ingestion et le dossier LinkedIn (modules 2 puis 1).**
    Implémenter le pipeline ingestion/normalisation/déduplication avec 3 sources non-LinkedIn
-   (2 sites carrière camerounais + 1 flux RSS) — le connecteur LinkedIn s'y branchera tel
+   (2 sites carrière camerounais + 1 flux RSS): le connecteur LinkedIn s'y branchera tel
    quel. En parallèle, déposer la demande d'application LinkedIn et obtenir l'avis juridique
    écrit sur le périmètre de collecte autorisé.
 2. **Prototyper l'espace recruteur sur un pilote restreint (module 3).** Recruter 5

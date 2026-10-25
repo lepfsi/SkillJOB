@@ -1,11 +1,11 @@
-# AGENTS.md — Guide pour les agents IA travaillant sur ce dépôt
+# AGENTS.md : guide pour les agents IA travaillant sur ce dépôt
 
 ## Projet
 
-OrientSkill AI — plateforme d'intelligence professionnelle pour jeunes
+OrientSkill AI : plateforme d'intelligence professionnelle pour jeunes
 Camerounais (MVP concours MINJEC). Référentiel fonctionnel maître :
 `projet_ia_minjec_formalisation-1.md` à la racine. Contrat d'API strict :
-`docs/API_CONTRACT.md` — **ne jamais s'en écarter** sans mettre à jour les
+`docs/API_CONTRACT.md` : **ne jamais s'en écarter** sans mettre à jour les
 deux côtés (backend `schemas.py` + frontend).
 
 ## Stack
@@ -19,17 +19,17 @@ deux côtés (backend `schemas.py` + frontend).
 ## Commandes de vérification (OBLIGATOIRES avant de terminer une tâche)
 
 ```bash
-# Backend — tous les tests doivent passer
+# Backend : tous les tests doivent passer
 cd backend && source .venv/Scripts/activate
 python -m pytest tests -q
 
-# Backend — démarrage
-python -m uvicorn app.main:app --port 8000 --reload
+# Backend : démarrage
+python -m uvicorn app.main:app --port 8110 --reload
 
-# Frontend — le build doit passer sans erreur
+# Frontend : le build doit passer sans erreur
 cd frontend
 npm run build
-npm run dev   # port 5173, proxy /api -> localhost:8000
+npm run dev   # port 5190, proxy /api -> localhost:8110
 
 # Vérification HTTP isolée (ne touche JAMAIS la base de l'utilisateur)
 bash scripts/smoke.sh   # base .smoke/ jetable, port 8123
@@ -41,6 +41,10 @@ bash scripts/smoke.sh   # base .smoke/ jetable, port 8123
   son serveur en cours. Toujours arrêter par PID le process démarré par l'agent.
 - Les vérifications HTTP passent par `bash scripts/smoke.sh` : base SQLite isolée
   (`DATABASE_URL` dédié), port séparé, nettoyage de `.smoke/` uniquement.
+- Les fichiers déposés (photos, pièces) vivent sous `UPLOAD_DIR` (défaut :
+  `backend/uploads/`). Les tests (conftest) et le smoke le redéfinissent vers un
+  bac à sable jetable : JAMAIS écrire dans `backend/uploads/` réel depuis un test,
+  un upload écraserait les photos des vrais utilisateurs.
 
 Compte démo : `demo@orientskill.cm / demo1234` (candidat) ·
 `recruteur@orientskill.cm / recruteur1234` (recruteur) ·
@@ -48,7 +52,7 @@ Compte démo : `demo@orientskill.cm / demo1234` (candidat) ·
 
 ## Règles métier inviolables (du cahier des charges)
 
-1. **Pas d'invention** (§47) : CV ciblé, lettre, entretien — uniquement à
+1. **Pas d'invention** (§47) : CV ciblé, lettre, entretien : uniquement à
    partir du profil validé. Ne jamais inventer diplôme, expérience,
    certification, compétence, employeur.
 2. **Score explicable** (§12) : chaque match inclut covered/partial/missing,

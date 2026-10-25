@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../../api/client.js";
-import { fmtDate, STATUS_ORDER, STATUS_LABELS } from "../../lib.js";
-import MatchBadge from "../../components/MatchBadge.jsx";
+import { STATUS_LABELS } from "../../lib.js";
+import Avatar from "../../components/Avatar.jsx";
+import ContactDialog from "../../components/ContactDialog.jsx";
+import TalentCard from "../../components/TalentCard.jsx";
 import { Loader, ErrorNote } from "../../components/ui.jsx";
 
 // Dashboard recruteur (§37) : entreprise, offres publiées, profils
@@ -25,6 +27,12 @@ export default function RecruiterHome() {
   const [candidates, setCandidates] = useState(null);
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [contactTarget, setContactTarget] = useState(null);
+  const [editingCompany, setEditingCompany] = useState(false);
+  const [companyForm, setCompanyForm] = useState(null);
+  const [companyError, setCompanyError] = useState("");
+  const [companyBusy, setCompanyBusy] = useState(false);
+  const [searchParams] = useSearchParams();
 
   useEffect(() => {
     api("/recruiter/company").then(setCompany).catch((e) => setError(e.detail));
@@ -33,17 +41,39 @@ export default function RecruiterHome() {
     api("/recruiter/candidates").then(setCandidates).catch(() => setCandidates([]));
   }, []);
 
-  async function contact(candidateId) {
-    const body = window.prompt(
-      "Message au candidat (envoyé via la messagerie OrientSkill) :",
-      "Bonjour, votre profil correspond à l'un de nos postes. Êtes-vous disponible pour un échange ?"
-    );
-    if (!body) return;
+  // Le profil de l'entreprise est modifiable sans quitter le tableau de bord.
+  function openCompanyEdit() {
+    setCompanyForm({
+      name: company.name || "",
+      sector: company.sector || "",
+      location: company.location || "",
+      website: company.website || "",
+      description: company.description || "",
+    });
+    setCompanyError("");
+    setEditingCompany(true);
+  }
+
+  async function saveCompany(event) {
+    event.preventDefault();
+    if (!companyForm.name.trim()) {
+      setCompanyError("Le nom de l'entreprise est obligatoire.");
+      return;
+    }
+    setCompanyBusy(true);
+    setCompanyError("");
     try {
-      await api("/messages", { method: "POST", body: { recipient_id: candidateId, body } });
-      window.location.href = `/messages/${candidateId}`;
+      const updated = await api("/recruiter/company", {
+        method: "PUT",
+        body: { ...companyForm, name: companyForm.name.trim() },
+      });
+      setCompany(updated);
+      setEditingCompany(false);
+      setNotice("Profil de l'entreprise mis à jour.");
     } catch (err) {
-      setError(err.detail);
+      setCompanyError(err.detail);
+    } finally {
+      setCompanyBusy(false);
     }
   }
 
@@ -63,12 +93,37 @@ export default function RecruiterHome() {
     }
   }
 
+  async function refuseApplication(app) {
+    if (!window.confirm(
+      `Refuser la candidature de ${app.candidate_name} ? Le candidat sera notifié.`
+    )) {
+      return;
+    }
+    try {
+      await api(`/recruiter/applications/${app.id}`, {
+        method: "PATCH",
+        body: { status: "refusee" },
+      });
+      setNotice(`Candidature de ${app.candidate_name} refusée.`);
+      const updated = await api("/recruiter/applications");
+      setApplications(updated);
+    } catch (err) {
+      setError(err.detail);
+    }
+  }
+
   if (error && !company) {
     return <div className="page"><ErrorNote error={error} /></div>;
   }
   if (!company || !jobs || !applications || !candidates) {
     return <div className="page"><Loader /></div>;
   }
+
+  const jobFilter = searchParams.get("offre");
+  const filterJob = jobFilter ? jobs.find((j) => String(j.id) === jobFilter) : null;
+  const visibleApplications = jobFilter
+    ? applications.filter((a) => String(a.job_id) === jobFilter)
+    : applications;
 
   return (
     <div className="page">
@@ -87,9 +142,85 @@ export default function RecruiterHome() {
               {company.description}
             </p>
           )}
+          <div className="company-links">
+            {company.website && (
+              <a href={company.website} target="_blank" rel="noreferrer" className="small">
+                Site web de l'entreprise
+              </a>
+            )}
+            <button type="button" className="btn btn-outline btn-small" onClick={openCompanyEdit}>
+              Modifier l'entreprise
+            </button>
+          </div>
         </div>
       </div>
+
+      {editingCompany && companyForm && (
+        <form className="panel" onSubmit={saveCompany}>
+          <h2>Profil de l'entreprise</h2>
+          <p className="small muted">
+            Ces informations identifient vos offres auprès des candidats.
+          </p>
+          <div className="grid-2">
+            <label className="field">
+              <span>Nom de l'entreprise *</span>
+              <input
+                value={companyForm.name}
+                onChange={(e) => setCompanyForm({ ...companyForm, name: e.target.value })}
+                required
+              />
+            </label>
+            <label className="field">
+              <span>Secteur</span>
+              <input
+                value={companyForm.sector}
+                onChange={(e) => setCompanyForm({ ...companyForm, sector: e.target.value })}
+                placeholder="Ex. Informatique / IT"
+              />
+            </label>
+            <label className="field">
+              <span>Localisation</span>
+              <input
+                value={companyForm.location}
+                onChange={(e) => setCompanyForm({ ...companyForm, location: e.target.value })}
+                placeholder="Douala"
+              />
+            </label>
+            <label className="field">
+              <span>Site web</span>
+              <input
+                value={companyForm.website}
+                onChange={(e) => setCompanyForm({ ...companyForm, website: e.target.value })}
+                placeholder="https://…"
+              />
+            </label>
+          </div>
+          <label className="field">
+            <span>Description</span>
+            <textarea
+              rows="3"
+              value={companyForm.description}
+              onChange={(e) => setCompanyForm({ ...companyForm, description: e.target.value })}
+            />
+          </label>
+          <ErrorNote error={companyError} />
+          <div className="actions-row">
+            <button className="btn btn-primary" disabled={companyBusy}>
+              {companyBusy ? "Enregistrement…" : "Enregistrer"}
+            </button>
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={() => setEditingCompany(false)}
+              disabled={companyBusy}
+            >
+              Annuler
+            </button>
+          </div>
+        </form>
+      )}
       <ErrorNote error={error} />
+      {notice && <div className="alert alert-success">{notice}</div>}
 
       <div className="metric-strip">
         <div className="metric">
@@ -117,19 +248,39 @@ export default function RecruiterHome() {
         </div>
       </section>
 
-      {applications.length > 0 && (
-        <section className="section">
-          <h2>Candidatures reçues</h2>
-          {notice && <div className="alert alert-success">{notice}</div>}
-          {applications.map((a) => (
+      {(applications.length > 0 || jobFilter) && (
+        <section className="section" id="candidatures">
+          <div className="section-head">
+            <h2>Candidatures reçues ({visibleApplications.length})</h2>
+          </div>
+          {jobFilter && (
+            <p className="small muted" style={{ margin: "0 0 0.5rem" }}>
+              {filterJob ? `Offre : ${filterJob.title}` : `Offre #${jobFilter}`}
+              {" · "}
+              <Link className="link-more" to="/recruteur#candidatures">
+                Toutes les offres
+              </Link>
+            </p>
+          )}
+          {visibleApplications.length === 0 && (
+            <p className="muted">Aucune candidature pour cette offre.</p>
+          )}
+          {visibleApplications.map((a) => (
             <div className="app-row" key={a.id}>
               <div className="app-head">
-                <div>
-                  <strong>{a.candidate_name}</strong>
-                  {a.candidate_verified && <span className="verified-chip" style={{ marginLeft: "0.5rem" }}>Profil vérifié</span>}
-                  <p className="job-meta" style={{ margin: "0.15rem 0" }}>
-                    Postule à : {a.job_title} · statut : {STATUS_LABELS[a.status] || a.status}
-                  </p>
+                <div className="app-candidate">
+                  <Avatar
+                    name={a.candidate_name}
+                    photoUrl={a.candidate_photo_url}
+                    className="app-avatar"
+                  />
+                  <div>
+                    <strong>{a.candidate_name}</strong>
+                    {a.candidate_verified && <span className="verified-chip" style={{ marginLeft: "0.5rem" }}>Profil vérifié</span>}
+                    <p className="job-meta" style={{ margin: "0.15rem 0" }}>
+                      Postule à : {a.job_title} · statut : {STATUS_LABELS[a.status] || a.status}
+                    </p>
+                  </div>
                 </div>
                 <div className="actions-row" style={{ marginTop: 0 }}>
                   {NEXT_STATUS[a.status] && (
@@ -137,11 +288,43 @@ export default function RecruiterHome() {
                       Passer à « {STATUS_LABELS[NEXT_STATUS[a.status]]} »
                     </button>
                   )}
-                  <button className="btn btn-outline btn-small" onClick={() => contact(a.candidate_id)}>
+                  {!["acceptee", "refusee"].includes(a.status) && (
+                    <button className="btn btn-remove btn-small" onClick={() => refuseApplication(a)}>
+                      Refuser
+                    </button>
+                  )}
+                  <button
+                    className="btn btn-outline btn-small"
+                    onClick={() => setContactTarget({ user_id: a.candidate_id, full_name: a.candidate_name })}
+                  >
                     Contacter
                   </button>
                 </div>
               </div>
+              {a.apply_channel === "external" && (
+                <div className="app-external">
+                  <span className="app-external-label">
+                    Candidature déposée sur le site de l'entreprise
+                  </span>
+                  <div className="actions-row" style={{ marginTop: 0 }}>
+                    {a.apply_url && (
+                      <a
+                        className="btn btn-outline btn-small"
+                        href={a.apply_url}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Voir l'offre et postuler
+                      </a>
+                    )}
+                    {a.apply_email && (
+                      <a className="btn btn-ghost btn-small" href={`mailto:${a.apply_email}`}>
+                        Écrire à {a.apply_email}
+                      </a>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </section>
@@ -153,38 +336,21 @@ export default function RecruiterHome() {
           <Link className="small" to="/recruteur/candidats">Recherche avancée →</Link>
         </div>
         {candidates.slice(0, 5).map((c) => (
-          <div className="talent-card" key={c.user_id}>
-            <div className="talent-card-header">
-              <div className="talent-avatar">
-                {c.full_name.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase()}
-              </div>
-              <div className="talent-card-id">
-                <strong style={{ fontSize: "1.02rem" }}>{c.full_name}</strong>
-                <p className="job-meta" style={{ margin: "0.1rem 0" }}>
-                  {c.title || "Profil en construction"} · {c.location || "Cameroun"}
-                </p>
-              </div>
-              {c.verified ? (
-                <span className="verified-chip">Vérifié</span>
-              ) : (
-                <span className="badge badge-none">Non vérifié</span>
-              )}
-            </div>
-            {c.summary && <p className="talent-summary">{c.summary}</p>}
-            <div className="talent-actions">
-              <Link className="btn btn-outline btn-small" to={`/recruteur/candidats/${c.user_id}`}>
-                Voir la carte de profil
-              </Link>
-              <button className="btn btn-primary btn-small" onClick={() => contact(c.user_id)}>
-                Contacter
-              </button>
-            </div>
-          </div>
+          <TalentCard
+            key={c.user_id}
+            candidate={c}
+            profileHref={`/recruteur/candidats/${c.user_id}`}
+            onContact={setContactTarget}
+          />
         ))}
         {candidates.length === 0 && (
           <p className="muted">Aucun profil candidat disponible pour l'instant.</p>
         )}
       </section>
+
+      {contactTarget && (
+        <ContactDialog candidate={contactTarget} onClose={() => setContactTarget(null)} />
+      )}
     </div>
   );
 }

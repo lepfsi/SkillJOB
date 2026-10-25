@@ -4,7 +4,7 @@ import { STATUS_LABELS } from "../../lib.js";
 import { Loader, ErrorNote } from "../../components/ui.jsx";
 
 // Analyse institutionnelle (§39, V3) : indicateurs AGREGÉS et anonymisés
-// pour les décideurs publics — lecture du marché local des compétences.
+// pour les décideurs publics : lecture du marché local des compétences.
 
 function BarList({ title, items, labelKey, valueKey, unit }) {
   if (!items || items.length === 0) return null;

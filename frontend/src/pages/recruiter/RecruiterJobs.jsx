@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { api } from "../../api/client.js";
 import { CONTRACT_TYPES, fmtDate } from "../../lib.js";
 import { Loader, ErrorNote, Empty } from "../../components/ui.jsx";
+import { DomainPicker } from "../../components/DomainPicker.jsx";
 
 // Publication et gestion des offres de l'entreprise (branding automatique).
 const EMPTY_FORM = {
@@ -10,11 +11,16 @@ const EMPTY_FORM = {
   company: "",
   location: "",
   sector: "",
+  domain_id: null,
+  specialty_id: null,
   contract_type: "CDI",
   description: "",
   requirements: "",
   salary: "",
+  deadline: "",
   source_url: "",
+  apply_email: "",
+  apply_keywords: [],
   skills: [{ name: "", importance: "core" }],
 };
 
@@ -22,6 +28,24 @@ function JobForm({ initial, onCancel, onSaved }) {
   const [form, setForm] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [keywordsText, setKeywordsText] = useState(
+    (initial.apply_keywords || []).join(", ")
+  );
+  // Photo FACULTATIVE de l'offre : envoyée après la publication (l'id de
+  // l'offre est alors connu), comme côté administration.
+  const [photoFile, setPhotoFile] = useState(null);
+  const [removePhoto, setRemovePhoto] = useState(false);
+  const [photoPreview, setPhotoPreview] = useState(initial.photo_url || "");
+
+  useEffect(() => {
+    if (!photoFile) {
+      setPhotoPreview(removePhoto ? "" : (initial.photo_url || ""));
+      return undefined;
+    }
+    const url = URL.createObjectURL(photoFile);
+    setPhotoPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [photoFile, removePhoto, initial.photo_url]);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
   const setSkill = (i, k, v) =>
@@ -37,22 +61,40 @@ function JobForm({ initial, onCancel, onSaved }) {
     try {
       const payload = {
         title: form.title,
-        company: form.company,
         location: form.location,
         sector: form.sector,
+        domain_id: form.domain_id || null,
+        specialty_id: form.specialty_id || null,
         contract_type: form.contract_type,
         description: form.description,
         requirements: form.requirements,
         salary: form.salary || null,
+        deadline: form.deadline
+          ? `${String(form.deadline).slice(0, 10)}T23:59:00`
+          : null,
         source_url: form.source_url,
+        apply_email: (form.apply_email || "").trim() || null,
+        apply_keywords: keywordsText
+          .split(",")
+          .map((word) => word.trim())
+          .filter(Boolean),
         required_skills: form.skills
           .filter((s) => s.name.trim())
           .map((s) => ({ name: s.name.trim(), importance: s.importance })),
       };
+      let saved;
       if (form.id) {
-        await api(`/recruiter/jobs/${form.id}`, { method: "PUT", body: payload });
+        saved = await api(`/recruiter/jobs/${form.id}`, { method: "PUT", body: payload });
       } else {
-        await api("/recruiter/jobs", { method: "POST", body: payload });
+        saved = await api("/recruiter/jobs", { method: "POST", body: payload });
+      }
+      const jobId = saved?.id || form.id;
+      if (jobId && photoFile) {
+        const fd = new FormData();
+        fd.append("file", photoFile);
+        await api(`/recruiter/jobs/${jobId}/photo`, { method: "POST", form: fd });
+      } else if (jobId && removePhoto) {
+        await api(`/recruiter/jobs/${jobId}/photo`, { method: "DELETE" });
       }
       onSaved();
     } catch (err) {
@@ -97,7 +139,30 @@ function JobForm({ initial, onCancel, onSaved }) {
           <span>Lien externe (optionnel)</span>
           <input value={form.source_url || ""} onChange={(e) => set("source_url", e.target.value)} placeholder="https://…" />
         </label>
+        <label className="field">
+          <span>Date limite de candidature (facultatif)</span>
+          <input
+            type="date"
+            value={form.deadline ? String(form.deadline).slice(0, 10) : ""}
+            onChange={(e) => set("deadline", e.target.value)}
+          />
+        </label>
       </div>
+      <DomainPicker
+        domainId={form.domain_id}
+        specialtyIds={form.specialty_id ? [form.specialty_id] : []}
+        multiple={false}
+        domainLabel="Domaine du poste"
+        specialtyLabel="Spécialité recherchée"
+        onChange={({ domain_id, specialty_ids }) =>
+          setForm((f) => ({
+            ...f,
+            domain_id,
+            specialty_id: specialty_ids?.[0] ?? null,
+          }))
+        }
+        hint="Les talents peuvent ainsi vous retrouver par domaine et spécialité."
+      />
       <label className="field">
         <span>Description du poste</span>
         <textarea rows="3" value={form.description} onChange={(e) => set("description", e.target.value)} />
@@ -106,6 +171,97 @@ function JobForm({ initial, onCancel, onSaved }) {
         <span>Profil recherché</span>
         <textarea rows="2" value={form.requirements} onChange={(e) => set("requirements", e.target.value)} />
       </label>
+
+      <div className="job-route-box">
+        <h3>Candidatures par e-mail</h3>
+        <p>
+          Le visuel public de l'offre indique au candidat d'envoyer son CV et
+          sa lettre à l'adresse interne d'OrientSkill AI, avec la référence
+          de l'offre. La candidature vous est ensuite transmise avec les
+          pièces jointes d'origine.
+        </p>
+        <div className="job-route-grid">
+          <label className="field">
+            <span>Adresse de réception (RH)</span>
+            <input
+              type="email"
+              value={form.apply_email || ""}
+              onChange={(e) => set("apply_email", e.target.value)}
+              placeholder="recrutement@entreprise.cm"
+            />
+            <span className="field-hint">
+              Laissez vide pour recevoir sur l'e-mail de votre compte.
+            </span>
+          </label>
+          <label className="field">
+            <span>Mots-clés de routage</span>
+            <input
+              value={keywordsText}
+              onChange={(e) => setKeywordsText(e.target.value)}
+              placeholder="développeur, laravel, douala"
+            />
+            <span className="field-hint">
+              Séparés par des virgules. Utiles si l'objet ne cite pas la référence.
+            </span>
+          </label>
+        </div>
+        <p className="small muted">
+          Référence publique :{" "}
+          <span className="job-reference">
+            {form.email_reference || "attribuée après publication"}
+          </span>
+        </p>
+      </div>
+
+      {/* Photo FACULTATIVE : illustre l'offre côté talents. */}
+      <div className="field">
+        <span>Photo de l'offre (facultatif)</span>
+        <div className="job-photo-field">
+          <div className="job-photo-preview">
+            {photoPreview
+              ? <img src={photoPreview} alt="Aperçu de la photo de l'offre" />
+              : <span>Aucune photo</span>}
+          </div>
+          <div className="job-photo-copy">
+            <strong>Illustration visible par les candidats</strong>
+            <p>
+              JPG, PNG ou WebP, 5 Mo maximum. Facultative : une offre sans
+              photo s'affiche normalement. Elle apparaît sur la carte et le
+              détail de l'offre.
+            </p>
+            <div className="job-photo-actions">
+              <label className="btn btn-outline btn-small">
+                {photoFile ? "Changer la photo" : "Choisir une photo"}
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  hidden
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setPhotoFile(file);
+                      setRemovePhoto(false);
+                    }
+                  }}
+                />
+              </label>
+              {(photoPreview || photoFile) && (
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-small"
+                  onClick={() => { setPhotoFile(null); setRemovePhoto(true); }}
+                >
+                  Retirer
+                </button>
+              )}
+              {photoFile && <span className="small muted">{photoFile.name}</span>}
+            </div>
+            <p>
+              La photo est envoyée {form.id ? "après l'enregistrement" : "après la publication"}.
+            </p>
+          </div>
+        </div>
+      </div>
       <label className="field">
         <span>Compétences requises</span>
       </label>
@@ -203,12 +359,22 @@ function ParseHelper({ onParsed }) {
 
 export default function RecruiterJobs() {
   const [jobs, setJobs] = useState(null);
+  const [applications, setApplications] = useState(null);
   const [form, setForm] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
   const [error, setError] = useState("");
 
   const reload = () => {
     setForm(null);
-    api("/recruiter/jobs").then(setJobs).catch((e) => setError(e.detail));
+    Promise.all([
+      api("/recruiter/jobs"),
+      api("/recruiter/applications").catch(() => []),
+    ])
+      .then(([jobRows, applicationRows]) => {
+        setJobs(jobRows);
+        setApplications(applicationRows);
+      })
+      .catch((e) => setError(e.detail));
   };
 
   useEffect(() => {
@@ -218,9 +384,14 @@ export default function RecruiterJobs() {
   if (error && !jobs) {
     return <div className="page"><ErrorNote error={error} /></div>;
   }
-  if (!jobs) {
+  if (!jobs || !applications) {
     return <div className="page"><Loader /></div>;
   }
+
+  const applicationCounts = applications.reduce((acc, app) => {
+    acc[app.job_id] = (acc[app.job_id] || 0) + 1;
+    return acc;
+  }, {});
 
   async function remove(job) {
     if (!window.confirm(`Supprimer « ${job.title} » ? Les candidatures liées seront supprimées.`)) {
@@ -234,6 +405,17 @@ export default function RecruiterJobs() {
     }
   }
 
+  async function copyPublicLink(job) {
+    const url = `${window.location.origin}/postuler/${job.id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setCopiedId(job.id);
+      window.setTimeout(() => setCopiedId(null), 3000);
+    } catch {
+      window.prompt("Copiez ce lien public de candidature :", url);
+    }
+  }
+
   function fromParsed(draft) {
     setForm({
       title: draft.title || "",
@@ -244,7 +426,11 @@ export default function RecruiterJobs() {
       description: draft.description || "",
       requirements: draft.requirements || "",
       salary: draft.salary || "",
-      source_url: "",
+      deadline: String(draft.deadline || "").slice(0, 10),
+      source_url: draft.source_url || "",
+      apply_email: "",
+      apply_keywords: [],
+      email_reference: "",
       skills: (draft.required_skills || []).length > 0
         ? draft.required_skills.map((s) => ({ name: s.name, importance: s.importance }))
         : [{ name: "", importance: "core" }],
@@ -255,7 +441,11 @@ export default function RecruiterJobs() {
   return (
     <div className="page">
       <h1>Mes offres</h1>
-      <p className="page-lead">{jobs.length} offre(s) publiée(s) par votre entreprise.</p>
+      <p className="page-lead">
+        {jobs.length} offre(s) publiée(s) par votre entreprise, {applications.length} candidature(s) reçue(s).
+        Le bouton « Lien public » copie une adresse de candidature rapide : un candidat non inscrit
+        saisit nom, e-mail et téléphone, son compte est créé et sa candidature enregistrée.
+      </p>
       <ErrorNote error={error} />
 
       <div className="actions-row">
@@ -284,6 +474,8 @@ export default function RecruiterJobs() {
               <strong>{j.title}</strong>
               <p className="job-meta" style={{ margin: "0.15rem 0" }}>
                 {j.location} · {j.contract_type} · publiée le {fmtDate(j.published_at)}
+                {j.deadline ? ` · échéance : ${fmtDate(j.deadline)}` : ""}
+                {` · ${applicationCounts[j.id] || 0} candidature(s)`}
               </p>
             </div>
             <div className="actions-row" style={{ marginTop: 0 }}>
@@ -304,6 +496,28 @@ export default function RecruiterJobs() {
               <Link className="btn btn-ghost btn-small" to={`/opportunites/${j.id}`}>
                 Aperçu
               </Link>
+              <button
+                className="btn btn-outline btn-small"
+                onClick={() => copyPublicLink(j)}
+                title="Copier le lien public de candidature à partager"
+              >
+                {copiedId === j.id ? "Lien copié" : "Lien public"}
+              </button>
+              <Link
+                className="btn btn-outline btn-small"
+                to={`/visuel/${j.id}`}
+                title="Visuel de candidature pour LinkedIn"
+              >
+                Visuel
+              </Link>
+              {(applicationCounts[j.id] || 0) > 0 && (
+                <Link
+                  className="btn btn-outline btn-small"
+                  to={`/recruteur?offre=${j.id}#candidatures`}
+                >
+                  Candidatures ({applicationCounts[j.id]})
+                </Link>
+              )}
             </div>
           </div>
         </div>

@@ -70,7 +70,7 @@ export default function Register() {
   const [accountType, setAccountType] = useState("candidate");
   const [geo, setGeo] = useState(null);
   const [form, setForm] = useState({
-    fullName: "", email: "", password: "", gender: "",
+    fullName: "", email: "", password: "", phone: "", gender: "",
     region: "", department: "", arrondissement: "", city: "",
     recruiterType: "company",
     companyName: "", companySector: "", companyDescription: "", companyLocation: "",
@@ -112,11 +112,7 @@ export default function Register() {
           full_name: form.fullName.trim(),
           email: form.email.trim(),
           password: form.password,
-          gender: form.gender || null,
-          region: form.region || null,
-          department: form.department || null,
-          arrondissement: form.arrondissement || null,
-          city: form.city || null,
+          phone: form.phone.trim() || null,
         });
         navigate("/onboarding");
       }
@@ -173,19 +169,21 @@ export default function Register() {
               </label>
             </div>
             <label className="field">
-              <span>Vous êtes *</span>
-              <select value={form.gender} onChange={(e) => set("gender", e.target.value)} required>
-                <option value="">Choisir</option>
-                <option value="homme">Un homme</option>
-                <option value="femme">Une femme</option>
-              </select>
+              <span>Téléphone (facultatif)</span>
+              <input
+                type="tel"
+                value={form.phone}
+                onChange={(e) => set("phone", e.target.value)}
+                placeholder="+237 6 00 00 00 00"
+              />
             </label>
-            <div className="field-label">Localisation *</div>
-            {geo ? (
-              <GeoSelects geo={geo} value={form} onChange={(patch) => setForm((f) => ({ ...f, ...patch }))} />
-            ) : (
-              <p className="muted small">Chargement des régions…</p>
-            )}
+            <p className="small muted">
+              C'est tout pour commencer. Vous complétez ensuite votre profil
+              (compétences, expériences, formation) à votre rythme : vos
+              réponses restent enregistrées comme brouillon tant que vous ne
+              validez pas. Le téléphone reste privé et n'est jamais affiché
+              aux recruteurs.
+            </p>
           </>
         )}
 

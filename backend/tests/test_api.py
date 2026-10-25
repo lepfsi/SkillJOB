@@ -158,6 +158,12 @@ def test_jobs_list_filters_and_detail(demo_headers, client):
     assert all(
         {"name", "url"} == set(j["source"]) for j in jobs
     )
+    # Les compétences requises accompagnent la liste (cartes d'offres).
+    assert all("required_skills" in j for j in jobs)
+    assert all(
+        {"name", "importance", "level"} <= set(skill)
+        for j in jobs for skill in j["required_skills"]
+    )
 
     it_jobs = client.get("/api/jobs", params={"sector": "Informatique"},
                          headers=demo_headers).json()
@@ -198,6 +204,23 @@ def test_careers_matches(demo_headers, client):
         "immediate", "with_upskilling", "long_term"
     )
     assert top["match"]["score"] > 0
+
+
+def test_careers_match_is_explainable(demo_headers, client):
+    """§12 : le matching métier s'explique comme celui des offres :
+    couvertes/partielles/manquantes distinctes, atouts, lecture FR."""
+    careers = client.get("/api/careers", headers=demo_headers).json()
+    for c in careers:
+        m = c["match"]
+        assert m["level"] in ("forte", "moyenne", "faible")
+        assert isinstance(m["covered"], list)
+        assert isinstance(m["partial"], list)
+        assert isinstance(m["missing"], list)
+        assert isinstance(m["strengths"], list)
+        # Une compétence n'est jamais à la fois couverte et partielle.
+        assert not (set(m["covered"]) & set(m["partial"]))
+        assert m["explanation"].strip()
+        assert m["recommended_actions"]
 
 
 def test_documents_generation_no_invention(demo_headers, client):
@@ -299,11 +322,16 @@ def test_learning_plan(demo_headers, client):
     response = client.get("/api/learning", headers=demo_headers)
     assert response.status_code == 200
     body = response.json()
-    assert set(body) == {"learn_now", "improve", "learn_next", "progress"}
+    assert set(body) == {"learn_now", "improve", "learn_next", "progress",
+                         "enrollments", "stats", "proof_kinds", "link_kinds",
+                         "statuses"}
     assert body["learn_now"]
     first = body["learn_now"][0]
     assert first["resources"] and first["reason"]
     assert all(r["type"] in ("course", "certification", "project", "free")
+               for r in first["resources"])
+    # Chaque ressource dit ce que le lien ouvre réellement (§19)
+    assert all(r["link_kind"] in ("exact", "catalogue", "search", "local")
                for r in first["resources"])
 
 
@@ -411,8 +439,10 @@ def test_admin_settings_roundtrip(admin_headers, client):
     response = client.get("/api/admin/settings", headers=admin_headers)
     assert response.status_code == 200
     body = response.json()
-    assert set(body) == {"smtp", "llm", "aggregators"}
+    assert set(body) == {"smtp", "llm", "inbound", "aggregators", "notifications"}
     assert "api_key" in body["llm"] and "api_key_set" in body["llm"]
+    assert "webhook_secret_set" in body["inbound"]
+    assert body["inbound"]["webhook_secret"] in ("", "<set>")
 
     # Mise à jour LLM : la clé n'est jamais renvoyée en clair
     response = client.put("/api/admin/settings/llm", json={

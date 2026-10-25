@@ -8,6 +8,7 @@ import {
   PROFICIENCY_LABELS,
   CONTRACT_TYPES,
 } from "../lib.js";
+import { DomainPicker } from "./DomainPicker.jsx";
 
 function ListEditor({ items, onChange, blank, addLabel, render }) {
   return (
@@ -58,16 +59,29 @@ function Section({ title, hint, open = false, children }) {
   );
 }
 
-export default function ProfileEditor({ profile, onChange }) {
+export default function ProfileEditor({ profile, onChange, sections = null }) {
   if (!profile) return null;
+  // sections = null : profil complet (validation du brouillon, « Améliorer
+  // mon profil »). Sinon, on n'affiche que les sections de l'onglet courant.
+  const show = (key) => !sections || sections.includes(key);
+  const single = Array.isArray(sections) && sections.length === 1;
+  const pairCertLanguages = show("certifications") && show("languages");
   const set = (field, value) => onChange({ ...profile, [field]: value });
   const prefs = profile.preferences || {
-    sectors: [], target_roles: [], contract_types: [], remote_ok: false, linkedin_url: "",
+    domain_id: null,
+    specialty_ids: [],
+    domain_other: "",
+    sectors: [],
+    target_roles: [],
+    contract_types: [],
+    remote_ok: false,
+    linkedin_url: "",
   };
   const setPrefs = (patch) => onChange({ ...profile, preferences: { ...prefs, ...patch } });
 
   return (
     <div className="profile-editor">
+      {show("identity") && (
       <Section title="Identité professionnelle" open>
         <div className="grid-2">
           <Field label="Titre professionnel (ex. Technicien support IT)">
@@ -114,7 +128,9 @@ export default function ProfileEditor({ profile, onChange }) {
           />
         </Field>
       </Section>
+      )}
 
+      {show("experience") && (
       <Section
         title="Expériences (formelles et informelles)"
         hint="Les petits boulots, missions, bénévolats et projets personnels comptent aussi : l'absence d'expérience formelle n'est pas une absence de compétence."
@@ -143,7 +159,7 @@ export default function ProfileEditor({ profile, onChange }) {
                   ))}
                 </select>
               </Field>
-              <Field label="Période (ex. 2022 – 2024)">
+              <Field label="Période (ex. 2022 à 2024)">
                 <input value={it.start_date || ""} onChange={(e) => upd({ start_date: e.target.value })} />
               </Field>
               <div className="span-2">
@@ -159,8 +175,10 @@ export default function ProfileEditor({ profile, onChange }) {
           )}
         />
       </Section>
+      )}
 
-      <Section title="Formation" hint="Tous les parcours comptent : CEP, FSLC, GCE, CAP, bac, BTS, licence, ingénieur, recyclages et compétences de terrain.">
+      {show("education") && (
+      <Section title="Formation" open={single} hint="Tous les parcours comptent : CEP, FSLC, GCE, CAP, bac, BTS, licence, ingénieur, recyclages et compétences de terrain.">
         <ListEditor
           items={profile.education || []}
           onChange={(v) => set("education", v)}
@@ -187,7 +205,9 @@ export default function ProfileEditor({ profile, onChange }) {
           )}
         />
       </Section>
+      )}
 
+      {show("skills") && (
       <Section title="Compétences" hint="Ajustez le niveau de maîtrise de chaque compétence détectée ou déclarée." open>
         <ListEditor
           items={profile.skills || []}
@@ -210,9 +230,12 @@ export default function ProfileEditor({ profile, onChange }) {
           )}
         />
       </Section>
+      )}
 
-      <div className="grid-2">
-        <Section title="Certifications">
+      {(show("certifications") || show("languages")) && (
+      <div className={pairCertLanguages ? "grid-2" : ""}>
+        {show("certifications") && (
+        <Section title="Certifications" open={single}>
           <ListEditor
             items={profile.certifications || []}
             onChange={(v) => set("certifications", v)}
@@ -240,8 +263,10 @@ export default function ProfileEditor({ profile, onChange }) {
             )}
           />
         </Section>
+        )}
 
-        <Section title="Langues">
+        {show("languages") && (
+        <Section title="Langues" open={single}>
           <ListEditor
             items={profile.languages || []}
             onChange={(v) => set("languages", v)}
@@ -259,10 +284,14 @@ export default function ProfileEditor({ profile, onChange }) {
             )}
           />
         </Section>
+        )}
       </div>
+      )}
 
+      {show("projects") && (
       <Section
         title="Projets & portfolio"
+        open={single}
         hint="Vos réalisations avec liens de preuve (site, dépôt de code, page, photos) : une compétence documentée pèse plus dans le matching."
       >
         <ListEditor
@@ -291,10 +320,36 @@ export default function ProfileEditor({ profile, onChange }) {
           )}
         />
       </Section>
+      )}
 
-      <Section title="Préférences professionnelles">
+      {show("preferences") && (
+      <Section title="Préférences professionnelles" open={single}>
+        {!show("identity") && (
+          <Field label="Mobilité">
+            <select
+              value={profile.mobility || ""}
+              onChange={(e) => set("mobility", e.target.value)}
+            >
+              <option value="">Non renseigné</option>
+              <option>Ma ville uniquement</option>
+              <option>National</option>
+              <option>International</option>
+            </select>
+          </Field>
+        )}
+        <DomainPicker
+          domainId={prefs.domain_id}
+          specialtyIds={prefs.specialty_ids || []}
+          onChange={(patch) => setPrefs(patch)}
+          domainLabel="Domaine professionnel visé"
+          specialtyLabel="Spécialités associées (plusieurs choix possibles)"
+          showOther
+          otherValue={prefs.domain_other || ""}
+          onOtherChange={(value) => setPrefs({ domain_other: value })}
+          hint="Ce référentiel est le même que celui utilisé par les recruteurs pour filtrer les talents."
+        />
         <div className="grid-2">
-          <Field label="Secteurs qui vous intéressent (séparés par des virgules)">
+          <Field label="Secteurs complémentaires (séparés par des virgules)">
             <textarea
               rows="2"
               value={(prefs.sectors || []).join(", ")}
@@ -344,6 +399,7 @@ export default function ProfileEditor({ profile, onChange }) {
           />
         </Field>
       </Section>
+      )}
     </div>
   );
 }

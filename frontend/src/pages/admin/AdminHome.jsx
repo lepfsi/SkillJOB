@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { Link, Navigate, Outlet } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
-import { api } from "../../api/client.js";
+import { api, docsHref } from "../../api/client.js";
 import { Loader, ErrorNote } from "../../components/ui.jsx";
 
 // Vue générale : statistiques plateforme + état des services.
@@ -16,14 +16,25 @@ export default function AdminHome() {
 
   if (user && user.role !== "admin") return <Navigate to="/" replace />;
 
+  // Chaque indicateur mène à l'écran qui permet de l'expliquer ou d'agir.
   const CELLS = stats
     ? [
-        ["Utilisateurs", stats.users],
-        ["Profils construits", stats.profiles],
-        ["Offres en base", stats.jobs],
-        ["Candidatures", stats.applications],
-        ["Documents générés", stats.documents],
-        ["Ressources learning", stats.learning_resources],
+        { label: "Utilisateurs", value: stats.users, to: "/admin/utilisateurs" },
+        { label: "Profils construits", value: stats.profiles, to: "/admin/utilisateurs" },
+        { label: "Offres en base", value: stats.jobs, to: "/admin/offres" },
+        { label: "Candidatures", value: stats.applications, to: "/admin/institutionnel" },
+        { label: "Documents générés", value: stats.documents, to: "/admin/utilisateurs" },
+        { label: "Ressources learning", value: stats.learning_resources },
+        {
+          label: "Signalements à traiter",
+          value: stats.open_reports ?? 0,
+          to: "/admin/signalements",
+        },
+        {
+          label: "Suivi des candidatures",
+          value: stats.applications,
+          to: "/admin/candidatures",
+        },
       ]
     : [];
 
@@ -40,11 +51,23 @@ export default function AdminHome() {
       {stats && (
         <>
           <div className="admin-stats">
-            {CELLS.map(([label, value]) => (
-              <div className="stat-cell" key={label}>
-                <strong>{value}</strong>
-                <span>{label}</span>
-              </div>
+            {CELLS.map((cell) => (
+              cell.to ? (
+                <Link
+                  className="stat-cell stat-cell-link"
+                  key={cell.label}
+                  to={cell.to}
+                  title={`Ouvrir : ${cell.label}`}
+                >
+                  <strong>{cell.value}</strong>
+                  <span>{cell.label}</span>
+                </Link>
+              ) : (
+                <div className="stat-cell" key={cell.label}>
+                  <strong>{cell.value}</strong>
+                  <span>{cell.label}</span>
+                </div>
+              )
             ))}
           </div>
 
@@ -67,7 +90,6 @@ export default function AdminHome() {
             <div className="actions-row">
               <Link className="btn btn-outline" to="/admin/parametres">Configurer les services</Link>
               <Link className="btn btn-ghost" to="/admin/offres">Gérer la base d'offres</Link>
-              <Outlet />
             </div>
           </div>
 
@@ -77,7 +99,7 @@ export default function AdminHome() {
               <Link className="btn btn-ghost" to="/admin/connecteurs">Connecteurs et roadmap</Link>
               <a
                 className="btn btn-ghost"
-                href="http://localhost:8000/docs"
+                href={docsHref()}
                 target="_blank"
                 rel="noreferrer"
               >

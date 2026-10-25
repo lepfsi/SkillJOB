@@ -1,34 +1,79 @@
 [
   {
-    "category": "concours",
-    "subcategory": "fonction_publique",
+    "category": "minfopra",
+    "subcategory": "concours_direct",
     "title": "Concours directs de la fonction publique",
-    "description": "Recrutements annuels dans les administrations de l'État : MINFOP, MINEDUB, MINTP, MINFI, ministères techniques. Sessions publiées par le MINFOP et les départements ministériels concernés.",
-    "eligibility": "Selon les grades : de l'inscription au concours d'entrée aux niveaux licence (grade I) jusqu'aux grades supérieurs ; âge et diplômes exigés par chaque concours.",
-    "url": "https://www.minfop.gov.cm",
+    "description": "Recrutements annuels dans les administrations de l'État (grades I à III selon les diplômes). Les sessions sont publiées par le MINFOPRA et les départements ministériels concernés.",
+    "eligibility": "Diplômes et âge exigés par chaque grade : du BEPC au master selon le concours visé.",
+    "url": "https://www.minfopra.gov.cm",
     "deadline": "Sessions annuelles, calendriers officiels"
   },
   {
-    "category": "concours",
-    "subcategory": "fonction_publique",
-    "title": "Examen professionnel de la fonction publique",
-    "description": "Examen professionnel pour l'avancement et l'intégration des contractuels de l'État.",
-    "eligibility": "Agents en poste remplissant les conditions de stage.",
-    "url": "https://www.minfop.gov.cm",
+    "category": "minfopra",
+    "subcategory": "concours_direct",
+    "title": "Concours du personnel de la santé (MINSANTE)",
+    "description": "Concours de recrutement des personnels de santé : infirmiers, sages-femmes, techniciens de laboratoire, aides-soignants. Écoles des paramédicaux et universités de médecine.",
+    "eligibility": "Du BEPC (aides-soignants) au baccalauréat et au-delà (infirmiers diplômés d'État).",
+    "url": "https://www.minsante.cm",
+    "deadline": "Sessions annuelles et selon les écoles"
+  },
+  {
+    "category": "minfopra",
+    "subcategory": "concours_direct",
+    "title": "Concours Eaux, Forêts et Faune (MINFOF)",
+    "description": "Recrutement des agents des eaux et forêts et de la faune : gardes-chasse, ingénieurs des eaux et forêts, techniciens. École de faune de Garoua et concours administratifs.",
+    "eligibility": "Selon les grades : du BEPC au niveau ingénieur.",
+    "url": "https://www.minfof.gov.cm",
+    "deadline": "Sessions périodiques"
+  },
+  {
+    "category": "minfopra",
+    "subcategory": "concours_integration",
+    "title": "Concours d'intégration dans la fonction publique",
+    "description": "Intégration des contractuels et agents de l'État en activité dans les corps de la fonction publique, selon les postes ouverts par les ministères.",
+    "eligibility": "Agents en fonction remplissant les conditions d'ancienneté et de diplôme du corps visé.",
+    "url": "https://www.minfopra.gov.cm",
     "deadline": "Sessions annuelles"
   },
   {
-    "category": "concours",
-    "subcategory": "grandes_ecoles",
-    "title": "Concours des grandes écoles (MINESUP) : Polytechnique, ENSET, FMI",
-    "description": "Concours d'entrée dans les grandes écoles relevant du MINESUP : École Polytechnique de Yaoundé, ENSET de Yaoundé, Douala, Kumba et Bandja, FMI (Institut des Mines), ENS (Écoles Normales Supérieures), IAIs, CRIT etc.",
-    "eligibility": "Baccalauréat (séries scientifiques et techniques selon les écoles) ; âge limite selon les concours.",
+    "category": "minfopra",
+    "subcategory": "concours_integration",
+    "title": "Examens professionnels d'avancement",
+    "description": "Examens professionnels pour l'avancement et la promotion des agents publics en activité.",
+    "eligibility": "Agents en poste remplissant les conditions de stage et d'ancienneté.",
+    "url": "https://www.minfopra.gov.cm",
+    "deadline": "Sessions annuelles"
+  },
+  {
+    "category": "minesup",
+    "subcategory": "universites",
+    "title": "Universités d'État du Cameroun",
+    "description": "Inscriptions et parcours des universités d'État : Yaoundé I, Yaoundé II, Douala, Dschang, Buea, Bamenda, Ngaoundéré, Maroua, Bertoua. Chaque université gère son calendrier académique.",
+    "eligibility": "Baccalauréat ou GCE A-Level pour le premier cycle ; diplômes antérieurs selon le niveau visé.",
+    "url": "https://www.minesup.gov.cm",
+    "deadline": "Rentrées académiques, calendriers des universités"
+  },
+  {
+    "category": "minesup",
+    "subcategory": "ecoles",
+    "title": "Écoles et instituts de formation par université",
+    "description": "Chaque université abrite ses écoles de formation : École Polytechnique (Yaoundé), ENSET, Faculté de Médecine et des Sciences Biomédicales, ENSP, IAI, ENS, écoles de commerce et de gestion.",
+    "eligibility": "Concours ou étude de dossier selon l'école et le cycle.",
     "url": "https://www.minesup.gov.cm",
     "deadline": "Sessions annuelles"
   },
   {
-    "category": "concours",
-    "subcategory": "grandes_ecoles",
+    "category": "minesup",
+    "subcategory": "avis_concours",
+    "title": "Avis de concours des grandes écoles (MINESUP)",
+    "description": "Concours d'entrée dans les grandes écoles relevant du MINESUP : École Polytechnique de Yaoundé, ENSET de Yaoundé, Douala, Kumba et Bandja, FMI (Institut des Mines), ENS, IAIs, CRIT. Les avis sont publiés par le ministère et les écoles.",
+    "eligibility": "Baccalauréat (séries scientifiques et techniques selon les écoles) ; âge limite selon les concours.",
+    "url": "https://www.minesup.gov.cm",
+    "deadline": "Sessions annuelles, avis officiels"
+  },
+  {
+    "category": "minesup",
+    "subcategory": "avis_concours",
     "title": "Concours ENSUP et instituts universitaires",
     "description": "Concours des instituts universitaires et écoles normales supérieures (ENS Yaoundé, Bambili, Maroua) pour les filières de formation des enseignants.",
     "eligibility": "Baccalauréat ou licence selon le cycle.",
@@ -36,44 +81,17 @@
     "deadline": "Sessions annuelles"
   },
   {
-    "category": "concours",
-    "subcategory": "sante",
-    "title": "Concours du personnel de la santé (MINSANTE)",
-    "description": "Concours de recrutement des personnels de santé : infirmiers, sages-femmes, techniciens de laboratoire, aides-soignants. Écoles des paramédicaux et universités de médecine.",
-    "eligibility": "Niveaux requis selon les filières : du BEPC (aides-soignants) au baccalauréat et au-delà (infirmiers diplômés d'État).",
-    "url": "https://www.minsante.cm",
-    "deadline": "Sessions annuelles et selon les écoles"
-  },
-  {
-    "category": "concours",
-    "subcategory": "forets_faune",
-    "title": "Concours Eaux, Forêts et Faune (MINEF)",
-    "description": "Recrutement des agents des eaux et forêts et de la faune : gardes-chasse, ingénieurs des eaux et forêts, techniciens. École de faune de Garoua et concours administratifs.",
-    "eligibility": "Selon les grades : du BEPC au niveau ingénieur.",
-    "url": "https://www.minef.gov.cm",
-    "deadline": "Sessions périodiques"
-  },
-  {
-    "category": "concours",
-    "subcategory": "armees",
-    "title": "Concours des forces de défense et de sécurité",
-    "description": "Recrutements dans les armées (ARM, Gendarmerie nationale, Police) et la sécurité : concours directs et semi-directs, écoles militaires (ESIG, EMAA, police).",
-    "eligibility": "Conditions physiques, morales et scolaires précisées par chaque concours ; âge limite strict.",
-    "url": "https://www.defense.gouv.cm",
-    "deadline": "Recrutements périodiques selon les armées"
-  },
-  {
-    "category": "fne",
-    "subcategory": "offres_emploi",
+    "category": "minefop",
+    "subcategory": "fne",
     "title": "Offres d'emploi et stages du Fonds National de l'Emploi",
-    "description": "Le FNE publie régulièrement des offres d'emploi, stages et contrats préprofessionnels pour les jeunes camerounais, dans tous les secteurs. Inscription conseillée en agence FNE de votre région.",
+    "description": "Le FNE publie en continu des offres d'emploi, stages et contrats préprofessionnels pour les jeunes Camerounais, dans tous les secteurs. Inscription conseillée en agence FNE de votre région.",
     "eligibility": "Jeunes demandeurs d'emploi inscrits auprès du FNE.",
     "url": "https://www.emploi.cm",
     "deadline": "Appels publiés en continu"
   },
   {
-    "category": "fne",
-    "subcategory": "offres_emploi",
+    "category": "minefop",
+    "subcategory": "fne",
     "title": "Programme contrats préprofessionnels FNE",
     "description": "Contrats de 6 à 24 mois associant travail en entreprise et formation complémentaire, pris en charge par le FNE.",
     "eligibility": "Jeunes diplômés sans expérience professionnelle significative.",
@@ -81,39 +99,156 @@
     "deadline": "Campagnes régulières"
   },
   {
-    "category": "minfop",
-    "subcategory": "bourses",
-    "title": "Bourses de formation professionnelle (MINFOP)",
+    "category": "minefop",
+    "subcategory": "bourse_formation",
+    "title": "Bourses de formation professionnelle (MINEFOP)",
     "description": "Bourses couvrant la formation dans les centres professionnels publics : métiers du bâtiment, mécanique auto, hôtellerie-restauration, couture, agriculture, numérique.",
     "eligibility": "Jeunes de 15 à 35 ans, sur dossier. Les niveaux d'études ne sont pas éliminatoires : recyclages et formations courtes sont éligibles.",
-    "url": "https://www.minfop.gov.cm",
+    "url": "https://www.minefop.cm",
     "deadline": "Rentrée des sessions"
   },
   {
-    "category": "minfop",
-    "subcategory": "bourses",
+    "category": "minefop",
+    "subcategory": "bourse_formation",
     "title": "Certification des compétences acquises sur le terrain (VAE)",
-    "description": "Le MINFOP permet de faire reconnaître officiellement les compétences acquises par l'expérience (plombiers, chauffeurs, maçons, gardiens, mécaniciens…) sans retourner à l'école.",
+    "description": "Le MINEFOP permet de faire reconnaître officiellement les compétences acquises par l'expérience (plombiers, chauffeurs, maçons, gardiens, mécaniciens…) sans retourner à l'école.",
     "eligibility": "Professionnels justifiant d'une expérience pratique documentée.",
-    "url": "https://www.minfop.gov.cm",
+    "url": "https://www.minefop.cm",
     "deadline": "Toute l'année"
   },
   {
-    "category": "minpme",
-    "subcategory": "accompagnement_pme",
-    "title": "Accompagnement à la création de PME (MINPME)",
-    "description": "Appui-conseil, formalisation des entreprises et accès aux dispositifs de financement pour les très petites entreprises.",
-    "eligibility": "Porteurs de projets et jeunes entreprises.",
-    "url": "https://www.minpme.gov.cm",
-    "deadline": "Guichet permanent"
+    "category": "ong",
+    "subcategory": "ong_emplois",
+    "title": "Offres d'emploi des ONG et organisations internationales",
+    "description": "Les ONG et organisations internationales présentes au Cameroun recrutent en continu : projets de développement, santé, éducation, environnement, urgence. Les offres sont publiées sur le site de chaque organisation.",
+    "eligibility": "Selon le poste : du niveau technique au niveau expert ; dossiers souvent en anglais et en français.",
+    "url": null,
+    "deadline": "Appels publiés en continu"
   },
   {
-    "category": "minpme",
-    "subcategory": "accompagnement_pme",
-    "title": "Programme économique spécial jeunes (PEA-Jeunes)",
-    "description": "Dispositif d'appui aux jeunes entrepreneurs : financement partiel, formation à la gestion et suivi des jeunes entreprises.",
-    "eligibility": "Jeunes porteurs de projets économiques viables.",
-    "url": "https://www.minpme.gov.cm",
-    "deadline": "Campagnes de sélection"
+    "category": "ong",
+    "subcategory": "ong_stages",
+    "title": "Programmes de stage des ONG",
+    "description": "Stages et volontariats proposés par les ONG dans le cadre de leurs projets : terrain, suivi-évaluation, communication, administration. Chaque organisation publie son appel et ses conditions.",
+    "eligibility": "Étudiants et jeunes diplômés selon les profils demandés.",
+    "url": null,
+    "deadline": "Appels publiés en continu"
+  },
+  {
+    "category": "mindef",
+    "subcategory": "armee",
+    "title": "Concours d'entrée dans l'armée (forces armées)",
+    "description": "Recrutements des forces armées : concours directs et semi-directs, écoles et centres de formation. Les avis officiels précisent les conditions et les pièces du dossier.",
+    "eligibility": "Conditions physiques, morales et scolaires précisées par chaque concours ; âge limite strict.",
+    "url": "https://www.defense.gouv.cm",
+    "deadline": "Recrutements périodiques, avis officiels"
+  },
+  {
+    "category": "mindef",
+    "subcategory": "gendarmerie",
+    "title": "Gendarmerie nationale · recrutements",
+    "description": "Recrutements de la Gendarmerie nationale : sous-officiers et officiers, selon les sessions ouvertes par le commandement. Conditions physiques et enquête de moralité.",
+    "eligibility": "Diplômes, taille, condition physique et âge précisés par chaque recrutement.",
+    "url": "https://www.defense.gouv.cm",
+    "deadline": "Sessions périodiques"
+  },
+  {
+    "category": "mindef",
+    "subcategory": "bir",
+    "title": "Bataillon d'intervention rapide (BIR)",
+    "description": "Recrutements du BIR, unité d'élite des forces de défense. Sélection physique exigeante et enquête de moralité, sur sessions annoncées officiellement.",
+    "eligibility": "Aptitude physique élevée, conditions d'âge et de diplôme précisées par la session.",
+    "url": "https://www.defense.gouv.cm",
+    "deadline": "Sessions périodiques"
+  },
+  {
+    "category": "mindef",
+    "subcategory": "garde_presidentielle",
+    "title": "Garde présidentielle",
+    "description": "Recrutements de la Garde présidentielle : sélection spécifique et exigences physiques particulières, annoncées par l'institution.",
+    "eligibility": "Conditions physiques et d'âge précisées lors de chaque session.",
+    "url": "https://www.defense.gouv.cm",
+    "deadline": "Sessions périodiques"
+  },
+  {
+    "category": "mindef",
+    "subcategory": "emia",
+    "title": "École militaire interarmes (EMIA)",
+    "description": "Formation des officiers des forces armées : concours d'entrée à l'EMIA pour les élèves officiers, ouvert aux titulaires du baccalauréat et au-delà selon les sessions.",
+    "eligibility": "Diplômes, âge et aptitudes précises par l'avis officiel du concours.",
+    "url": "https://www.defense.gouv.cm",
+    "deadline": "Sessions annuelles"
+  },
+  {
+    "category": "mindef",
+    "subcategory": "armee_etrangere",
+    "title": "Armée étrangère · recrutements internationaux",
+    "description": "Certaines armées étrangères ouvrent leur recrutement aux candidats internationaux (par exemple la Légion étrangère française). Chaque pays publie ses conditions d'engagement et ses sessions sur son site officiel.",
+    "eligibility": "Conditions propres à chaque pays : âge, aptitude physique, documents de voyage.",
+    "url": null,
+    "deadline": "Campagnes selon les pays"
+  },
+  {
+    "category": "dgsn",
+    "subcategory": "police",
+    "title": "Concours d'entrée à la police nationale (DGSN)",
+    "description": "Recrutements de la Police nationale : gardiens de la paix, inspecteurs et officiers de police selon les sessions. Les avis de concours sont publiés par la Délégation Générale à la Sûreté Nationale.",
+    "eligibility": "Diplômes (du BEPC au master selon le corps), condition physique et âge limites par session.",
+    "url": "https://www.dgsn.cm",
+    "deadline": "Sessions annuelles, avis officiels"
+  },
+  {
+    "category": "appels_projets",
+    "subcategory": "appels_minader",
+    "title": "Appels à projets agricoles et ruraux (MINADER)",
+    "description": "Le MINADER et ses programmes publient des appels à projets pour les jeunes agriculteurs et entrepreneurs ruraux : financement de campagnes, équipements, appui-conseil.",
+    "eligibility": "Porteurs de projets agricoles, coopératives et jeunes ruraux selon les appels.",
+    "url": "https://www.minader.gov.cm",
+    "deadline": "Publication au fil des campagnes"
+  },
+  {
+    "category": "appels_projets",
+    "subcategory": "appels_minepat",
+    "title": "Appels à projets et financements (MINEPAT)",
+    "description": "Le MINEPAT publie des appels à projets et des programmes de financement pour les initiatives économiques et sociales portées par les jeunes et les communautés.",
+    "eligibility": "Selon l'appel : porteurs de projets, PME, coopératives et collectivités.",
+    "url": "https://www.minepat.gov.cm",
+    "deadline": "Publication au fil des campagnes"
+  },
+  {
+    "category": "appels_projets",
+    "subcategory": "appels_minjec",
+    "title": "Appels à projets jeunesse (MINJEC)",
+    "description": "Le MINJEC publie des appels à projets pour l'insertion et l'entrepreneuriat des jeunes : appuis financiers, accompagnement et programmes de volontariat.",
+    "eligibility": "Jeunes porteurs de projets et associations de jeunesse selon l'appel.",
+    "url": "https://www.minjec.gov.cm",
+    "deadline": "Publication au fil des campagnes"
+  },
+  {
+    "category": "appels_projets",
+    "subcategory": "appels_mintoul",
+    "title": "Appels à projets touristiques (MINTOUL)",
+    "description": "Le MINTOUL publie des appels à projets pour l'hôtellerie, l'écotourisme et la valorisation des sites : financement partiel et accompagnement des porteurs.",
+    "eligibility": "Porteurs de projets touristiques et PME du secteur selon l'appel.",
+    "url": "https://www.mintoul.gov.cm",
+    "deadline": "Publication au fil des campagnes"
+  },
+  {
+    "category": "appels_projets",
+    "subcategory": "appels_minfof",
+    "title": "Appels à projets forêts et faune (MINFOF)",
+    "description": "Le MINFOF publie des appels à projets liés à la gestion durable des forêts, à la faune et à l'environnement : reboisement, écotourisme, surveillance communautaire.",
+    "eligibility": "Associations, coopératives et porteurs de projets environnementaux selon l'appel.",
+    "url": "https://www.minfof.gov.cm",
+    "deadline": "Publication au fil des campagnes"
+  },
+  {
+    "category": "appels_projets",
+    "subcategory": "appels_mincom",
+    "title": "Appels à projets communication et médias (MINCOM)",
+    "description": "Le MINCOM publie des appels à projets pour les initiatives de communication, la presse en ligne et les contenus numériques participatifs.",
+    "eligibility": "Professionnels des médias, entreprises de presse et porteurs de projets numériques selon l'appel.",
+    "url": "https://www.mincom.gov.cm",
+    "deadline": "Publication au fil des campagnes"
   }
 ]

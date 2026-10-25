@@ -106,7 +106,14 @@ def test_cv_generated_with_ats_template(demo_headers, client):
     doc = client.post("/api/jobs/1/cv", json={"template": "ats"},
                       headers=demo_headers).json()
     assert doc["template"] == "ats"
-    assert "Core Skills" in doc["content_markdown"]
+    markdown = doc["content_markdown"]
+    # Intitulés standards du gabarit ATS de référence, dans le bon ordre.
+    assert "Compétences" in markdown
+    assert "Expérience professionnelle" in markdown
+    assert markdown.index("Profil") < markdown.index("Compétences")
+    assert markdown.index("Compétences") < markdown.index("Expérience professionnelle")
+    assert markdown.index("Certifications") < markdown.index("Formation")
+    assert "Professional Summary" not in markdown
     pdf = client.get(f"/api/documents/{doc['id']}/export?format=pdf",
                      headers=demo_headers)
     assert pdf.status_code == 200

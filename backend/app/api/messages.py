@@ -98,6 +98,7 @@ def send_message(
         + (f" de {company.name}" if company else "")
         + f" vous a écrit : « {message.body[:200]} ». "
           "Répondez depuis votre messagerie OrientSkill.",
+        event="message",
     )
     return message
 

@@ -62,10 +62,12 @@ def get_current_user(
     db: Session = Depends(get_db),
     creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer),
 ) -> models.User:
-    """Authentification obligatoire : 401 si le jeton est absent ou invalide."""
+    """Authentification obligatoire : 401 si le jeton est absent ou invalide,
+    403 si le compte est suspendu par l'administration."""
     user = _resolve_user(db, creds)
     if user is None:
         raise HTTPException(status_code=401, detail="Non authentifié ou jeton invalide")
+    _reject_banned(user)
     return user
 
 
@@ -74,7 +76,20 @@ def get_optional_user(
     creds: Optional[HTTPAuthorizationCredentials] = Depends(_bearer),
 ) -> Optional[models.User]:
     """Authentification optionnelle : None si pas de jeton valide (endpoints publics)."""
-    return _resolve_user(db, creds)
+    user = _resolve_user(db, creds)
+    if user is not None:
+        _reject_banned(user)
+    return user
+
+
+def _reject_banned(user: models.User) -> None:
+    """Un compte banni n'a plus accès à l'espace authentifié."""
+    if getattr(user, "is_banned", False):
+        detail = "Compte suspendu par l'administration."
+        reason = getattr(user, "ban_reason", None)
+        if reason:
+            detail = f"Compte suspendu : {reason}"
+        raise HTTPException(status_code=403, detail=detail)
 
 
 def require_admin(user: models.User = Depends(get_current_user)) -> models.User:

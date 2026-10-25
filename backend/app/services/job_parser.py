@@ -4,7 +4,7 @@ Transforme une brève description libre en offre STRUCTURÉE : intitulé,
 localisation, type de contrat, secteur, compétences requises (reconnues
 dans la taxonomie). Utilisé par l'assistant, l'espace recruteur et la
 console admin. Le brouillon reste à VALIDER par l'humain avant
-enregistrement (§47 : pas d'invention — l'extraction ne fait que
+enregistrement (§47 : pas d'invention : l'extraction ne fait que
 reconnaître, et le recruteur corrige).
 """
 import re
@@ -96,6 +96,19 @@ def parse_job_description(text: str) -> dict[str, Any]:
     # autour d'un mot-clé de fonction.
     first_line = text.splitlines()[0].strip()
     title = first_line if 4 <= len(first_line) <= 80 and not first_line.endswith((".", ":", ";")) else ""
+    if title:
+        # Un intitulé de flux contient souvent « chez X à Y » : ces
+        # précisions sont déjà extraites séparément (entreprise, lieu).
+        title = re.sub(
+            r"\s+(?:chez|pour)\s+.+$", "", title, flags=re.IGNORECASE
+        ).strip()
+        for city in CAMEROON_CITIES:
+            title = re.sub(
+                rf"\s+(?:à|a|au)\s+{re.escape(city)}\s*$",
+                "",
+                title,
+                flags=re.IGNORECASE,
+            ).strip()
     if not title:
         m = re.search(
             r"(?:poste de|recrutons un|recrute un|recherche un|nous cherchons un|cherche)\s+(?:un |une |des )?([A-Za-zÀ-ÿ' \-]{4,60})",
@@ -113,6 +126,13 @@ def parse_job_description(text: str) -> dict[str, Any]:
     m = re.search(r"(?:chez|pour(?: le compte de)?)\s+([A-Z][A-Za-zÀ-ÿ0-9&' \-]{2,50})", text)
     if m:
         company = re.split(r"\s+(?:à|au|x)\s+[A-ZÀ-ÿ]", m.group(1).strip())[0].strip()
+        for city in CAMEROON_CITIES:
+            company = re.sub(
+                rf"\s+{re.escape(city)}\s*$",
+                "",
+                company,
+                flags=re.IGNORECASE,
+            ).strip()
     m = re.search(r"entreprise\s*:\s*(.+)", norm)
     if m and not company:
         company = m.group(1).strip()[:60].capitalize()

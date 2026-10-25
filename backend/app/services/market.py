@@ -31,6 +31,22 @@ def _skill_counts(jobs: list[Any], weighted: bool = False) -> Counter:
     return counts
 
 
+def _skill_offer_counts(jobs: list[Any]) -> Counter:
+    """Nombre d'offres DISTINCTES qui demandent chaque compétence.
+
+    Séparé du score pondéré : un affichage « X offres » doit compter des
+    offres réelles, pas des points d'importance (§47)."""
+    counts: Counter[str] = Counter()
+    for job in jobs:
+        names = {
+            req.get("name")
+            for req in (job.required_skills or [])
+            if req.get("name")
+        }
+        counts.update(names)
+    return counts
+
+
 def skills_market(jobs: list[Any]) -> list[dict[str, Any]]:
     """GET /api/skills/market : demande et tendance par compétence."""
     old, recent = _split_recent(jobs)
@@ -102,6 +118,7 @@ def weekly_indicators(jobs: list[Any]) -> dict[str, Any]:
 
     counts_this = _skill_counts(this_week, weighted=True)
     counts_prev = _skill_counts(prev_week, weighted=True)
+    offers_this = _skill_offer_counts(this_week)
     total_this = sum(counts_this.values()) or 1
     total_prev = sum(counts_prev.values()) or 1
 
@@ -113,7 +130,13 @@ def weekly_indicators(jobs: list[Any]) -> dict[str, Any]:
             100 if counts_prev.get(name, 0) == 0 and count else 0
         )
         trend = "up" if pct >= 10 else ("down" if pct <= -10 else "stable")
-        skills.append({"name": name, "count": count, "trend": trend, "pct_change": pct})
+        skills.append({
+            "name": name,
+            "count": count,
+            "offers": offers_this.get(name, 0),
+            "trend": trend,
+            "pct_change": pct,
+        })
 
     sectors = Counter(j.sector for j in this_week)
     fmt = lambda d: d.strftime("%d/%m")  # noqa: E731

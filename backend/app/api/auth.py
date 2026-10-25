@@ -14,6 +14,37 @@ from app.services import mfa as mfa_service
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
+def _appeal_context(db: Session, user: models.User) -> str:
+    """Complète le refus de connexion par l'état réel du recours."""
+    pending = (
+        db.query(models.BanAppeal)
+        .filter(
+            models.BanAppeal.user_id == user.id,
+            models.BanAppeal.status == "pending",
+        )
+        .order_by(models.BanAppeal.created_at.desc())
+        .first()
+    )
+    if pending:
+        return " Votre recours est en cours d'examen."
+    rejected = (
+        db.query(models.BanAppeal)
+        .filter(
+            models.BanAppeal.user_id == user.id,
+            models.BanAppeal.status == "rejected",
+        )
+        .order_by(models.BanAppeal.reviewed_at.desc())
+        .first()
+    )
+    if rejected and rejected.reviewed_at:
+        note = f" Motif : {rejected.admin_note}" if rejected.admin_note else ""
+        return (
+            f" Votre recours du {rejected.created_at.strftime('%d/%m/%Y')} "
+            f"a été refusé.{note}"
+        )
+    return " Vous pouvez contester cette décision depuis l'écran de connexion."
+
+
 @router.post("/register", status_code=201, response_model=schemas.AuthResponse)
 def register(payload: schemas.RegisterIn, db: Session = Depends(get_db)):
     email = payload.email.strip().lower()
@@ -29,6 +60,7 @@ def register(payload: schemas.RegisterIn, db: Session = Depends(get_db)):
         department=payload.department,
         arrondissement=payload.arrondissement,
         city=payload.city,
+        phone=payload.phone,
     )
     db.add(user)
     db.commit()
@@ -86,6 +118,11 @@ def login(payload: schemas.LoginIn, db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == email).first()
     if user is None or not security.verify_password(payload.password, user.password_hash):
         raise HTTPException(status_code=401, detail="Email ou mot de passe incorrect")
+    if getattr(user, "is_banned", False):
+        detail = "Compte suspendu par l'administration."
+        if user.ban_reason:
+            detail = f"Compte suspendu : {user.ban_reason}"
+        raise HTTPException(status_code=403, detail=detail + _appeal_context(db, user))
     if user.mfa_enabled and user.mfa_secret:
         # Étape 1 validée : jeton MFA éphémère (5 minutes)
         return {
@@ -93,6 +130,49 @@ def login(payload: schemas.LoginIn, db: Session = Depends(get_db)):
             "mfa_token": security.create_token(user.id, minutes=5),
         }
     return {"token": security.create_token(user.id), "user": user}
+
+
+@router.post("/appeal", status_code=201, response_model=schemas.AppealOut)
+def submit_appeal(payload: schemas.AppealIn, db: Session = Depends(get_db)):
+    """Recours d'un compte suspendu.
+
+    Le compte et ses données restent intacts : la personne prouve son
+    identité (mot de passe) puis explique sa situation. Un seul recours
+    ouvert à la fois ; une nouvelle demande met à jour le message."""
+    email = payload.email.strip().lower()
+    user = db.query(models.User).filter(models.User.email == email).first()
+    if user is None or not security.verify_password(payload.password, user.password_hash):
+        raise HTTPException(status_code=401, detail="Email ou mot de passe incorrect")
+    if not getattr(user, "is_banned", False):
+        raise HTTPException(
+            status_code=400,
+            detail="Votre compte n'est pas suspendu : aucune contestation nécessaire.",
+        )
+    message = payload.message.strip()
+    if len(message) < 20:
+        raise HTTPException(
+            status_code=400,
+            detail="Décrivez votre situation en 20 caractères minimum.",
+        )
+    pending = (
+        db.query(models.BanAppeal)
+        .filter(
+            models.BanAppeal.user_id == user.id,
+            models.BanAppeal.status == "pending",
+        )
+        .order_by(models.BanAppeal.created_at.desc())
+        .first()
+    )
+    if pending:
+        pending.message = message
+        db.commit()
+        db.refresh(pending)
+        return pending
+    row = models.BanAppeal(user_id=user.id, message=message, status="pending")
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return row
 
 
 @router.post("/login/mfa", response_model=schemas.AuthResponse)
@@ -104,6 +184,8 @@ def login_mfa(payload: schemas.MfaLoginIn, db: Session = Depends(get_db)):
     user = db.get(models.User, user_id)
     if user is None or not user.mfa_enabled:
         raise HTTPException(status_code=401, detail="Compte introuvable ou MFA désactivé")
+    if getattr(user, "is_banned", False):
+        raise HTTPException(status_code=403, detail="Compte suspendu par l'administration.")
 
     code = (payload.code or "").strip()
     used_hash = None

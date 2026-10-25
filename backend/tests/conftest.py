@@ -4,9 +4,15 @@ import tempfile
 from pathlib import Path
 
 # Base de données isolée pour les tests (avant tout import de l'app)
-_tmpdb = Path(tempfile.mkdtemp(prefix="orientskill-test-")) / "test.db"
+_tmpdir = Path(tempfile.mkdtemp(prefix="orientskill-test-"))
+_tmpdb = _tmpdir / "test.db"
 os.environ["DATABASE_URL"] = f"sqlite:///{_tmpdb.as_posix()}"
 os.environ["SECRET_KEY"] = "test-secret"
+# Pas de collecte autonome pendant les tests : les sources de test ne
+# doivent jamais lancer de requêtes réseau imprévues.
+os.environ["SOURCE_SCHEDULER_ENABLED"] = "0"
+# Dépôts (photos, pièces) ISOLÉS : jamais le dossier réel de l'utilisateur.
+os.environ["UPLOAD_DIR"] = str(_tmpdir / "uploads")
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 

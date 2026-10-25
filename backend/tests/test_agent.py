@@ -26,17 +26,21 @@ def test_assistant_gaps_are_career_oriented(client):
     reply = body["reply"].lower()
     assert "métiers recommandés" in reply
     # Les écarts du profil démo (IT réseau) : Cisco, Azure, cybersécurité…
-    # — pas de compétences hors domaine en tête de liste.
+    # pas de compétences hors domaine en tête de liste.
     assert "excel" not in reply.split("\n")[0].lower()
 
 
 def test_assistant_formations_include_real_links(client):
-    """« Quelles formations ? » renvoie les LIENS réels (markdown + links)."""
+    """« Quelles formations ? » renvoie les LIENS réels (markdown + links).
+
+    Les boutons pointent désormais vers la fiche interne exacte de la
+    ressource (``/learning/{key}``) ; le lien externe reste dans le texte.
+    """
     body = _ask(client, _demo_headers(client),
                 "Quelles formations me conseilles-tu ?")
     assert "](http" in body["reply"], body["reply"]  # lien markdown
-    external = [l for l in body["links"] if l["href"].startswith("http")]
-    assert external, "au moins un lien externe vers une plateforme"
+    internal = [l for l in body["links"] if l["href"].startswith("/learning/")]
+    assert internal, "au moins un lien profond vers une formation"
 
 
 def test_assistant_specific_formation_links(client):
@@ -44,8 +48,7 @@ def test_assistant_specific_formation_links(client):
                 "Quelles formations suivre pour Cisco ?")
     assert "cisco" in body["reply"].lower()
     assert "](http" in body["reply"]
-    assert any("netacad" in l["href"] or "coursera" in l["href"] or "http" in l["href"]
-               for l in body["links"])
+    assert any(l["href"].startswith("/learning/") for l in body["links"])
 
 
 def test_context_document_contains_formations_and_careers(client):
@@ -68,6 +71,7 @@ def test_context_document_contains_formations_and_careers(client):
             load_taxonomy(), resources=_resources_map(db),
             applications=[{"job_title": "X", "status": "entretien"}],
             verified=True,
+            user=user,
         )
         doc = ctx.context_document()
         assert "MÉTIER RECOMMANDÉ" in doc
@@ -76,8 +80,84 @@ def test_context_document_contains_formations_and_careers(client):
         assert "](http" in doc              # liens markdown exacts
         assert "CANDIDATURES" in doc
         assert "identité vérifiée" in doc
+        assert "IDENTITÉ DE L'UTILISATEUR" in doc
+        assert (user.full_name or "").split()[0].lower() in doc.lower()
+        assert "RÉSUMÉ DU PROFIL" in doc or "EXPÉRIENCES" in doc
     finally:
         db.close()
+
+
+def test_assistant_history_is_persisted_and_clearable(client):
+    headers = _demo_headers(client)
+
+    initial = client.get("/api/assistant/history", headers=headers)
+    assert initial.status_code == 200, initial.text
+    assert initial.json()["mode"] == "persist"
+    assert initial.json()["retention_days"] == 30
+
+    body = _ask(client, headers, "Bonjour, on prépare mon CV ?")
+    assert body["reply"]
+
+    history = client.get("/api/assistant/history", headers=headers).json()
+    roles = [m["role"] for m in history["messages"]]
+    assert "user" in roles
+    assert "assistant" in roles
+    assert any("Bonjour" in m["content"] for m in history["messages"])
+
+    cleared = client.delete("/api/assistant/history", headers=headers)
+    assert cleared.status_code == 200, cleared.text
+    assert client.get("/api/assistant/history", headers=headers).json()["messages"] == []
+
+
+def test_assistant_history_ephemeral_mode_stops_storage(client):
+    headers = _demo_headers(client)
+    client.delete("/api/assistant/history", headers=headers)
+
+    switched = client.put(
+        "/api/assistant/history/settings",
+        json={"mode": "ephemeral"},
+        headers=headers,
+    )
+    assert switched.status_code == 200, switched.text
+    assert switched.json()["mode"] == "ephemeral"
+
+    _ask(client, headers, "Un message qui ne doit pas être conservé.")
+    history = client.get("/api/assistant/history", headers=headers).json()
+    assert history["mode"] == "ephemeral"
+    assert history["messages"] == []
+
+    back = client.put(
+        "/api/assistant/history/settings",
+        json={"mode": "persist"},
+        headers=headers,
+    )
+    assert back.json()["mode"] == "persist"
+
+
+def test_assistant_history_retention_purges_old_messages(client):
+    from datetime import timedelta
+
+    from app import models
+    from app.database import SessionLocal
+
+    headers = _demo_headers(client)
+    client.delete("/api/assistant/history", headers=headers)
+
+    db = SessionLocal()
+    try:
+        user = db.query(models.User).filter_by(email="demo@orientskill.cm").first()
+        db.add(models.AssistantMessage(
+            user_id=user.id,
+            role="assistant",
+            content="Message ancien",
+            created_at=models.utcnow() - timedelta(days=45),
+        ))
+        db.commit()
+    finally:
+        db.close()
+
+    history = client.get("/api/assistant/history", headers=headers).json()
+    assert all(m["content"] != "Message ancien" for m in history["messages"])
 
 
 def test_assistant_fetches_user_provided_url(client, monkeypatch):
@@ -404,6 +484,43 @@ def test_recruiter_agent_received_applications(client):
     body = _ask(client, rh, "Où en sont les candidatures reçues ?")
     assert "candidatures" in body["reply"].lower()
     assert any("/recruiter" in l["href"] for l in body["links"])
+
+
+def test_candidate_agent_lists_real_applications(client):
+    """« Où en sont mes candidatures ? » → le VRAI suivi du candidat
+    (titres, étapes, entretien à préparer), jamais un texte générique."""
+    body = _ask(client, _demo_headers(client), "Où en sont mes candidatures ?")
+    reply = body["reply"]
+    # Les deux candidatures semées : job1 en attente, job2 en entretien.
+    assert "Administrateur Systèmes et Réseaux" in reply
+    assert "Technicien support IT" in reply
+    assert "En attente de réponse" in reply
+    assert "Entretien à préparer" in reply
+    assert "2 candidature(s)" in reply
+    assert any(l["href"] == "/applications" for l in body["links"])
+    # L'entretien à préparer mène directement à l'offre concernée.
+    assert any(
+        l["href"].startswith("/jobs/") and "entretien" in l["label"].lower()
+        for l in body["links"]
+    )
+
+
+def test_candidate_agent_candidatures_without_follow_up(client):
+    """Un candidat avec un profil mais aucun suivi reçoit une réponse
+    honnête + une porte de sortie, pas une liste inventée."""
+    reg = client.post("/api/auth/register", json={
+        "email": "sans.suivi@tgc.cm", "password": "pass1234",
+        "full_name": "Sans Suivi",
+    })
+    headers = {"Authorization": f"Bearer {reg.json()['token']}"}
+    saved = client.put("/api/profile", json={
+        "title": "Technicien réseau junior",
+        "skills": [{"skill": "TCP/IP", "proficiency": "intermediaire"}],
+    }, headers=headers)
+    assert saved.status_code == 200, saved.text
+    body = _ask(client, headers, "Où en sont mes candidatures ?")
+    assert "aucune candidature" in body["reply"].lower()
+    assert any(l["href"] == "/jobs" for l in body["links"])
 
 
 def test_recruiter_agent_offer_writing(client):

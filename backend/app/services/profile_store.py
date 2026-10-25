@@ -89,12 +89,13 @@ def save_profile(db: Session, user_id: int, data: dict[str, Any]) -> Profile:
             else:
                 prefix = field[0]
                 items = _assign_ids(items, prefix)
-                if field == "experiences":
-                    # Canonise les compétences rattachées aux expériences
+                if field in ("experiences", "projects", "certifications"):
+                    # Canonise les compétences rattachées (taxonomie)
                     taxonomy = load_taxonomy()
                     for item in items:
+                        raw = item.get("skills") or []
                         item["skills"] = [
-                            taxonomy.canonical(s) for s in item.get("skills", [])
+                            taxonomy.canonical(s) for s in raw if s
                         ]
             setattr(row, field, items)
 

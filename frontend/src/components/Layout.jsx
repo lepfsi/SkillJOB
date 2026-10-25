@@ -1,20 +1,23 @@
-import { NavLink, useNavigate, useLocation } from "react-router-dom";
+import { NavLink, Link, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { api } from "../api/client.js";
 import { Icon, I } from "./icons.jsx";
 
-// Sidebar « produit pro » : icônes SVG sobres, aucun liseré, highlight
-// discret au survol et à l'activation, sections pliables à chevron
-// fluide, badge de messages bien visible en tête.
+// Coquille applicative : sidebar sombre (navigation par sections) à gauche,
+// top bar (recherche, notifications, pays, compte) au-dessus du contenu.
+// Reprise de la direction visuelle des maquettes : vert émeraude, tuiles
+// pastel, hiérarchie claire (§78). Aucun emoji.
 
 const CANDIDATE_NAV_GROUPS = [
   {
     section: null,
     items: [
-      { to: "/", label: "Dashboard", icon: "home", end: true },
+      { to: "/", label: "Accueil", icon: "home", end: true },
+      { to: "/agent", label: "Mon agent", icon: "bot" },
+      { to: "/profil", label: "Mon profil", icon: "user" },
+      { to: "/notifications", label: "Notifications", icon: "bell", notifications: true },
       { to: "/messages", label: "Messages", icon: "chat", messages: true },
-      { to: "/assistant", label: "Assistant", icon: "spark" },
     ],
   },
   {
@@ -24,6 +27,7 @@ const CANDIDATE_NAV_GROUPS = [
       { to: "/programmes", label: "Programmes publics", icon: "landmark" },
       { to: "/entrepreneuriat", label: "Entrepreneuriat", icon: "rocket" },
       { to: "/candidatures", label: "Mes candidatures", icon: "clipboard" },
+      { to: "/entretiens", label: "Entretiens", icon: "clock" },
     ],
   },
   {
@@ -33,7 +37,6 @@ const CANDIDATE_NAV_GROUPS = [
       { to: "/competences", label: "Compétences", icon: "zap" },
       { to: "/learning", label: "Learning", icon: "book" },
       { to: "/documents", label: "Documents", icon: "file" },
-      { to: "/profil", label: "Profil", icon: "user" },
     ],
   },
   {
@@ -67,6 +70,10 @@ const ADMIN_NAV_GROUPS = [
     section: "Contenus",
     items: [
       { to: "/admin/offres", label: "Base d'offres", icon: "database" },
+      { to: "/admin/domaines", label: "Domaines & spécialités", icon: "layers" },
+      { to: "/admin/formations", label: "Formations", icon: "layers" },
+      { to: "/admin/candidatures", label: "Candidatures", icon: "file" },
+      { to: "/admin/signalements", label: "Signalements", icon: "shield" },
       { to: "/admin/sources", label: "Sources & collecte", icon: "globe" },
       { to: "/admin/contenus", label: "Contenus publics", icon: "layers" },
       { to: "/admin/verifications", label: "Vérifications", icon: "shield" },
@@ -100,21 +107,22 @@ function useActiveGroup(groups) {
 export default function Layout({ children }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
-  const [unread, setUnread] = useState(0);
+  const [unreadMessages, setUnreadMessages] = useState(0);
+  const [unreadNotifications, setUnreadNotifications] = useState(0);
+  const [query, setQuery] = useState("");
   const role = user?.role;
 
   const activeGroup = useActiveGroup(CANDIDATE_NAV_GROUPS);
   const activeAdminGroup = useActiveGroup(ADMIN_NAV_GROUPS);
-  const [openGroups, setOpenGroups] = useState(
-    () => new Set(CANDIDATE_NAV_GROUPS.map((_, i) => i))
-  );
+  const [openGroups, setOpenGroups] = useState(() => new Set());
   useEffect(() => {
+    // Les sections restent repliées par défaut (la carte « mon agent »
+    // du pied de sidebar reste ainsi visible) ; on déplie la section
+    // active seulement après une navigation.
     setOpenGroups((prev) => new Set(prev).add(activeGroup));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeGroup]);
-  const [openAdminGroups, setOpenAdminGroups] = useState(
-    () => new Set(ADMIN_NAV_GROUPS.map((_, i) => i))
-  );
+  const [openAdminGroups, setOpenAdminGroups] = useState(() => new Set());
   useEffect(() => {
     setOpenAdminGroups((prev) => new Set(prev).add(activeAdminGroup));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -124,16 +132,33 @@ export default function Layout({ children }) {
     let alive = true;
     const poll = () => {
       api("/messages/unread-count")
-        .then((d) => { if (alive) setUnread(d.count); })
+        .then((d) => { if (alive) setUnreadMessages(d.count); })
         .catch(() => {});
+      if (role === "candidate") {
+        api("/notifications/unread-count")
+          .then((d) => { if (alive) setUnreadNotifications(d.count); })
+          .catch(() => {});
+      }
     };
     poll();
     const timer = setInterval(poll, 30000);
-    return () => { alive = false; clearInterval(timer); };
-  }, []);
+    const seen = () => setUnreadNotifications(0);
+    window.addEventListener("orientskill:notifications-seen", seen);
+    return () => {
+      alive = false;
+      clearInterval(timer);
+      window.removeEventListener("orientskill:notifications-seen", seen);
+    };
+  }, [role]);
 
   const initials = (user?.full_name || "?")
     .split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase();
+
+  function submitSearch(e) {
+    e.preventDefault();
+    const term = query.trim();
+    navigate(term ? `/opportunites?search=${encodeURIComponent(term)}` : "/opportunites");
+  }
 
   function renderLinks(items) {
     return items.map((item) => (
@@ -145,8 +170,11 @@ export default function Layout({ children }) {
       >
         <Icon d={I[item.icon]} />
         <span>{item.label}</span>
-        {item.messages && unread > 0 && (
-          <span className="nav-badge">{unread}</span>
+        {item.messages && unreadMessages > 0 && (
+          <span className="nav-badge">{unreadMessages}</span>
+        )}
+        {item.notifications && unreadNotifications > 0 && (
+          <span className="nav-badge">{unreadNotifications}</span>
         )}
       </NavLink>
     ));
@@ -210,6 +238,15 @@ export default function Layout({ children }) {
               : renderGroups(CANDIDATE_NAV_GROUPS, openGroups, (i) => toggleGroup(setOpenGroups, i))}
         </nav>
 
+        <div className="sidebar-agent">
+          <div className="sidebar-agent-head">
+            <span className="sidebar-agent-icon"><Icon d={I.bot} size={17} /></span>
+            <span className="sidebar-agent-title">Mon agent</span>
+          </div>
+          <p>Il analyse le marché et prépare vos candidatures. Vous validez.</p>
+          <Link className="btn btn-primary btn-small" to={role === "candidate" ? "/agent" : "/assistant"}>Ouvrir l'assistant</Link>
+        </div>
+
         <div className="sidebar-footer">
           <div className="sidebar-user">
             <span className="sidebar-avatar">{initials}</span>
@@ -221,7 +258,69 @@ export default function Layout({ children }) {
           </button>
         </div>
       </aside>
-      <main className="content">{children}</main>
+
+      <div className="main-col">
+        <header className="topbar">
+          {role === "candidate" && (
+            <form className="topbar-search" onSubmit={submitSearch} role="search">
+              <Icon d={I.search} size={17} />
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Rechercher une opportunité, une compétence, un métier…"
+                aria-label="Rechercher"
+              />
+            </form>
+          )}
+          <div className="topbar-actions">
+            {role === "candidate" && (
+              <>
+                <Link
+                  className="topbar-icon"
+                  to="/notifications"
+                  aria-label="Notifications"
+                  title="Notifications"
+                >
+                  <Icon d={I.bell} size={18} />
+                  {unreadNotifications > 0 && (
+                    <span className="topbar-badge">
+                      {unreadNotifications > 9 ? "9+" : unreadNotifications}
+                    </span>
+                  )}
+                </Link>
+                <Link
+                  className="topbar-icon"
+                  to="/messages"
+                  aria-label="Messages"
+                  title="Messages"
+                >
+                  <Icon d={I.chat} size={18} />
+                  {unreadMessages > 0 && (
+                    <span className="topbar-badge">
+                      {unreadMessages > 9 ? "9+" : unreadMessages}
+                    </span>
+                  )}
+                </Link>
+              </>
+            )}
+            {role !== "candidate" && (
+              <Link className="topbar-icon" to="/messages" aria-label="Messages">
+                <Icon d={I.chat} size={18} />
+                {unreadMessages > 0 && (
+                  <span className="topbar-badge">
+                    {unreadMessages > 9 ? "9+" : unreadMessages}
+                  </span>
+                )}
+              </Link>
+            )}
+            <span className="country-chip"><span className="country-flag" aria-hidden="true" /> Cameroun</span>
+            <Link className="topbar-avatar" to="/parametres-compte" title={user?.full_name}>
+              {initials}
+            </Link>
+          </div>
+        </header>
+        <main className="content">{children}</main>
+      </div>
     </div>
   );
 }

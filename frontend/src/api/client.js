@@ -38,6 +38,25 @@ export class ApiError extends Error {
 // en production). Alternative : VITE_API_URL pour appeler l'API en direct.
 const API_BASE = (typeof import.meta !== "undefined" && import.meta.env?.VITE_API_URL) || "";
 
+// Documentation OpenAPI : même origine via le proxy en dev et en production,
+// ou directement le backend quand VITE_API_URL est défini.
+export function docsHref() {
+  return API_BASE ? `${API_BASE.replace(/\/$/, "")}/docs` : "/docs";
+}
+
+// URL directe d'une ressource API (téléchargements publics : .ics, visuel).
+// Les liens <a href> ne passent pas par fetch et n'ont donc pas de jeton.
+export function apiHref(path) {
+  return `${API_BASE}/api${path}`;
+}
+
+// URL d'un chemin déjà préfixé par /api, renvoyé tel quel par le backend
+// (par exemple calendar_url sur une invitation).
+export function resourceHref(path) {
+  if (!path) return "";
+  return `${API_BASE.replace(/\/$/, "")}${path}`;
+}
+
 // FastAPI renvoie detail = liste d'objets sur les 422 : on linéarise
 // en message lisible pour éviter tout crash de rendu React.
 function humanizeDetail(detail) {

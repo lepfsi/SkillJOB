@@ -3,7 +3,7 @@
 Logique de recommandation (refonte) :
 - « À apprendre maintenant » suit les MÉTIERS recommandés du jeune
   (§9bis) : les ressources ciblent les compétences manquantes des
-  métiers qui le correspondent le mieux — pas une liste générique ;
+  métiers qui le correspondent le mieux, pas une liste générique ;
 - « Perfectionner mon domaine » : ressources pour les compétences
   DÉJÀ acquises (son domaine de force), certifications en priorité ;
 - « Ensuite » : autres écarts face aux offres actives ;
@@ -11,11 +11,20 @@ Logique de recommandation (refonte) :
 Aucune ressource ou preuve n'est inventée (§47).
 """
 import json
+import re
+import unicodedata
 from collections import Counter
 from functools import lru_cache
 from typing import Any, Optional
 
 from app import config
+from app.services.learning_tracking import (
+    LINK_KINDS,
+    LINK_KIND_LABELS,
+    evidence_for,
+    infer_link_kind,
+    is_verifiable,
+)
 from app.services.matching import compute_match
 from app.services.skills_taxonomy import SkillsTaxonomy
 
@@ -32,6 +41,37 @@ STATUS_LABELS = {
 }
 
 
+def _slug(value: str) -> str:
+    """Identifiant lisible et stable pour une ressource (lien profond)."""
+    text = unicodedata.normalize("NFKD", value or "")
+    text = "".join(c for c in text if not unicodedata.combining(c))
+    text = re.sub(r"[^a-zA-Z0-9]+", "-", text).strip("-").lower()
+    return text or "ressource"
+
+
+def resource_key(skill: str, title: str) -> str:
+    """Clé publique d'une ressource : compétence + intitulé.
+
+    Elle ne dépend ni de l'ordre du fichier ni de l'identifiant SQLite :
+    un lien partagé reste valable après une synchronisation du référentiel.
+    """
+    return f"{_slug(skill)[:42]}--{_slug(title)[:72]}"
+
+
+def _normalize_resource(resource: dict[str, Any], skill: str = "") -> dict[str, Any]:
+    """Ressource prête à l'affichage : la nature du lien (formation
+    exacte, catalogue, recherche, organisme local) est explicite."""
+    item = dict(resource)
+    url = item.get("url")
+    link_kind = item.get("link_kind")
+    if link_kind not in LINK_KINDS:
+        link_kind = infer_link_kind(url, item.get("provider", ""))
+    item["link_kind"] = link_kind
+    item["link_kind_label"] = LINK_KIND_LABELS.get(link_kind, "Lien")
+    item["key"] = resource_key(skill or item.get("skill", ""), item.get("title", ""))
+    return item
+
+
 @lru_cache(maxsize=1)
 def load_resources() -> dict[str, list[dict[str, Any]]]:
     path = config.DATA_DIR / "learning_resources.json"
@@ -40,32 +80,68 @@ def load_resources() -> dict[str, list[dict[str, Any]]]:
     with open(path, encoding="utf-8") as f:
         raw = json.load(f)
     return {
-        skill: [r for r in resources if r.get("type") in _ALLOWED_TYPES]
+        skill: [
+            _normalize_resource(r, skill)
+            for r in resources
+            if r.get("type") in _ALLOWED_TYPES
+        ]
         for skill, resources in raw.items()
     }
 
 
 def _diversify(resources: list[dict], limit: int = 3) -> list[dict]:
-    """Évite les doublons de type : un cours, une certification, un projet
-    plutôt que trois fois le même format."""
+    """Évite les doublons de TYPE et de FOURNISSEUR : un cours, une
+    certification, un projet, et pas trois fois le même organisme. Les
+    liens vers la formation exacte passent devant les catalogues."""
     if not resources:
         return []
-    by_type: dict[str, list[dict]] = {}
-    for r in resources:
-        by_type.setdefault(r.get("type", "free"), []).append(r)
-    order = ["certification", "course", "free", "project"]
+    ordered = sorted(
+        resources,
+        key=lambda r: (
+            0 if r.get("link_kind") == "exact"
+            else 1 if r.get("link_kind") == "catalogue"
+            else 2
+        ),
+    )
     out: list[dict] = []
-    for t in order + [k for k in by_type if k not in order]:
-        for r in by_type.get(t, []):
-            if r not in out:
-                out.append(r)
-            if len(out) >= limit:
-                return out
+    types: set[str] = set()
+    providers: set[str] = set()
+
+    def provider_of(item: dict) -> str:
+        return (item.get("provider") or "").lower()
+
+    for r in ordered:  # 1) un type et un fournisseur différents à chaque fois
+        if r.get("type", "free") in types or provider_of(r) in providers:
+            continue
+        types.add(r.get("type", "free"))
+        providers.add(provider_of(r))
+        out.append(r)
+        if len(out) >= limit:
+            return out
+    for r in ordered:  # 2) même type accepté, fournisseur toujours différent
+        if r in out or provider_of(r) in providers:
+            continue
+        providers.add(provider_of(r))
+        out.append(r)
+        if len(out) >= limit:
+            return out
+    for r in ordered:  # 3) on complète si le référentiel est pauvre
+        if r in out:
+            continue
+        out.append(r)
+        if len(out) >= limit:
+            break
     return out[:limit]
 
 
-def _build_evidences(profile: dict[str, Any], skill_name: str) -> list[dict[str, str]]:
-    """Preuves vérifiables rattachées à la compétence (profil uniquement)."""
+def _build_evidences(
+    profile: dict[str, Any],
+    skill_name: str,
+    enrollments: Optional[list[Any]] = None,
+) -> list[dict[str, str]]:
+    """Preuves vérifiables rattachées à la compétence : profil validé
+    (expériences, projets, certifications) + formations suivies dont la
+    preuve a été fournie (§19)."""
     evidences: list[dict[str, str]] = []
     for e in profile.get("experiences", []):
         if skill_name in (e.get("skills") or []):
@@ -81,6 +157,9 @@ def _build_evidences(profile: dict[str, Any], skill_name: str) -> list[dict[str,
         if skill_name.lower() in name.lower():
             issuer = f" · {c['issuer']}" if c.get("issuer") else ""
             evidences.append({"kind": "certification", "label": f"{name}{issuer}"})
+    for enrollment in enrollments or []:
+        if enrollment.skill == skill_name and is_verifiable(enrollment):
+            evidences.append(evidence_for(enrollment))
     return evidences[:4]
 
 
@@ -107,6 +186,7 @@ def build_progress(
     profile: dict[str, Any],
     jobs: list[Any],
     taxonomy: Optional[SkillsTaxonomy] = None,
+    enrollments: Optional[list[Any]] = None,
 ) -> list[dict[str, Any]]:
     """Progression vérifiable par compétence du profil."""
     demand: Counter[str] = Counter()
@@ -118,7 +198,7 @@ def build_progress(
     out: list[dict[str, Any]] = []
     for s in profile.get("skills", []):
         name = s["skill"]
-        evidences = _build_evidences(profile, name)
+        evidences = _build_evidences(profile, name, enrollments)
         proficiency = s.get("proficiency", "debutant")
         if evidences:
             status = "verifiee"
@@ -141,18 +221,88 @@ def build_progress(
     return out
 
 
+def admin_resources(db) -> dict[str, list[dict[str, Any]]]:
+    """Formations AJOUTÉES dans la console d'administration.
+
+    Elles vivent en base (source « admin ») : la synchronisation du
+    référentiel JSON ne les touche jamais. Renvoyées au même format que
+    ``load_resources`` pour fusionner proprement.
+    """
+    from app import models
+
+    rows = (
+        db.query(models.LearningResource)
+        .filter(
+            models.LearningResource.source == "admin",
+            models.LearningResource.hidden.is_(False),
+        )
+        .all()
+    )
+    out: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        if row.type not in _ALLOWED_TYPES:
+            continue
+        out.setdefault(row.skill, []).append(_normalize_resource({
+            "skill": row.skill,
+            "title": row.title,
+            "provider": row.provider or "",
+            "type": row.type,
+            "url": row.url,
+        }, row.skill))
+    return out
+
+
+def visible_resources(db) -> dict[str, list[dict[str, Any]]]:
+    """Catalogue réel proposé aux candidats, lu en base.
+
+    Contrairement à ``load_resources`` (qui lit le référentiel JSON),
+    cette fonction respecte les retouches de la console : une ligne
+    masquée n'est jamais proposée, une ligne corrigée garde son nouveau
+    lien. Le JSON sert uniquement de référentiel initial.
+    """
+    from app import models
+
+    rows = (
+        db.query(models.LearningResource)
+        .filter(models.LearningResource.hidden.is_(False))
+        .order_by(models.LearningResource.skill, models.LearningResource.title)
+        .all()
+    )
+    out: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        if row.type not in _ALLOWED_TYPES:
+            continue
+        out.setdefault(row.skill, []).append(_normalize_resource({
+            "skill": row.skill,
+            "title": row.title,
+            "provider": row.provider or "",
+            "type": row.type,
+            "url": row.url,
+        }, row.skill))
+    return out
+
+
 def learning_plan(
     profile: dict[str, Any],
     jobs: list[Any],
     taxonomy: Optional[SkillsTaxonomy] = None,
     careers: Optional[list[Any]] = None,
+    enrollments: Optional[list[Any]] = None,
+    admin_resources: Optional[dict[str, list[dict[str, Any]]]] = None,
+    resources_map: Optional[dict[str, list[dict[str, Any]]]] = None,
 ) -> dict[str, Any]:
     """Plan d'apprentissage PERSONNALISÉ :
     - maintenant : écarts des métiers recommandés (le domaine visé) ;
     - perfectionner : ressources sur ses acquis (son domaine actuel) ;
     - ensuite : autres écarts face aux offres actives ;
-    - progression : vérifiable (preuves)."""
-    resources_map = load_resources()
+    - progression : vérifiable (preuves, formations suivies comprises)."""
+    if resources_map is None:
+        resources_map = load_resources()
+        if admin_resources:
+            merged = dict(resources_map)
+            for skill, items in admin_resources.items():
+                merged[skill] = resources_map.get(skill, []) + items
+            resources_map = merged
     profile_skills = profile.get("skills", []) if profile else []
 
     # ----------------------------------------------------------
@@ -242,7 +392,7 @@ def learning_plan(
             "resources": _diversify(resources_map.get(name, [])),
         })
 
-    progress = build_progress(profile, jobs, taxonomy) if profile else []
+    progress = build_progress(profile, jobs, taxonomy, enrollments) if profile else []
 
     return {
         "learn_now": learn_now,

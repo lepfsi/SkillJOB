@@ -1,46 +1,53 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { api } from "../../api/client.js";
-import { fmtDate } from "../../lib.js";
+import { api, resourceHref } from "../../api/client.js";
+import { fmtDate, fmtDateTime } from "../../lib.js";
+import ContactDialog from "../../components/ContactDialog.jsx";
+import InterviewInviteDialog from "../../components/InterviewInviteDialog.jsx";
 import { Loader, ErrorNote, Empty } from "../../components/ui.jsx";
 
 // Shortlists (§20, V2) : listes de candidats présélectionnés par le
 // recruteur, isolées entre entreprises.
 
-function ShortlistCard({ sl, onChanged }) {
+const INVITE_LABELS = {
+  pending: "Invitation en attente",
+  accepted: "Créneau accepté",
+  declined: "Autre créneau demandé",
+};
+
+function ShortlistCard({ sl, onChanged, invites, onInvitesChanged }) {
   const navigate = useNavigate();
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [contactTarget, setContactTarget] = useState(null);
+  const [inviteTarget, setInviteTarget] = useState(null);
+
+  const latestInvite = (candidateId) => (invites || [])
+    .filter((row) => row.candidate_id === candidateId)
+    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
 
   async function removeItem(candidateId) {
     setBusy(true);
+    setError("");
     try {
       await api(`/recruiter/shortlists/${sl.id}/items/${candidateId}`, { method: "DELETE" });
       onChanged();
+    } catch (err) {
+      setError(err.detail);
     } finally {
       setBusy(false);
-    }
-  }
-
-  async function contact(candidateId) {
-    const body = window.prompt(
-      "Message au candidat :",
-      "Bonjour, vous figurez sur notre présélection. Êtes-vous disponible pour un échange ?"
-    );
-    if (!body) return;
-    try {
-      await api("/messages", { method: "POST", body: { recipient_id: candidateId, body } });
-      navigate(`/messages/${candidateId}`);
-    } catch {
-      // la page messages affichera l'erreur
     }
   }
 
   async function removeList() {
     if (!window.confirm(`Supprimer la shortlist « ${sl.name} » ?`)) return;
     setBusy(true);
+    setError("");
     try {
       await api(`/recruiter/shortlists/${sl.id}`, { method: "DELETE" });
       onChanged();
+    } catch (err) {
+      setError(err.detail);
     } finally {
       setBusy(false);
     }
@@ -55,56 +62,97 @@ function ShortlistCard({ sl, onChanged }) {
         </span>
       </div>
       {sl.note && <p className="small muted">{sl.note}</p>}
+      <ErrorNote error={error} />
       {sl.items.length === 0 ? (
         <p className="muted small">
           Shortlist vide : ajoutez des candidats depuis la recherche de talents.
         </p>
       ) : (
-        sl.items.map((item) => (
-          <div className="app-row" key={item.candidate_id}>
-            <div className="app-head">
-              <div>
-                <strong>{item.name}</strong>
-                {item.verified && (
-                  <span className="verified-chip" style={{ marginLeft: "0.5rem" }}>Vérifié</span>
-                )}
-                <p className="small muted" style={{ margin: 0 }}>
-                  Ajouté le {fmtDate(item.added_at)}
-                </p>
-              </div>
-              <div className="actions-row" style={{ marginTop: 0 }}>
-                <button
-                  className="btn btn-outline btn-small"
-                  onClick={() => navigate(`/recruteur/candidats/${item.candidate_id}`)}
-                >
-                  Voir la carte
-                </button>
-                <button className="btn btn-primary btn-small" onClick={() => contact(item.candidate_id)}>
-                  Contacter
-                </button>
-                <button
-                  className="btn btn-remove btn-small"
-                  onClick={() => removeItem(item.candidate_id)}
-                  disabled={busy}
-                >
-                  Retirer
-                </button>
+        sl.items.map((item) => {
+          const last = latestInvite(item.candidate_id);
+          return (
+            <div className="app-row" key={item.candidate_id}>
+              <div className="app-head">
+                <div>
+                  <strong>{item.name}</strong>
+                  {item.verified && (
+                    <span className="verified-chip" style={{ marginLeft: "0.5rem" }}>Vérifié</span>
+                  )}
+                  <p className="small muted" style={{ margin: 0 }}>
+                    Ajouté le {fmtDate(item.added_at)}
+                  </p>
+                  {last && (
+                    <p className={`small invite-status invite-status-${last.status}`}>
+                      {INVITE_LABELS[last.status]} · {fmtDateTime(last.slot_at)}
+                      {last.status === "declined" && last.candidate_note
+                        ? ` · « ${last.candidate_note} »`
+                        : ""}
+                    </p>
+                  )}
+                </div>
+                <div className="actions-row" style={{ marginTop: 0 }}>
+                  <button
+                    className="btn btn-outline btn-small"
+                    onClick={() => navigate(`/recruteur/candidats/${item.candidate_id}`)}
+                  >
+                    Voir la carte
+                  </button>
+                  <button
+                    className="btn btn-outline btn-small"
+                    onClick={() => setContactTarget({ user_id: item.candidate_id, full_name: item.name })}
+                  >
+                    Contacter
+                  </button>
+                  <button
+                    className="btn btn-primary btn-small"
+                    onClick={() => setInviteTarget({ user_id: item.candidate_id, full_name: item.name })}
+                  >
+                    Inviter en entretien
+                  </button>
+                  {last?.calendar_url && (
+                    <a
+                      className="btn btn-ghost btn-small"
+                      href={resourceHref(last.calendar_url)}
+                      title="Télécharger le créneau au format calendrier"
+                    >
+                      Calendrier (.ics)
+                    </a>
+                  )}
+                  <button
+                    className="btn btn-remove btn-small"
+                    onClick={() => removeItem(item.candidate_id)}
+                    disabled={busy}
+                  >
+                    Retirer
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        ))
+          );
+        })
       )}
       <div className="actions-row">
         <button className="btn btn-ghost btn-small" onClick={removeList} disabled={busy}>
           Supprimer la shortlist
         </button>
       </div>
+      {contactTarget && (
+        <ContactDialog candidate={contactTarget} onClose={() => setContactTarget(null)} />
+      )}
+      {inviteTarget && (
+        <InterviewInviteDialog
+          candidate={inviteTarget}
+          onClose={() => setInviteTarget(null)}
+          onSent={() => onInvitesChanged?.()}
+        />
+      )}
     </section>
   );
 }
 
 export default function RecruiterShortlists() {
   const [lists, setLists] = useState(null);
+  const [invites, setInvites] = useState([]);
   const [name, setName] = useState("");
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
@@ -114,8 +162,15 @@ export default function RecruiterShortlists() {
     api("/recruiter/shortlists").then(setLists).catch((e) => setError(e.detail));
   };
 
+  const reloadInvites = () => {
+    api("/recruiter/interviews")
+      .then((rows) => setInvites(rows || []))
+      .catch(() => setInvites([]));
+  };
+
   useEffect(() => {
     reload();
+    reloadInvites();
   }, []);
 
   async function create(e) {
@@ -175,7 +230,13 @@ export default function RecruiterShortlists() {
         </Empty>
       )}
       {lists.map((sl) => (
-        <ShortlistCard key={sl.id} sl={sl} onChanged={reload} />
+        <ShortlistCard
+          key={sl.id}
+          sl={sl}
+          onChanged={reload}
+          invites={invites}
+          onInvitesChanged={reloadInvites}
+        />
       ))}
     </div>
   );

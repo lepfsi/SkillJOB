@@ -1,9 +1,10 @@
 """Store de paramètres d'administration (table ``settings``).
 
-Groupes : ``smtp`` (notifications e-mail), ``llm`` (assistant IA),
-``aggregators`` (Telegram, WhatsApp). Les secrets ne sont jamais
-renvoyés en clair : seule la présence (`*_set`) est exposée, et une
-valeur vide soumise conserve le secret existant.
+Groupes : ``smtp`` (notifications e-mail), ``inbound`` (réception des
+candidatures par e-mail), ``llm`` (assistant IA), ``aggregators``
+(Telegram, WhatsApp), ``notifications`` (digest). Les secrets ne sont
+jamais renvoyés en clair : seule la présence (`*_set`) est exposée, et
+une valeur vide soumise conserve le secret existant.
 """
 import json
 from typing import Any
@@ -13,7 +14,9 @@ from sqlalchemy.orm import Session
 from app import models
 
 # Clés sensibles : masquées en lecture, non écrasées si soumises vides.
-SECRET_KEYS = {"password", "api_key", "bot_token"}
+SECRET_KEYS = {
+    "password", "api_key", "bot_token", "imap_password", "webhook_secret",
+}
 
 DEFAULTS: dict[str, dict[str, Any]] = {
     "smtp": {
@@ -24,6 +27,23 @@ DEFAULTS: dict[str, dict[str, Any]] = {
         "from_email": "",
         "use_tls": True,
         "enabled": False,
+    },
+    "inbound": {
+        # Boîte de réception des candidatures (adresse affichée sur le
+        # visuel public). Deux modes : relève IMAP ou webhook fournisseur.
+        "enabled": False,
+        "address": "",
+        "protocol": "imap",           # "imap" | "webhook"
+        "imap_host": "",
+        "imap_port": 993,
+        "imap_username": "",
+        "imap_password": "",
+        "imap_use_ssl": True,
+        "imap_mailbox": "INBOX",
+        "poll_seconds": 120,
+        "webhook_secret": "",
+        # Adresse de secours si l'offre ne porte aucune adresse RH.
+        "fallback_email": "",
     },
     "llm": {
         "provider": "rules",          # "rules" | "openai"
@@ -53,6 +73,11 @@ def _mask(group: str, value: dict[str, Any]) -> dict[str, Any]:
     elif group == "smtp":
         out["password_set"] = bool(value.get("password"))
         out["password"] = "<set>" if value.get("password") else ""
+    elif group == "inbound":
+        out["imap_password_set"] = bool(value.get("imap_password"))
+        out["imap_password"] = "<set>" if value.get("imap_password") else ""
+        out["webhook_secret_set"] = bool(value.get("webhook_secret"))
+        out["webhook_secret"] = "<set>" if value.get("webhook_secret") else ""
     elif group == "aggregators":
         for chan in ("telegram", "whatsapp"):
             if chan in out:

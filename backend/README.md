@@ -1,4 +1,4 @@
-# OrientSkill AI — Backend MVP
+# OrientSkill AI : Backend MVP
 
 Plateforme d'intelligence professionnelle pour jeunes Camerounais (projet MINJEC).
 Backend FastAPI + SQLAlchemy 2 (SQLite) + Pydantic v2, conforme au contrat
@@ -14,7 +14,7 @@ pip install -r requirements.txt
 python -m app.main              # crée skilljob.db + seed automatique si base vide
 ```
 
-L'API écoute sur http://localhost:8000 (docs interactive : `/docs`).
+L'API écoute sur http://localhost:8110 (docs interactive : `/docs`).
 
 Au premier démarrage, `python -m app.main` (ou uvicorn) :
 - crée les tables SQLite (`backend/skilljob.db`) ;

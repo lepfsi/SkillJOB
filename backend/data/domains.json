@@ -1,0 +1,518 @@
+[
+  {
+    "slug": "informatique-numerique",
+    "name": "Informatique et numérique",
+    "description": "Développement, réseaux, données, cybersécurité et usages numériques.",
+    "aliases": ["Informatique / IT", "Informatique", "IT", "Numérique", "Technologies de l'information"],
+    "sort_order": 10,
+    "specialties": [
+      { "slug": "developpement-web", "name": "Développement web", "aliases": ["Web", "Front-end", "Back-end"] },
+      { "slug": "developpement-mobile", "name": "Développement mobile", "aliases": ["Android", "iOS"] },
+      { "slug": "developpement-logiciel", "name": "Développement logiciel", "aliases": ["Génie logiciel", "Programmation"] },
+      { "slug": "data-science-ia", "name": "Data science et intelligence artificielle", "aliases": ["Data", "IA", "Machine learning"] },
+      { "slug": "cybersecurite", "name": "Cybersécurité", "aliases": ["Sécurité informatique", "SOC"] },
+      { "slug": "cloud-devops", "name": "Cloud et DevOps", "aliases": ["Cloud", "DevOps", "Azure", "AWS"] },
+      { "slug": "reseaux-systemes", "name": "Réseaux et systèmes", "aliases": ["Réseaux", "Administration système", "Support IT"] },
+      { "slug": "support-helpdesk", "name": "Support et helpdesk", "aliases": ["Support informatique", "Assistance utilisateur"] },
+      { "slug": "bases-de-donnees", "name": "Administration de bases de données", "aliases": ["DBA", "SQL"] },
+      { "slug": "tests-qualite", "name": "Tests et assurance qualité", "aliases": ["QA", "Test logiciel"] },
+      { "slug": "ui-ux", "name": "UI et UX design", "aliases": ["UX", "UI", "Design produit"] },
+      { "slug": "gestion-produit", "name": "Gestion de produit numérique", "aliases": ["Product owner", "Product manager"] },
+      { "slug": "transformation-digitale", "name": "Transformation digitale", "aliases": ["Digitalisation", "SI"] },
+      { "slug": "jeux-video", "name": "Jeux vidéo", "aliases": ["Game design", "Game dev"] },
+      { "slug": "blockchain", "name": "Blockchain et technologies distribuées", "aliases": ["Web3"] },
+      { "slug": "informatique-embarquee", "name": "Informatique embarquée et objets connectés", "aliases": ["IoT", "Embarqué"] },
+      { "slug": "pedagogie-numerique", "name": "Pédagogie et formation numérique", "aliases": ["E-learning", "Formation IT"] },
+      { "slug": "administration-systemes", "name": "Administration systèmes", "aliases": ["Sysadmin", "Windows Server", "Linux", "Virtualisation", "Active Directory"] },
+      { "slug": "reseaux-telecoms", "name": "Réseaux et télécommunications", "aliases": ["Networking", "Cisco", "Routage", "Switching", "Fibre optique"] },
+      { "slug": "intelligence-artificielle", "name": "Intelligence artificielle", "aliases": ["IA", "Machine learning", "Deep learning", "NLP", "Computer vision"] },
+      { "slug": "data-science-analytics", "name": "Data science et analytics", "aliases": ["Data analyst", "Business intelligence", "Statistiques", "Power BI", "Tableau"] },
+      { "slug": "ingenierie-donnees", "name": "Ingénierie des données", "aliases": ["Data engineer", "ETL", "Big data", "Data pipeline", "Hadoop", "Spark"] },
+      { "slug": "genie-logiciel", "name": "Génie logiciel", "aliases": ["Software engineering", "Architecture logicielle", "Microservices"] },
+      { "slug": "analyse-programme", "name": "Analyse programme et besoins", "aliases": ["Business analyst", "Analyste fonctionnel", "Cahier des charges"] },
+      { "slug": "autre-informatique", "name": "Autre spécialité informatique", "aliases": [] }
+    ]
+  },
+  {
+    "slug": "comptabilite-finance-assurance",
+    "name": "Comptabilité, finance et assurance",
+    "description": "Comptabilité, audit, fiscalité, finance et métiers de l'assurance.",
+    "aliases": ["Comptabilité", "Finance", "Assurance", "Comptabilité / Finance"],
+    "sort_order": 20,
+    "specialties": [
+      { "slug": "comptabilite-generale", "name": "Comptabilité générale", "aliases": ["Compta", "SYSCOHADA"] },
+      { "slug": "comptabilite-analytique", "name": "Comptabilité analytique", "aliases": ["Contrôle analytique"] },
+      { "slug": "audit", "name": "Audit interne et externe", "aliases": ["Audit financier"] },
+      { "slug": "controle-gestion", "name": "Contrôle de gestion", "aliases": ["Management control"] },
+      { "slug": "fiscalite", "name": "Fiscalité", "aliases": ["Impôts", "Fiscaliste"] },
+      { "slug": "paie", "name": "Paie et déclarations sociales", "aliases": ["Gestion de la paie"] },
+      { "slug": "finance-entreprise", "name": "Finance d'entreprise", "aliases": ["Corporate finance"] },
+      { "slug": "analyse-financiere", "name": "Analyse financière", "aliases": ["Analyse de crédit"] },
+      { "slug": "assurance", "name": "Assurance", "aliases": ["Assurance dommages", "Assurance vie"] },
+      { "slug": "actuariat", "name": "Actuariat", "aliases": ["Actuaire"] },
+      { "slug": "tresorerie", "name": "Trésorerie", "aliases": ["Cash management"] },
+      { "slug": "normes-ifrs", "name": "Normes comptables internationales", "aliases": ["IFRS", "OHADA"] },
+      { "slug": "gestion-risques-financiers", "name": "Gestion des risques financiers", "aliases": ["Risk management"] },
+      { "slug": "autre-comptabilite-finance", "name": "Autre spécialité comptabilité ou finance", "aliases": [] }
+    ]
+  },
+  {
+    "slug": "banque-microfinance",
+    "name": "Banque et microfinance",
+    "description": "Opérations bancaires, crédit, microfinance et services financiers.",
+    "aliases": ["Banque", "Microfinance", "Services financiers"],
+    "sort_order": 30,
+    "specialties": [
+      { "slug": "operations-bancaires", "name": "Opérations bancaires", "aliases": ["Guichet", "Back office"] },
+      { "slug": "credit", "name": "Crédit et analyse de dossier", "aliases": ["Chargé de crédit"] },
+      { "slug": "microfinance", "name": "Microfinance", "aliases": ["Institution de microfinance", "IMF"] },
+      { "slug": "recouvrement", "name": "Recouvrement", "aliases": ["Contentieux client"] },
+      { "slug": "monetique", "name": "Monétique et moyens de paiement", "aliases": ["Cartes bancaires", "Mobile money"] },
+      { "slug": "banque-digitale", "name": "Banque digitale", "aliases": ["Fintech", "Néobanque"] },
+      { "slug": "conformite-kyc", "name": "Conformité et KYC", "aliases": ["Lutte anti-blanchiment", "KYC"] },
+      { "slug": "relation-client-bancaire", "name": "Relation client bancaire", "aliases": ["Conseiller clientèle"] },
+      { "slug": "tresorerie-bancaire", "name": "Trésorerie et marchés", "aliases": ["Salle de marché"] },
+      { "slug": "autre-banque", "name": "Autre spécialité banque", "aliases": [] }
+    ]
+  },
+  {
+    "slug": "sante-soins",
+    "name": "Santé et soins",
+    "description": "Médecine, soins, pharmacie, laboratoire et administration de la santé.",
+    "aliases": ["Santé", "Médical", "Soins"],
+    "sort_order": 40,
+    "specialties": [
+      { "slug": "medecine-generale", "name": "Médecine générale", "aliases": ["Médecin"] },
+      { "slug": "soins-infirmiers", "name": "Soins infirmiers", "aliases": ["Infirmier", "Infirmière"] },
+      { "slug": "pharmacie", "name": "Pharmacie", "aliases": ["Pharmacien"] },
+      { "slug": "laboratoire", "name": "Laboratoire d'analyses", "aliases": ["Biologie médicale"] },
+      { "slug": "imagerie-medicale", "name": "Imagerie médicale", "aliases": ["Radiologie"] },
+      { "slug": "kinesitherapie", "name": "Kinésithérapie et rééducation", "aliases": ["Kiné"] },
+      { "slug": "sante-publique", "name": "Santé publique", "aliases": ["Épidémiologie"] },
+      { "slug": "sage-femme", "name": "Maïeutique et sage-femme", "aliases": ["Sage-femme"] },
+      { "slug": "dentisterie", "name": "Dentisterie", "aliases": ["Chirurgie dentaire"] },
+      { "slug": "nutrition", "name": "Nutrition et diététique", "aliases": ["Nutritionniste"] },
+      { "slug": "logistique-medicale", "name": "Logistique médicale", "aliases": ["Approvisionnement pharmaceutique"] },
+      { "slug": "administration-hospitaliere", "name": "Administration hospitalière", "aliases": ["Gestion d'établissement de santé"] },
+      { "slug": "autre-sante", "name": "Autre spécialité santé", "aliases": [] }
+    ]
+  },
+  {
+    "slug": "education-formation",
+    "name": "Éducation et formation",
+    "description": "Enseignement, ingénierie pédagogique et formation professionnelle.",
+    "aliases": ["Éducation", "Enseignement", "Formation"],
+    "sort_order": 50,
+    "specialties": [
+      { "slug": "enseignement-primaire", "name": "Enseignement primaire", "aliases": ["Instituteur"] },
+      { "slug": "enseignement-secondaire", "name": "Enseignement secondaire", "aliases": ["Professeur de lycée"] },
+      { "slug": "enseignement-superieur", "name": "Enseignement supérieur", "aliases": ["Université", "Chargé de cours"] },
+      { "slug": "formation-professionnelle", "name": "Formation professionnelle", "aliases": ["Formateur", "CFP"] },
+      { "slug": "ingenierie-pedagogique", "name": "Ingénierie pédagogique", "aliases": ["Conception de formation"] },
+      { "slug": "orientation-scolaire", "name": "Orientation scolaire et professionnelle", "aliases": ["Conseiller d'orientation"] },
+      { "slug": "e-learning", "name": "E-learning et formation à distance", "aliases": ["FOAD", "Cours en ligne"] },
+      { "slug": "education-specialisee", "name": "Éducation spécialisée", "aliases": ["Enfants à besoins spécifiques"] },
+      { "slug": "administration-scolaire", "name": "Administration scolaire", "aliases": ["Vie scolaire", "Scolarité"] },
+      { "slug": "alphabetisation", "name": "Alphabétisation et éducation de base", "aliases": ["Éducation non formelle"] },
+      { "slug": "autre-education", "name": "Autre spécialité éducation", "aliases": [] }
+    ]
+  },
+  {
+    "slug": "batiment-travaux-publics",
+    "name": "Bâtiment et travaux publics",
+    "description": "Construction, génie civil, architecture et conduite de chantier.",
+    "aliases": ["BTP", "Bâtiment", "Génie civil", "Travaux publics"],
+    "sort_order": 60,
+    "specialties": [
+      { "slug": "genie-civil", "name": "Génie civil", "aliases": ["Ingénieur civil"] },
+      { "slug": "genie-routier", "name": "Génie routier", "aliases": ["Routes", "Voirie"] },
+      { "slug": "construction-metallique", "name": "Construction métallique", "aliases": ["Charpente métallique"] },
+      { "slug": "maconnerie", "name": "Maçonnerie", "aliases": ["Maçon"] },
+      { "slug": "electricite-batiment", "name": "Électricité bâtiment", "aliases": ["Installation électrique"] },
+      { "slug": "plomberie", "name": "Plomberie et sanitaire", "aliases": ["Plombier"] },
+      { "slug": "menuiserie", "name": "Menuiserie", "aliases": ["Menuisier"] },
+      { "slug": "peinture-batiment", "name": "Peinture bâtiment", "aliases": ["Peintre"] },
+      { "slug": "topographie", "name": "Topographie", "aliases": ["Géomètre"] },
+      { "slug": "architecture", "name": "Architecture", "aliases": ["Architecte"] },
+      { "slug": "urbanisme", "name": "Urbanisme et aménagement", "aliases": ["Planification urbaine"] },
+      { "slug": "conduite-chantier", "name": "Conduite de chantier", "aliases": ["Chef de chantier"] },
+      { "slug": "hse-chantier", "name": "Santé et sécurité sur chantier", "aliases": ["HSE", "Prévention"] },
+      { "slug": "autre-btp", "name": "Autre spécialité BTP", "aliases": [] }
+    ]
+  },
+  {
+    "slug": "agriculture-elevage-peche",
+    "name": "Agriculture, élevage et pêche",
+    "description": "Production agricole, élevage, pêche et développement rural.",
+    "aliases": ["Agriculture", "Élevage", "Pêche", "Agronomie"],
+    "sort_order": 70,
+    "specialties": [
+      { "slug": "agronomie", "name": "Agronomie", "aliases": ["Ingénieur agronome"] },
+      { "slug": "production-vegetale", "name": "Production végétale", "aliases": ["Cultures", "Maraîchage"] },
+      { "slug": "elevage", "name": "Élevage", "aliases": ["Zootechnie", "Bovins", "Volaille"] },
+      { "slug": "pisciculture", "name": "Pisciculture", "aliases": ["Aquaculture"] },
+      { "slug": "apiculture", "name": "Apiculture", "aliases": ["Apiculteur"] },
+      { "slug": "sylviculture", "name": "Sylviculture et foresterie", "aliases": ["Forêt"] },
+      { "slug": "irrigation", "name": "Irrigation et maîtrise de l'eau", "aliases": ["Agriculture irriguée"] },
+      { "slug": "mecanisation-agricole", "name": "Mécanisation agricole", "aliases": ["Machinisme"] },
+      { "slug": "semences", "name": "Semences et amélioration variétale", "aliases": ["Production de semences"] },
+      { "slug": "protection-phytosanitaire", "name": "Protection phytosanitaire", "aliases": ["Défense des cultures"] },
+      { "slug": "cooperative-agricole", "name": "Organisation et gestion coopérative", "aliases": ["Coopérative"] },
+      { "slug": "technicien-agricole", "name": "Technicien agricole", "aliases": ["Conseiller agricole"] },
+      { "slug": "autre-agriculture", "name": "Autre spécialité agricole", "aliases": [] }
+    ]
+  },
+  {
+    "slug": "agroalimentaire",
+    "name": "Agroalimentaire et transformation",
+    "description": "Transformation des produits, qualité, production et distribution alimentaire.",
+    "aliases": ["Agroalimentaire", "Transformation", "Industrie alimentaire"],
+    "sort_order": 80,
+    "specialties": [
+      { "slug": "transformation-alimentaire", "name": "Transformation alimentaire", "aliases": ["Transformation des produits"] },
+      { "slug": "qualite-alimentaire", "name": "Contrôle qualité alimentaire", "aliases": ["HACCP", "Qualité"] },
+      { "slug": "production-alimentaire", "name": "Production alimentaire", "aliases": ["Ligne de production"] },
+      { "slug": "packaging", "name": "Conditionnement et packaging", "aliases": ["Emballage"] },
+      { "slug": "conservation", "name": "Conservation et chaîne du froid", "aliases": ["Froid alimentaire"] },
+      { "slug": "nutrition-animale", "name": "Nutrition animale", "aliases": ["Provende"] },
+      { "slug": "brasserie", "name": "Brasserie et boissons", "aliases": ["Boissons"] },
+      { "slug": "boulangerie", "name": "Boulangerie et pâtisserie industrielle", "aliases": ["Boulanger"] },
+      { "slug": "fromagerie", "name": "Laiterie et fromagerie", "aliases": ["Produits laitiers"] },
+      { "slug": "logistique-alimentaire", "name": "Logistique alimentaire", "aliases": ["Distribution alimentaire"] },
+      { "slug": "autre-agroalimentaire", "name": "Autre spécialité agroalimentaire", "aliases": [] }
+    ]
+  },
+  {
+    "slug": "commerce-vente-distribution",
+    "name": "Commerce, vente et distribution",
+    "description": "Vente, achat, commerce de détail et distribution.",
+    "aliases": ["Commerce", "Vente", "Distribution", "Commercial"],
+    "sort_order": 90,
+    "specialties": [
+      { "slug": "vente", "name": "Vente", "aliases": ["Commercial", "Vendeur"] },
+      { "slug": "commerce-detail", "name": "Commerce de détail", "aliases": ["Retail"] },
+      { "slug": "commerce-gros", "name": "Commerce de gros", "aliases": ["Grossiste"] },
+      { "slug": "achat", "name": "Achat et approvisionnement", "aliases": ["Acheteur"] },
+      { "slug": "merchandising", "name": "Merchandising", "aliases": ["Mise en rayon"] },
+      { "slug": "e-commerce", "name": "E-commerce", "aliases": ["Vente en ligne"] },
+      { "slug": "relation-client", "name": "Relation client", "aliases": ["Service client"] },
+      { "slug": "caisse", "name": "Caisse et encaissement", "aliases": ["Caissier"] },
+      { "slug": "management-magasin", "name": "Management de magasin", "aliases": ["Responsable de magasin"] },
+      { "slug": "export", "name": "Commerce international et export", "aliases": ["Import-export"] },
+      { "slug": "autre-commerce", "name": "Autre spécialité commerce", "aliases": [] }
+    ]
+  },
+  {
+    "slug": "marketing-communication-medias",
+    "name": "Marketing, communication et médias",
+    "description": "Marketing, communication, journalisme, création et production de contenus.",
+    "aliases": ["Marketing", "Communication", "Médias", "Journalisme"],
+    "sort_order": 100,
+    "specialties": [
+      { "slug": "marketing-digital", "name": "Marketing digital", "aliases": ["Digital marketing"] },
+      { "slug": "community-management", "name": "Community management", "aliases": ["Réseaux sociaux"] },
+      { "slug": "communication-institutionnelle", "name": "Communication institutionnelle", "aliases": ["Communication corporate"] },
+      { "slug": "publicite", "name": "Publicité", "aliases": ["Agence de publicité"] },
+      { "slug": "journalisme", "name": "Journalisme", "aliases": ["Presse", "Rédaction"] },
+      { "slug": "radio-television", "name": "Radio et télévision", "aliases": ["Audiovisuel"] },
+      { "slug": "photographie", "name": "Photographie", "aliases": ["Photo"] },
+      { "slug": "montage-video", "name": "Montage vidéo", "aliases": ["Vidéo", "Post-production"] },
+      { "slug": "relations-presse", "name": "Relations presse", "aliases": ["RP"] },
+      { "slug": "evenementiel", "name": "Événementiel", "aliases": ["Organisation d'événements"] },
+      { "slug": "seo-sea", "name": "Référencement et publicité en ligne", "aliases": ["SEO", "SEA"] },
+      { "slug": "branding", "name": "Image de marque", "aliases": ["Branding", "Identité visuelle"] },
+      { "slug": "traduction", "name": "Traduction et interprétation", "aliases": ["Traducteur"] },
+      { "slug": "autre-marketing-communication", "name": "Autre spécialité marketing ou communication", "aliases": [] }
+    ]
+  },
+  {
+    "slug": "ressources-humaines-administration",
+    "name": "Ressources humaines et administration",
+    "description": "Recrutement, gestion du personnel, administration et assistance de direction.",
+    "aliases": ["Ressources humaines", "RH", "Administration", "Secrétariat"],
+    "sort_order": 110,
+    "specialties": [
+      { "slug": "recrutement", "name": "Recrutement", "aliases": ["Talent acquisition"] },
+      { "slug": "gestion-administrative-rh", "name": "Gestion administrative du personnel", "aliases": ["Administration RH"] },
+      { "slug": "paie-rh", "name": "Paie et administration sociale", "aliases": ["Gestion de paie"] },
+      { "slug": "formation-rh", "name": "Formation et développement des compétences", "aliases": ["L&D"] },
+      { "slug": "developpement-rh", "name": "Développement RH", "aliases": ["Talent management"] },
+      { "slug": "relations-sociales", "name": "Relations sociales", "aliases": ["Dialogue social"] },
+      { "slug": "qhse", "name": "Qualité, hygiène, sécurité et environnement", "aliases": ["QHSE", "HSE"] },
+      { "slug": "secretariat", "name": "Secrétariat", "aliases": ["Assistant administratif"] },
+      { "slug": "assistance-direction", "name": "Assistance de direction", "aliases": ["Office manager"] },
+      { "slug": "archivage", "name": "Archivage et gestion documentaire", "aliases": ["Records management"] },
+      { "slug": "autre-rh-administration", "name": "Autre spécialité RH ou administration", "aliases": [] }
+    ]
+  },
+  {
+    "slug": "droit-justice-conformite",
+    "name": "Droit, justice et conformité",
+    "description": "Droit des affaires, droit social, contentieux et conformité.",
+    "aliases": ["Droit", "Juridique", "Justice", "Conformité"],
+    "sort_order": 120,
+    "specialties": [
+      { "slug": "droit-affaires", "name": "Droit des affaires", "aliases": ["Droit commercial"] },
+      { "slug": "droit-social", "name": "Droit social", "aliases": ["Droit du travail"] },
+      { "slug": "droit-fiscal", "name": "Droit fiscal", "aliases": ["Fiscalité"] },
+      { "slug": "droit-civil", "name": "Droit civil", "aliases": ["Droit privé"] },
+      { "slug": "droit-penal", "name": "Droit pénal", "aliases": ["Pénal"] },
+      { "slug": "contentieux", "name": "Contentieux et procédures", "aliases": ["Litiges"] },
+      { "slug": "conformite", "name": "Conformité et réglementation", "aliases": ["Compliance"] },
+      { "slug": "propriete-intellectuelle", "name": "Propriété intellectuelle", "aliases": ["Brevets", "Marques"] },
+      { "slug": "notariat", "name": "Notariat", "aliases": ["Notaire"] },
+      { "slug": "huissier", "name": "Métiers d'huissier", "aliases": ["Exécution"] },
+      { "slug": "juriste-entreprise", "name": "Juriste d'entreprise", "aliases": ["Legal counsel"] },
+      { "slug": "autre-droit", "name": "Autre spécialité juridique", "aliases": [] }
+    ]
+  },
+  {
+    "slug": "industrie-maintenance-mecanique",
+    "name": "Industrie, maintenance et mécanique",
+    "description": "Production industrielle, maintenance, mécanique et automatisme.",
+    "aliases": ["Industrie", "Maintenance", "Mécanique", "Production industrielle"],
+    "sort_order": 130,
+    "specialties": [
+      { "slug": "maintenance-industrielle", "name": "Maintenance industrielle", "aliases": ["Maintenance préventive"] },
+      { "slug": "mecanique", "name": "Mécanique", "aliases": ["Mécanicien"] },
+      { "slug": "electromecanique", "name": "Électromécanique", "aliases": ["Électromécanicien"] },
+      { "slug": "electricite-industrielle", "name": "Électricité industrielle", "aliases": ["Électricien industriel"] },
+      { "slug": "automatisme", "name": "Automatisme et contrôle", "aliases": ["Automatique", "API"] },
+      { "slug": "soudure", "name": "Soudure", "aliases": ["Soudeur"] },
+      { "slug": "usinage", "name": "Usinage", "aliases": ["Tournage", "Fraisage"] },
+      { "slug": "chaudronnerie", "name": "Chaudronnerie", "aliases": ["Chaudronnier"] },
+      { "slug": "froid-climatisation", "name": "Froid et climatisation", "aliases": ["Frigoriste"] },
+      { "slug": "production-industrielle", "name": "Production industrielle", "aliases": ["Chef de production"] },
+      { "slug": "qualite-industrielle", "name": "Qualité industrielle", "aliases": ["Contrôle qualité"] },
+      { "slug": "logistique-industrielle", "name": "Logistique industrielle", "aliases": ["Flux industriels"] },
+      { "slug": "autre-industrie", "name": "Autre spécialité industrielle", "aliases": [] }
+    ]
+  },
+  {
+    "slug": "energie-eau-environnement",
+    "name": "Énergie, eau et environnement",
+    "description": "Énergies, eau, assainissement, mines et gestion environnementale.",
+    "aliases": ["Énergie", "Eau", "Environnement", "Mines", "Pétrole"],
+    "sort_order": 140,
+    "specialties": [
+      { "slug": "energies-renouvelables", "name": "Énergies renouvelables", "aliases": ["Solaire", "Éolien", "Biomasse"] },
+      { "slug": "electricite", "name": "Électricité et réseaux électriques", "aliases": ["Électrotechnique"] },
+      { "slug": "hydroelectricite", "name": "Hydroélectricité", "aliases": ["Barrages"] },
+      { "slug": "petrole-gaz", "name": "Pétrole et gaz", "aliases": ["Oil and gas"] },
+      { "slug": "eau-assainissement", "name": "Eau et assainissement", "aliases": ["Hydraulique"] },
+      { "slug": "gestion-dechets", "name": "Gestion des déchets", "aliases": ["Recyclage"] },
+      { "slug": "climat-environnement", "name": "Climat et environnement", "aliases": ["Développement durable"] },
+      { "slug": "qhse-environnement", "name": "QHSE et environnement", "aliases": ["HSE"] },
+      { "slug": "efficacite-energetique", "name": "Efficacité énergétique", "aliases": ["Économies d'énergie"] },
+      { "slug": "geologie", "name": "Géologie", "aliases": ["Géologue"] },
+      { "slug": "mines", "name": "Mines et carrières", "aliases": ["Exploitation minière"] },
+      { "slug": "autre-energie-environnement", "name": "Autre spécialité énergie ou environnement", "aliases": [] }
+    ]
+  },
+  {
+    "slug": "transport-logistique",
+    "name": "Transport, logistique et supply chain",
+    "description": "Transport, transit, entreposage et chaîne d'approvisionnement.",
+    "aliases": ["Transport", "Logistique", "Supply chain", "Transit"],
+    "sort_order": 150,
+    "specialties": [
+      { "slug": "logistique", "name": "Logistique", "aliases": ["Gestion logistique"] },
+      { "slug": "supply-chain", "name": "Supply chain", "aliases": ["Chaîne d'approvisionnement"] },
+      { "slug": "transit-douanier", "name": "Transit et douane", "aliases": ["Déclarant en douane"] },
+      { "slug": "transport-routier", "name": "Transport routier", "aliases": ["Camionnage"] },
+      { "slug": "transport-maritime", "name": "Transport maritime", "aliases": ["Fret maritime"] },
+      { "slug": "entreposage", "name": "Entreposage", "aliases": ["Magasinage"] },
+      { "slug": "approvisionnement", "name": "Approvisionnement", "aliases": ["Achats logistiques"] },
+      { "slug": "distribution", "name": "Distribution", "aliases": ["Livraison"] },
+      { "slug": "conducteur-poids-lourd", "name": "Conduite de poids lourd", "aliases": ["Chauffeur poids lourd"] },
+      { "slug": "gestion-flotte", "name": "Gestion de flotte", "aliases": ["Parc automobile"] },
+      { "slug": "autre-transport-logistique", "name": "Autre spécialité transport ou logistique", "aliases": [] }
+    ]
+  },
+  {
+    "slug": "hotellerie-tourisme-restauration",
+    "name": "Hôtellerie, tourisme et restauration",
+    "description": "Hôtellerie, restauration, tourisme et loisirs.",
+    "aliases": ["Hôtellerie", "Tourisme", "Restauration", "Hôtellerie / Tourisme"],
+    "sort_order": 160,
+    "specialties": [
+      { "slug": "hotellerie", "name": "Hôtellerie", "aliases": ["Réception", "Hébergement"] },
+      { "slug": "restauration", "name": "Restauration", "aliases": ["Serveur", "Restauration commerciale"] },
+      { "slug": "cuisine", "name": "Cuisine", "aliases": ["Cuisinier", "Chef de cuisine"] },
+      { "slug": "patisserie", "name": "Pâtisserie", "aliases": ["Pâtissier"] },
+      { "slug": "service", "name": "Service en salle", "aliases": ["Maître d'hôtel"] },
+      { "slug": "tourisme", "name": "Tourisme", "aliases": ["Industrie touristique"] },
+      { "slug": "agence-voyage", "name": "Agence de voyage", "aliases": ["Forfait touristique"] },
+      { "slug": "guide-touristique", "name": "Guidage touristique", "aliases": ["Guide"] },
+      { "slug": "evenementiel-touristique", "name": "Événementiel touristique", "aliases": ["Écotourisme"] },
+      { "slug": "loisirs", "name": "Loisirs et animation", "aliases": ["Animation"] },
+      { "slug": "autre-hotellerie-tourisme", "name": "Autre spécialité hôtellerie ou tourisme", "aliases": [] }
+    ]
+  },
+  {
+    "slug": "art-design-artisanat",
+    "name": "Art, design et artisanat",
+    "description": "Création graphique, mode, artisanat, musique et production artistique.",
+    "aliases": ["Art", "Design", "Artisanat", "Création"],
+    "sort_order": 170,
+    "specialties": [
+      { "slug": "graphisme", "name": "Graphisme", "aliases": ["Design graphique"] },
+      { "slug": "mode", "name": "Mode", "aliases": ["Industrie de la mode"] },
+      { "slug": "stylisme", "name": "Stylisme", "aliases": ["Styliste"] },
+      { "slug": "couture", "name": "Couture", "aliases": ["Couturier"] },
+      { "slug": "menuiserie-art", "name": "Menuiserie d'art", "aliases": ["Ébénisterie"] },
+      { "slug": "sculpture", "name": "Sculpture", "aliases": ["Sculpteur"] },
+      { "slug": "ceramique", "name": "Céramique", "aliases": ["Poterie"] },
+      { "slug": "bijouterie", "name": "Bijouterie", "aliases": ["Joaillerie"] },
+      { "slug": "decoration", "name": "Décoration", "aliases": ["Décorateur"] },
+      { "slug": "peinture-art", "name": "Peinture artistique", "aliases": ["Arts plastiques"] },
+      { "slug": "musique", "name": "Musique", "aliases": ["Musicien"] },
+      { "slug": "cinema", "name": "Cinéma et production audiovisuelle", "aliases": ["Réalisation"] },
+      { "slug": "autre-art-artisanat", "name": "Autre spécialité artistique ou artisanale", "aliases": [] }
+    ]
+  },
+  {
+    "slug": "services-personne-action-sociale",
+    "name": "Services à la personne et action sociale",
+    "description": "Aide sociale, petite enfance, accompagnement et insertion.",
+    "aliases": ["Services à la personne", "Action sociale", "Social"],
+    "sort_order": 180,
+    "specialties": [
+      { "slug": "aide-sociale", "name": "Aide sociale", "aliases": ["Travail social"] },
+      { "slug": "aide-domicile", "name": "Aide à domicile", "aliases": ["Auxiliaire de vie"] },
+      { "slug": "petite-enfance", "name": "Petite enfance", "aliases": ["Crèche"] },
+      { "slug": "personnes-agees", "name": "Accompagnement des personnes âgées", "aliases": ["Gériatrie sociale"] },
+      { "slug": "handicap", "name": "Accompagnement du handicap", "aliases": ["Inclusion"] },
+      { "slug": "insertion", "name": "Insertion sociale et professionnelle", "aliases": ["Insertion"] },
+      { "slug": "mediation", "name": "Médiation sociale", "aliases": ["Médiateur"] },
+      { "slug": "conseil-social", "name": "Conseil social", "aliases": ["Assistant social"] },
+      { "slug": "autre-services-personne", "name": "Autre spécialité sociale", "aliases": [] }
+    ]
+  },
+  {
+    "slug": "securite-defense-urgences",
+    "name": "Sécurité, défense et urgences",
+    "description": "Sécurité privée, protection civile, secours et défense.",
+    "aliases": ["Sécurité", "Défense", "Urgences", "Protection civile"],
+    "sort_order": 190,
+    "specialties": [
+      { "slug": "securite-privee", "name": "Sécurité privée", "aliases": ["Agent de sécurité"] },
+      { "slug": "gardiennage", "name": "Gardiennage", "aliases": ["Vigile"] },
+      { "slug": "surete-physique", "name": "Sûreté physique et contrôle d'accès", "aliases": ["Contrôle d'accès"] },
+      { "slug": "protection-civile", "name": "Protection civile", "aliases": ["Sécurité civile"] },
+      { "slug": "pompiers", "name": "Pompiers", "aliases": ["Sapeur-pompier"] },
+      { "slug": "secourisme", "name": "Secourisme", "aliases": ["Premiers secours"] },
+      { "slug": "defense", "name": "Défense", "aliases": ["Militaire"] },
+      { "slug": "police", "name": "Police", "aliases": ["Police nationale"] },
+      { "slug": "douanes", "name": "Douanes", "aliases": ["Douanier"] },
+      { "slug": "gestion-crise", "name": "Gestion de crise", "aliases": ["Continuité d'activité"] },
+      { "slug": "autre-securite", "name": "Autre spécialité sécurité", "aliases": [] }
+    ]
+  },
+  {
+    "slug": "entrepreneuriat-gestion-projet",
+    "name": "Entrepreneuriat et gestion de projet",
+    "description": "Création d'entreprise, gestion de projet, innovation et économie sociale.",
+    "aliases": ["Entrepreneuriat", "Gestion de projet", "Innovation", "PME"],
+    "sort_order": 200,
+    "specialties": [
+      { "slug": "creation-entreprise", "name": "Création d'entreprise", "aliases": ["Entrepreneur"] },
+      { "slug": "gestion-projet", "name": "Gestion de projet", "aliases": ["Chef de projet"] },
+      { "slug": "business-plan", "name": "Business plan", "aliases": ["Plan d'affaires"] },
+      { "slug": "financement-entreprise", "name": "Financement de l'entreprise", "aliases": ["Levée de fonds"] },
+      { "slug": "incubation", "name": "Incubation et accélération", "aliases": ["Incubateur"] },
+      { "slug": "developpement-commercial", "name": "Développement commercial", "aliases": ["Business development"] },
+      { "slug": "gestion-associative", "name": "Gestion associative", "aliases": ["Association"] },
+      { "slug": "economie-sociale", "name": "Économie sociale et solidaire", "aliases": ["ESS"] },
+      { "slug": "innovation", "name": "Innovation et prototypage", "aliases": ["Innovation"] },
+      { "slug": "autre-entrepreneuriat", "name": "Autre spécialité entrepreneuriale", "aliases": [] }
+    ]
+  },
+  {
+    "slug": "administration-publique",
+    "name": "Administration publique et collectivités",
+    "description": "Administration, politiques publiques, finances publiques et marchés publics.",
+    "aliases": ["Administration publique", "Fonction publique", "Collectivités"],
+    "sort_order": 210,
+    "specialties": [
+      { "slug": "administration-generale", "name": "Administration générale", "aliases": ["Administration"] },
+      { "slug": "collectivites", "name": "Collectivités territoriales", "aliases": ["Commune", "Région"] },
+      { "slug": "politiques-publiques", "name": "Politiques publiques", "aliases": ["Évaluation des politiques"] },
+      { "slug": "marches-publics", "name": "Marchés publics", "aliases": ["Passation de marchés"] },
+      { "slug": "rh-publique", "name": "Ressources humaines publiques", "aliases": ["Gestion des agents publics"] },
+      { "slug": "finances-publiques", "name": "Finances publiques", "aliases": ["Budget public"] },
+      { "slug": "service-public", "name": "Service public", "aliases": ["Accueil du public"] },
+      { "slug": "diplomatie", "name": "Diplomatie et relations internationales", "aliases": ["Affaires étrangères"] },
+      { "slug": "statistiques", "name": "Statistiques et planification", "aliases": ["Démographie", "Planification"] },
+      { "slug": "autre-administration-publique", "name": "Autre spécialité administration publique", "aliases": [] }
+    ]
+  },
+  {
+    "slug": "immobilier",
+    "name": "Immobilier",
+    "description": "Transaction, gestion, promotion et expertise immobilière.",
+    "aliases": ["Immobilier", "Promotion immobilière"],
+    "sort_order": 220,
+    "specialties": [
+      { "slug": "transaction-immobiliere", "name": "Transaction immobilière", "aliases": ["Agent immobilier"] },
+      { "slug": "gestion-locative", "name": "Gestion locative", "aliases": ["Administration de biens"] },
+      { "slug": "promotion-immobiliere", "name": "Promotion immobilière", "aliases": ["Promoteur"] },
+      { "slug": "evaluation-immobiliere", "name": "Évaluation immobilière", "aliases": ["Expertise"] },
+      { "slug": "syndic", "name": "Syndic de copropriété", "aliases": ["Copropriété"] },
+      { "slug": "amenagement", "name": "Aménagement foncier", "aliases": ["Lotissement"] },
+      { "slug": "autre-immobilier", "name": "Autre spécialité immobilière", "aliases": [] }
+    ]
+  },
+  {
+    "slug": "sport-loisirs",
+    "name": "Sport et loisirs",
+    "description": "Encadrement sportif, animation, coaching et gestion d'équipements.",
+    "aliases": ["Sport", "Loisirs", "Animation sportive"],
+    "sort_order": 230,
+    "specialties": [
+      { "slug": "encadrement-sportif", "name": "Encadrement sportif", "aliases": ["Éducateur sportif"] },
+      { "slug": "animation", "name": "Animation", "aliases": ["Animateur"] },
+      { "slug": "coaching-sportif", "name": "Coaching sportif", "aliases": ["Préparateur physique"] },
+      { "slug": "gestion-salle", "name": "Gestion de salle de sport", "aliases": ["Fitness"] },
+      { "slug": "tourisme-sportif", "name": "Tourisme sportif", "aliases": ["Sports nature"] },
+      { "slug": "arbitrage", "name": "Arbitrage", "aliases": ["Arbitre"] },
+      { "slug": "autre-sport", "name": "Autre spécialité sportive", "aliases": [] }
+    ]
+  },
+  {
+    "slug": "secteur-informel",
+    "name": "Secteur informel",
+    "description": "Activités de terrain, artisanat, commerce et services de proximité.",
+    "aliases": ["Informel", "Secteur informel", "Activité informelle", "Petit commerce"],
+    "sort_order": 240,
+    "specialties": [
+      { "slug": "commerce-ambulant", "name": "Commerce ambulant", "aliases": ["Vente ambulante"] },
+      { "slug": "vente-marche", "name": "Vente sur les marchés", "aliases": ["Marché"] },
+      { "slug": "couture-informelle", "name": "Couture et retouches", "aliases": ["Couture"] },
+      { "slug": "reparation-mobile", "name": "Réparation de téléphones et accessoires", "aliases": ["Réparation mobile"] },
+      { "slug": "reparation-auto", "name": "Réparation automobile", "aliases": ["Garage"] },
+      { "slug": "coiffure", "name": "Coiffure et esthétique", "aliases": ["Salon de coiffure"] },
+      { "slug": "restauration-rue", "name": "Restauration de rue", "aliases": ["Cuisine de rue"] },
+      { "slug": "moto-taxi", "name": "Transport par moto-taxi", "aliases": ["Benskin"] },
+      { "slug": "artisanat-informel", "name": "Artisanat", "aliases": ["Artisan"] },
+      { "slug": "services-quartier", "name": "Services de quartier", "aliases": ["Petits services"] },
+      { "slug": "agriculture-vivriere", "name": "Agriculture vivrière", "aliases": ["Champ familial"] },
+      { "slug": "petites-productions", "name": "Petites productions et transformation", "aliases": ["Production artisanale"] },
+      { "slug": "autre-informel", "name": "Autre activité informelle", "aliases": [] }
+    ]
+  },
+  {
+    "slug": "autres",
+    "name": "Autres",
+    "description": "Profils polyvalents, métiers émergents et domaines non listés.",
+    "aliases": ["Autres", "Autre", "Divers"],
+    "sort_order": 250,
+    "specialties": [
+      { "slug": "autre-domaine", "name": "Autre domaine non listé", "aliases": [] },
+      { "slug": "profil-polyvalent", "name": "Profil polyvalent", "aliases": ["Polyvalence"] },
+      { "slug": "reconversion", "name": "Reconversion professionnelle", "aliases": ["Reconversion"] },
+      { "slug": "metier-emergent", "name": "Métier émergent", "aliases": ["Nouveau métier"] },
+      { "slug": "autre-specialite", "name": "Autre spécialité à préciser", "aliases": [] }
+    ]
+  }
+]

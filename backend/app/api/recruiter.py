@@ -4,14 +4,20 @@ L'entreprise publie ses offres avec son branding, recherche des talents
 par compétences et suit les candidatures reçues. Le matching recruteur
 est explicable, comme côté candidat (§21).
 """
-from datetime import datetime
+import unicodedata
+from datetime import datetime, timedelta
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
-from app import models, schemas, security
+from app import config, models, schemas, security
 from app.database import get_db
+from app.services import calendar as calendar_service
+from app.services import cv_pdf, email_routing, job_media, notifications, uploads
+from app.services import interviews as interview_service
+from app.services.profile_store import profile_to_dict
 from app.services.skills_taxonomy import load_taxonomy
 
 router = APIRouter(prefix="/api/recruiter", tags=["recruiter"])
@@ -87,6 +93,8 @@ def _job_dict(job: models.Job) -> dict:
         "company": job.company,
         "location": job.location,
         "sector": job.sector,
+        "domain_id": job.domain_id,
+        "specialty_id": job.specialty_id,
         "contract_type": job.contract_type,
         "description": job.description,
         "requirements": job.requirements,
@@ -95,25 +103,39 @@ def _job_dict(job: models.Job) -> dict:
         "deadline": job.deadline,
         "source_name": job.source_name,
         "source_url": job.source_url,
+        "apply_channel": job.apply_channel or "",
+        "apply_instructions": job.apply_instructions or "",
+        "apply_email": job.apply_email or "",
+        "apply_keywords": job.apply_keywords or [],
+        "email_reference": email_routing.reference_for(job),
+        "poster_url": email_routing.public_poster_path(job),
         "salary": job.salary,
+        "photo_url": job_media.photo_url(job),
     }
 
 
 @router.post("/jobs", status_code=201, response_model=dict)
 def publish_job(
-    payload: schemas.AdminJobCreate,
+    payload: schemas.RecruiterJobCreate,
     user: models.User = Depends(security.get_current_user),
     db: Session = Depends(get_db),
 ):
     """Publication d'une offre avec le branding de l'entreprise."""
     _require_recruiter(user)
     company = _get_company(db, user)
+    domain = db.get(models.Domain, payload.domain_id) if payload.domain_id else None
+    if payload.specialty_id:
+        specialty = db.get(models.Specialty, payload.specialty_id)
+        if specialty is None or (domain and specialty.domain_id != domain.id):
+            raise HTTPException(status_code=422, detail="Spécialité incompatible avec le domaine")
     job = models.Job(
         title=payload.title.strip(),
         company=company.name,
         company_id=company.id,
         location=payload.location.strip() or company.location,
-        sector=payload.sector.strip() or company.sector,
+        sector=payload.sector.strip() or (domain.name if domain else "") or company.sector,
+        domain_id=domain.id if domain else None,
+        specialty_id=payload.specialty_id,
         contract_type=payload.contract_type,
         description=payload.description,
         requirements=payload.requirements,
@@ -122,6 +144,13 @@ def publish_job(
         deadline=payload.deadline,
         source_name=f"Espace recruteur · {company.name}",
         source_url=payload.source_url,
+        apply_channel=(payload.apply_channel or "").strip(),
+        apply_instructions=(payload.apply_instructions or "").strip(),
+        apply_email=(payload.apply_email or "").strip() or None,
+        apply_keywords=[
+            str(word).strip() for word in (payload.apply_keywords or [])
+            if str(word).strip()
+        ],
         salary=payload.salary,
     )
     db.add(job)
@@ -142,7 +171,19 @@ def update_my_job(
     job = db.get(models.Job, job_id)
     if job is None or job.company_id != company.id:
         raise HTTPException(status_code=404, detail="Offre introuvable")
-    for field, value in payload.model_dump(exclude_unset=True).items():
+    data = payload.model_dump(exclude_unset=True)
+    if "domain_id" in data or "specialty_id" in data:
+        domain_id = data.get("domain_id", job.domain_id)
+        specialty_id = data.get("specialty_id", job.specialty_id)
+        domain = db.get(models.Domain, domain_id) if domain_id else None
+        specialty = db.get(models.Specialty, specialty_id) if specialty_id else None
+        if specialty and (domain is None or specialty.domain_id != domain.id):
+            raise HTTPException(status_code=422, detail="Spécialité incompatible avec le domaine")
+        if domain and not (data.get("sector") or job.sector or "").strip():
+            data["sector"] = domain.name
+    for field, value in data.items():
+        if field == "apply_keywords" and value is not None:
+            value = [str(word).strip() for word in value if str(word).strip()]
         setattr(job, field, value)
     db.commit()
     db.refresh(job)
@@ -162,9 +203,125 @@ def delete_my_job(
         raise HTTPException(status_code=404, detail="Offre introuvable")
     db.query(models.Application).filter(models.Application.job_id == job_id).delete()
     db.query(models.Document).filter(models.Document.job_id == job_id).delete()
+    job_media.remove(job)
     db.delete(job)
     db.commit()
     return {"ok": True}
+
+
+@router.post("/jobs/{job_id}/photo", response_model=dict)
+def upload_my_job_photo(
+    job_id: int,
+    file: UploadFile = File(...),
+    user: models.User = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Photo d'illustration FACULTATIVE de l'offre publiée par l'entreprise."""
+    _require_recruiter(user)
+    company = _get_company(db, user)
+    job = db.get(models.Job, job_id)
+    if job is None or job.company_id != company.id:
+        raise HTTPException(status_code=404, detail="Offre introuvable")
+    job_media.save(job, file)
+    db.commit()
+    db.refresh(job)
+    return {"ok": True, "photo_url": job_media.photo_url(job)}
+
+
+@router.delete("/jobs/{job_id}/photo")
+def delete_my_job_photo(
+    job_id: int,
+    user: models.User = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+    _require_recruiter(user)
+    company = _get_company(db, user)
+    job = db.get(models.Job, job_id)
+    if job is None or job.company_id != company.id:
+        raise HTTPException(status_code=404, detail="Offre introuvable")
+    job_media.remove(job)
+    db.commit()
+    return {"ok": True}
+
+
+def _shared_cv_for_candidate(
+    db: Session, candidate: models.User
+) -> Optional[dict]:
+    """CV généraliste que le talent a explicitement rendu visible.
+
+    Le contrôle est refait à chaque lecture : un document supprimé, ciblé
+    ou appartenant à un autre compte ne fuit jamais.
+    """
+    if not candidate.cv_visible_to_recruiters or not candidate.shared_cv_id:
+        return None
+    document = db.get(models.Document, candidate.shared_cv_id)
+    if document is None or document.user_id != candidate.id:
+        return None
+    if document.kind != "cv" or document.job_id is not None:
+        return None
+    return {
+        "id": document.id,
+        "title": document.title,
+        "template": document.template or "classique",
+        "accent": document.accent,
+        "created_at": document.created_at,
+        "download_url": f"/api/recruiter/candidates/{candidate.id}/cv",
+    }
+
+
+def _candidate_payload(
+    candidate: models.User,
+    profile: models.Profile,
+    db: Session,
+    match: Optional[dict] = None,
+    summary_limit: Optional[int] = None,
+) -> dict:
+    """Faits du profil validé visibles du recruteur, sans coordonnée."""
+    certifications = profile.certifications or []
+    experiences = profile.experiences or []
+    education = profile.education or []
+    summary = profile.summary or ""
+    if summary_limit:
+        summary = summary[:summary_limit]
+    skills = profile.skills or []
+    return {
+        "user_id": candidate.id,
+        "full_name": candidate.full_name,
+        "title": profile.title,
+        "location": profile.location,
+        "verified": candidate.verification_status == "verified",
+        "summary": summary,
+        "photo_url": (
+            f"/api/recruiter/candidates/{candidate.id}/photo"
+            if candidate.photo_path else None
+        ),
+        "skills": [s.get("skill") for s in skills if s.get("skill")][:24],
+        "skill_details": [
+            {
+                "skill": s.get("skill"),
+                "proficiency": s.get("proficiency"),
+                "source": s.get("source"),
+            }
+            for s in skills if s.get("skill")
+        ][:24],
+        "match": match or {"score": 0, "covered": [], "partial": [], "missing": []},
+        "mobility": profile.mobility,
+        "availability": profile.availability,
+        "education": education,
+        "experiences": experiences,
+        "certifications": certifications,
+        "languages": profile.languages or [],
+        "projects": profile.projects or [],
+        "preferences": profile.preferences or {},
+        "experience_count": len(experiences),
+        "education_count": len(education),
+        "certification_count": len(certifications),
+        "top_certifications": [
+            c.get("name") for c in certifications if c.get("name")
+        ][:4],
+        "cv": _shared_cv_for_candidate(db, candidate),
+        "updated_at": profile.updated_at,
+    }
 
 
 @router.get("/candidates", response_model=list[schemas.RecruiterCandidateOut])
@@ -173,12 +330,14 @@ def search_candidates(
     q: str = "",
     region: str = "",
     sector: str = "",
+    domain_id: Optional[int] = None,
+    specialty_id: Optional[int] = None,
     verified_only: bool = False,
     db: Session = Depends(get_db),
     user: models.User = Depends(security.get_current_user),
 ):
     """Talent search : filtres compétences, métier/titre, région, secteur
-    d'activité visé, profils vérifiés — avec matching explicable (§21)."""
+    d'activité visé, profils vérifiés, avec matching explicable (§21)."""
     _require_recruiter(user)
     taxonomy = load_taxonomy()
     wanted = [
@@ -196,6 +355,11 @@ def search_candidates(
         if verified_only and candidate.verification_status != "verified":
             continue
         if region and candidate.region != region:
+            continue
+        prefs = profile.preferences or {}
+        if domain_id is not None and prefs.get("domain_id") != domain_id:
+            continue
+        if specialty_id is not None and specialty_id not in (prefs.get("specialty_ids") or []):
             continue
         # Filtres métier / secteur : titre du profil, secteurs visés,
         # filière, compétences.
@@ -226,17 +390,12 @@ def search_candidates(
         # Classement : correspondance aux critères, puis profils vérifiés
         if wanted and score == 0:
             continue
-        out.append({
-            "user_id": candidate.id,
-            "full_name": candidate.full_name,
-            "title": profile.title,
-            "location": profile.location,
-            "verified": candidate.verification_status == "verified",
-            "summary": (profile.summary or "")[:220],
-            "skills": [s.get("skill") for s in p_skills][:12],
-            "match": {"score": score, "covered": covered, "partial": partial,
-                      "missing": missing},
-        })
+        out.append(_candidate_payload(
+            candidate, profile, db,
+            match={"score": score, "covered": covered, "partial": partial,
+                   "missing": missing},
+            summary_limit=220,
+        ))
     out.sort(key=lambda c: (-c["match"]["score"], not c["verified"]))
     return out[:50]
 
@@ -257,20 +416,62 @@ def candidate_card(
         models.Profile.user_id == candidate_id).first()
     if profile is None:
         raise HTTPException(status_code=404, detail="Ce candidat n'a pas encore de profil")
-    p_skills = profile.skills or []
     geo = " · ".join(filter(None, [
         candidate.city, candidate.arrondissement, candidate.department, candidate.region,
     ]))
-    return {
-        "user_id": candidate.id,
-        "full_name": candidate.full_name,
-        "title": profile.title,
-        "location": profile.location or geo or None,
-        "verified": candidate.verification_status == "verified",
-        "summary": profile.summary or "",
-        "skills": [s.get("skill") for s in p_skills][:20],
-        "match": {"score": 0, "covered": [], "partial": [], "missing": []},
-    }
+    payload = _candidate_payload(candidate, profile, db)
+    payload["location"] = profile.location or geo or None
+    return payload
+
+
+@router.get("/candidates/{candidate_id}/cv")
+def candidate_cv(
+    candidate_id: int,
+    user: models.User = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Télécharge le CV généraliste partagé, uniquement sur opt-in du talent.
+
+    Le PDF est régénéré depuis le profil validé, avec le modèle et la
+    couleur du document choisi. Aucun autre document n'est accessible.
+    """
+    _require_recruiter(user)
+    candidate = db.get(models.User, candidate_id)
+    if candidate is None or candidate.role != "candidate":
+        raise HTTPException(status_code=404, detail="Candidat introuvable")
+    cv = _shared_cv_for_candidate(db, candidate)
+    if cv is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Ce talent n'a pas partagé de CV généraliste avec les recruteurs.",
+        )
+    profile = db.query(models.Profile).filter(
+        models.Profile.user_id == candidate_id).first()
+    if profile is None:
+        raise HTTPException(status_code=404, detail="Profil introuvable")
+    profile_dict = profile_to_dict(profile, candidate_id)
+    document = db.get(models.Document, cv["id"])
+    if document is None:
+        raise HTTPException(status_code=404, detail="CV introuvable")
+
+    content = cv_pdf.build_cv_pdf(
+        profile_dict, None, candidate, load_taxonomy(),
+        template=document.template or "classique",
+        accent=document.accent,
+    )
+    safe_name = unicodedata.normalize("NFKD", candidate.full_name)
+    safe_name = "".join(c for c in safe_name if not unicodedata.combining(c))
+    safe_name = "".join(
+        c if c.isascii() and (c.isalnum() or c in " -_") else "_"
+        for c in safe_name
+    ).strip("_") or f"candidat-{candidate.id}"
+    return Response(
+        content=content,
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="CV-{safe_name}.pdf"'
+        },
+    )
 
 
 @router.get("/applications", response_model=list[schemas.RecruiterApplicationOut])
@@ -301,11 +502,36 @@ def received_applications(
             "candidate_id": app.user_id,
             "candidate_name": candidate.full_name if candidate else "?",
             "candidate_verified": (candidate.verification_status == "verified") if candidate else False,
+            "candidate_photo_url": (
+                f"/api/recruiter/candidates/{candidate.id}/photo"
+                if candidate and candidate.photo_path else ""
+            ),
             "status": app.status,
             "timeline": app.timeline or [],
             "created_at": app.created_at,
+            "apply_channel": app.apply_channel or "",
+            "apply_url": app.job.source_url or "",
+            "apply_email": app.job.apply_email or "",
+            "apply_instructions": app.job.apply_instructions or "",
         })
     return out
+
+
+@router.get("/candidates/{candidate_id}/photo")
+def candidate_photo(
+    candidate_id: int,
+    user: models.User = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Photo du candidat, réservée aux recruteurs (profil visible en recherche)."""
+    _require_recruiter(user)
+    candidate = db.get(models.User, candidate_id)
+    if candidate is None or candidate.role != "candidate" or not candidate.photo_path:
+        raise HTTPException(status_code=404, detail="Photo introuvable")
+    full = uploads.resolve(candidate.photo_path)
+    if not full.exists():
+        raise HTTPException(status_code=404, detail="Photo introuvable")
+    return FileResponse(full)
 
 
 @router.patch("/applications/{application_id}", response_model=dict)
@@ -344,6 +570,7 @@ def update_application_status(
             f"OrientSkill AI : votre candidature a évolué",
             f"{company.name} a mis à jour votre candidature au poste "
             f"« {app.job.title} » : nouveau statut « {payload.status} ».",
+            event="application",
         )
     return {"ok": True, "status": app.status}
 
@@ -451,3 +678,91 @@ def remove_from_shortlist(shortlist_id: int, candidate_id: int,
     ).delete()
     db.commit()
     return {"ok": True}
+
+
+# ------------------------------------------- Invitations à un entretien
+
+@router.get("/interviews", response_model=list[schemas.InterviewInviteOut])
+def my_interview_invites(
+    user: models.User = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Invitations envoyées par ce recruteur, avec la réponse du candidat."""
+    _require_recruiter(user)
+    rows = (
+        db.query(models.InterviewInvite)
+        .filter(models.InterviewInvite.recruiter_id == user.id)
+        .order_by(models.InterviewInvite.created_at.desc())
+        .all()
+    )
+    return [interview_service.invite_dict(db, row) for row in rows]
+
+
+@router.post("/interviews", status_code=201,
+             response_model=schemas.InterviewInviteOut)
+def invite_to_interview(
+    payload: schemas.InterviewInviteIn,
+    user: models.User = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Invite un candidat de SES shortlists à un entretien daté.
+
+    L'e-mail reprend l'identité réelle du poste et de l'entreprise, le
+    créneau lisible et deux liens profonds (accepter / autre créneau).
+    Si le service e-mail n'est pas configuré, l'invitation reste disponible
+    dans l'espace du candidat : la réponse indique `email_sent: false`.
+    """
+    _require_recruiter(user)
+    job = db.get(models.Job, payload.job_id)
+    if job is None:
+        raise HTTPException(status_code=404, detail="Offre introuvable")
+    company = db.get(models.Company, job.company_id) if job.company_id else None
+    if company is None or company.owner_user_id != user.id:
+        raise HTTPException(
+            status_code=403,
+            detail="Vous ne pouvez inviter que pour une de vos propres offres.",
+        )
+    candidate = db.get(models.User, payload.candidate_id)
+    if candidate is None or candidate.role != "candidate":
+        raise HTTPException(status_code=404, detail="Candidat introuvable")
+    in_shortlist = (
+        db.query(models.ShortlistItem)
+        .join(models.Shortlist, models.Shortlist.id == models.ShortlistItem.shortlist_id)
+        .filter(
+            models.Shortlist.owner_user_id == user.id,
+            models.ShortlistItem.candidate_id == candidate.id,
+        )
+        .first()
+    )
+    if in_shortlist is None:
+        raise HTTPException(
+            status_code=400,
+            detail="Ce candidat n'est pas dans une de vos shortlists.",
+        )
+    if payload.slot_at < models.utcnow() - timedelta(hours=1):
+        raise HTTPException(
+            status_code=400,
+            detail="Le créneau proposé est déjà passé : choisissez une date à venir.",
+        )
+
+    invite = models.InterviewInvite(
+        token=interview_service.new_token(),
+        recruiter_id=user.id,
+        candidate_id=candidate.id,
+        job_id=job.id,
+        slot_at=payload.slot_at,
+        duration_min=payload.duration_min,
+        subject=payload.subject.strip(),
+        message=payload.message.strip(),
+        status="pending",
+    )
+    db.add(invite)
+    db.commit()
+    db.refresh(invite)
+
+    body = interview_service.compose_body(invite, job)
+    ics = calendar_service.attachment(invite, job, candidate, user, status="pending")
+    email_sent, _detail = notifications.send_email(
+        db, candidate.email, invite.subject, body, attachments=[ics]
+    )
+    return interview_service.invite_dict(db, invite, email_sent=email_sent)

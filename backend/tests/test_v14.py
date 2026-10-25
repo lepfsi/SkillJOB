@@ -58,6 +58,22 @@ def test_job_parser_extracts_structure(client):
     assert created.status_code == 201
 
 
+def test_recruiter_can_publish_without_company_field(client):
+    """L'entreprise vient du compte, pas du formulaire."""
+    headers, _user = _recruiter_headers(
+        client, email="recruteur.sanscompany@tgc.cm"
+    )
+    created = client.post("/api/recruiter/jobs", json={
+        "title": "Technicien support IT",
+        "location": "Douala",
+        "contract_type": "CDI",
+        "description": "Support utilisateurs et gestion des incidents.",
+        "company": "",
+    }, headers=headers)
+    assert created.status_code == 201, created.text
+    assert created.json()["company"] == "Parse Test CM"
+
+
 def test_job_parser_forbidden_for_candidates(client):
     dheaders = _demo_headers(client)
     response = client.post("/api/jobs/parse", json={
@@ -106,6 +122,68 @@ def test_entrepreneurship_financing_institutions(client):
     assert "Fonds National de l'Emploi" in names
     assert "microfinance" in names.lower()
     assert any("Banques" in i["name"] for i in data["financing_institutions"])
+
+
+def test_entrepreneur_profile_reads_real_skills(client):
+    """Le profil entrepreneurial situe les compétences RÉELLES du profil
+    par rapport à un référentiel issu de notre taxonomie (§11bis, §47)."""
+    from app.services.skills_taxonomy import load_taxonomy
+
+    dheaders = _demo_headers(client)
+    response = client.get("/api/entrepreneurship/profile", headers=dheaders)
+    assert response.status_code == 200, response.text
+    body = response.json()
+
+    taxonomy = load_taxonomy()
+    assert body["has_profile"] is True
+    assert body["total"] > 0
+    # Chaque compétence attendue existe dans NOTRE taxonomie : rien d'inventé.
+    for group in body["groups"]:
+        assert group["items"] and group["total"] == len(group["items"])
+        for item in group["items"]:
+            assert taxonomy.is_known(item["name"]), item["name"]
+            assert item["state"] in ("covered", "partial", "missing")
+
+    # Le profil démo (soft skills Communication, Travail en équipe,
+    # Relation client) couvre au moins une compétence entrepreneuriale.
+    assert body["covered_count"] >= 1
+    # Et son métier réel reste visible hors référentiel (§48).
+    trade = [t["name"] for t in body["trade_skills"]]
+    assert "Windows Server" in trade
+    assert all(t["category"] for t in body["trade_skills"])
+
+
+def test_entrepreneur_profile_requires_auth(client):
+    assert client.get("/api/entrepreneurship/profile").status_code in (401, 403)
+
+
+def test_assistant_entrepreneurship_intent(client):
+    """L'agent répond vraiment à « comment entreprendre dans mon domaine »
+    avec le domaine, les pistes et les financements réels (§11bis)."""
+    dheaders = _demo_headers(client)
+    response = client.post("/api/assistant", json={
+        "message": "Comment entreprendre dans mon domaine ?",
+        "history": [],
+    }, headers=dheaders)
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert "Numérique" in body["reply"]
+    assert "Pistes à instruire" in body["reply"]
+    assert "Financements à instruire" in body["reply"]
+    assert any(l["href"].startswith("/entrepreneurship") for l in body["links"])
+    assert body["suggestions"]
+
+
+def test_assistant_keeps_learning_intent_for_training_money(client):
+    """« Financer ma formation » n'est PAS de l'entrepreneuriat."""
+    dheaders = _demo_headers(client)
+    response = client.post("/api/assistant", json={
+        "message": "Je cherche un financement pour ma formation",
+        "history": [],
+    }, headers=dheaders)
+    body = response.json()
+    assert "business plan" not in body["reply"].lower()
+    assert not any(l["href"].startswith("/entrepreneurship") for l in body["links"])
 
 
 # ------------------------------------------------------ Notifications

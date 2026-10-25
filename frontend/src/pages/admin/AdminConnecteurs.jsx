@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { api } from "../../api/client.js";
 import { Loader, ErrorNote } from "../../components/ui.jsx";
@@ -23,6 +23,17 @@ const STATUS_LABELS = {
   roadmap: "Roadmap",
 };
 
+// Raccourcis vers l'écran qui permet d'agir sur chaque connecteur.
+const CONNECTOR_ACTIONS = {
+  llm: { to: "/admin/parametres", label: "Configurer le moteur IA" },
+  smtp: { to: "/admin/parametres", label: "Configurer les e-mails" },
+  telegram: { to: "/admin/parametres", label: "Configurer Telegram" },
+  whatsapp: { to: "/admin/parametres", label: "Configurer WhatsApp" },
+  linkedin: { to: "/admin/sources", label: "Voir les sources" },
+  multi_source: { to: "/admin/sources", label: "Voir les sources" },
+  skill_graph: { to: "/admin/skill-graph", label: "Ouvrir le Skill Graph" },
+};
+
 export default function AdminConnecteurs() {
   const { user } = useAuth();
   const [connectors, setConnectors] = useState(null);
@@ -41,20 +52,30 @@ export default function AdminConnecteurs() {
   const roadmap = connectors.filter((c) => c.status === "roadmap");
 
   const renderGroup = (list) =>
-    list.map((c) => (
-      <div className="panel" key={c.id}>
-        <div className="section-head">
-          <h2 style={{ margin: 0 }}>{c.name}</h2>
-          <span className={`connector-status connector-${c.status}`}>
-            {STATUS_LABELS[c.status]}
-          </span>
+    list.map((c) => {
+      const action = CONNECTOR_ACTIONS[c.id];
+      return (
+        <div className="panel" key={c.id}>
+          <div className="section-head">
+            <h2 style={{ margin: 0 }}>{c.name}</h2>
+            <span className={`connector-status connector-${c.status}`}>
+              {STATUS_LABELS[c.status]}
+            </span>
+          </div>
+          <p className="small muted">
+            {KIND_LABELS[c.kind] || c.kind} · phase {c.phase}
+          </p>
+          <p>{c.description}</p>
+          {action && (
+            <div className="actions-row" style={{ marginTop: "0.5rem" }}>
+              <Link className="btn btn-outline btn-small" to={action.to}>
+                {action.label}
+              </Link>
+            </div>
+          )}
         </div>
-        <p className="small muted">
-          {KIND_LABELS[c.kind] || c.kind} · phase {c.phase}
-        </p>
-        <p>{c.description}</p>
-      </div>
-    ));
+      );
+    });
 
   return (
     <div className="page">

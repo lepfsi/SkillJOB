@@ -27,7 +27,8 @@ function NotificationsSection() {
     setBusy(true);
     setError("");
     try {
-      const updated = await api("/profile/notifications", { method: "PUT", body: prefs });
+      const { event_types, ...payload } = prefs;
+      const updated = await api("/profile/notifications", { method: "PUT", body: payload });
       setPrefs(updated);
     } catch (err) {
       setError(err.detail);
@@ -152,6 +153,38 @@ function NotificationsSection() {
             />
           </label>
         )}
+      </div>
+
+      {/* Choix PAR ÉVÉNEMENT : e-mail ou uniquement in-app */}
+      <div className="events-prefs">
+        <h3>Quand souhaitez-vous un e-mail ?</h3>
+        <p className="small muted">
+          Pour chaque événement, cochez si vous voulez aussi le recevoir par
+          e-mail. Non coché, l'événement reste disponible dans la section
+          Notifications de l'application. L'e-mail requiert un canal E-mail
+          activé avec votre adresse.
+        </p>
+        {!prefs.email_enabled && (
+          <p className="small muted">
+            Le canal E-mail est désactivé : activez-le ci-dessus pour recevoir
+            ces événements par e-mail.
+          </p>
+        )}
+        <div className="grid-2">
+          {Object.entries(prefs.event_types || {}).map(([key, label]) => (
+            <label className="check" key={key}>
+              <input
+                type="checkbox"
+                disabled={!prefs.email_enabled}
+                checked={!!(prefs.events || {})[key]}
+                onChange={(e) =>
+                  set("events", { ...(prefs.events || {}), [key]: e.target.checked })
+                }
+              />
+              {label}
+            </label>
+          ))}
+        </div>
       </div>
       <div className="actions-row">
         <button className="btn btn-primary" disabled={busy}>

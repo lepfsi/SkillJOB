@@ -76,6 +76,7 @@ def run_digest_once(db: Session) -> dict:
                 db, user,
                 "OrientSkill AI : nouvelles offres pour vous",
                 body,
+                event="new_match",
             )
             if results and any(r["ok"] for r in results):
                 notified += 1
@@ -93,12 +94,19 @@ def digest_enabled(db: Session) -> bool:
 
 
 def _digest_loop(stop_event: threading.Event, interval_hours: float) -> None:
+    from app.services.alerts import run_alerts_once
+
     while not stop_event.is_set():
         db = SessionLocal()
         try:
             if digest_enabled(db):
                 result = run_digest_once(db)
                 logger.info("Digest exécuté : %s", result)
+            # Alertes d'échéances et de l'agent : indépendantes du digest,
+            # elles respectent les préférences par événement de chacun.
+            alerts = run_alerts_once(db)
+            if alerts["notified"] or alerts["errors"]:
+                logger.info("Alertes exécutées : %s", alerts)
         except Exception as exc:
             logger.warning("Boucle digest : %s", exc)
         finally:

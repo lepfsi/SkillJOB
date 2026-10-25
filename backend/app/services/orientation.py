@@ -69,9 +69,14 @@ def match_career(
         )
 
     return {
+        # Score explicable (§12) : mêmes clés que le matching d'offres,
+        # plus l'horizon d'accès propre à l'orientation.
         "score": match["score"],
-        "covered": match["covered"] + match["partial"],
+        "level": match["level"],
+        "covered": match["covered"],
+        "partial": match["partial"],
         "missing": match["missing"],
+        "strengths": match["strengths"],
         "accessibility": accessibility,
         "recommended_actions": actions[:4],
         "explanation": match["explanation"] + " "

@@ -1,4 +1,4 @@
-"""MFA TOTP (RFC 6238) — implémentation autonome (hmac/hashlib/base64),
+"""MFA TOTP (RFC 6238) : implémentation autonome (hmac/hashlib/base64),
 sans dépendance externe. Codes de récupération pour la perte de l'app
 authentificatrice ; l'administrateur peut réinitialiser le MFA d'un
 compte en cas extrême.

@@ -7,4 +7,8 @@ pyjwt>=2.8
 python-multipart>=0.0.9
 pypdf>=4.2
 reportlab>=4.0
+fpdf2>=2.8
 qrcode>=7.10
+# Dev / tests locaux
+pytest>=9
+httpx2>=2.13

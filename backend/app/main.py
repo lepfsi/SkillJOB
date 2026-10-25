@@ -1,4 +1,4 @@
-"""OrientSkill AI — Backend MVP (FastAPI).
+"""OrientSkill AI : Backend MVP (FastAPI).
 
 Lancement : ``python -m app.main`` (création des tables + seed si base vide).
 """
@@ -19,11 +19,13 @@ from app.api import (
     careers,
     dashboard,
     documents,
+    interviews,
     jobs,
     learning,
     market,
     messages,
     profile,
+    public,
     recruiter,
     referentiels,
     skills,
@@ -60,13 +62,27 @@ def seed_database(db: Session) -> None:
     # Offres (Job Intelligence : source + date toujours tracées)
     from datetime import datetime
 
+    from app.services.domains import match_domain, match_specialty
+
     jobs = []
     for job in _load_json("jobs_seed.json"):
+        domain = match_domain(db, job["sector"])
+        specialty = None
+        if domain is not None:
+            specialty = match_specialty(
+                db, domain.id,
+                " ".join(filter(None, [
+                    job["title"], job.get("description", ""),
+                    job.get("requirements", ""),
+                ])),
+            )
         row = models.Job(
             title=job["title"],
             company=job["company"],
             location=job["location"],
             sector=job["sector"],
+            domain_id=domain.id if domain else None,
+            specialty_id=specialty.id if specialty else None,
             contract_type=job["contract_type"],
             description=job.get("description", ""),
             requirements=job.get("requirements", ""),
@@ -187,7 +203,7 @@ def seed_database(db: Session) -> None:
             },
         ],
         "certifications": [
-            {"name": "CCNA — en préparation", "issuer": "Cisco Networking Academy",
+            {"name": "CCNA (en préparation)", "issuer": "Cisco Networking Academy",
              "year": 2024},
         ],
         "languages": [
@@ -239,6 +255,16 @@ def seed_database(db: Session) -> None:
             "remote_ok": False,
         },
     }
+    demo_domain = match_domain(db, "Informatique / IT")
+    if demo_domain is not None:
+        demo_profile["preferences"]["domain_id"] = demo_domain.id
+        demo_specialties = [
+            match_specialty(db, demo_domain.id, label)
+            for label in ("Réseaux et systèmes", "Cybersécurité", "Support et helpdesk")
+        ]
+        demo_profile["preferences"]["specialty_ids"] = [
+            specialty.id for specialty in demo_specialties if specialty is not None
+        ]
     save_profile(db, demo.id, demo_profile)
 
     # Candidatures de démonstration
@@ -319,6 +345,7 @@ def _ensure_columns() -> None:
             ("department", "VARCHAR(80)"),
             ("arrondissement", "VARCHAR(80)"),
             ("city", "VARCHAR(120)"),
+            ("phone", "VARCHAR(32)"),
             ("mfa_secret", "VARCHAR(64)"),
             ("mfa_enabled", "BOOLEAN DEFAULT 0"),
             ("recovery_codes", "JSON"),
@@ -327,11 +354,58 @@ def _ensure_columns() -> None:
             ("identity_doc_path", "TEXT"),
             ("verified_at", "DATETIME"),
             ("photo_path", "TEXT"),
+            ("cv_visible_to_recruiters", "BOOLEAN DEFAULT 0"),
+            ("shared_cv_id", "INTEGER"),
             ("notification_prefs", "JSON"),
+            ("notifications_seen_at", "DATETIME"),
+            ("agent_mode", "VARCHAR(20) DEFAULT 'preparation'"),
+            ("agent_history_mode", "VARCHAR(12) DEFAULT 'persist'"),
+            ("agent_history_retention_days", "INTEGER DEFAULT 30"),
+            ("is_banned", "BOOLEAN DEFAULT 0"),
+            ("ban_reason", "TEXT"),
         ],
-        "jobs": [("company_id", "INTEGER"), ("dedup_key", "VARCHAR(80)")],
-        "documents": [("template", "VARCHAR(20) DEFAULT 'classique'")],
-        "institutional_offers": [("subcategory", "VARCHAR(40)")],
+        "jobs": [
+            ("company_id", "INTEGER"),
+            ("dedup_key", "VARCHAR(80)"),
+            ("photo_path", "TEXT"),
+            ("domain_id", "INTEGER"),
+            ("specialty_id", "INTEGER"),
+            ("apply_channel", "VARCHAR(20) DEFAULT ''"),
+            ("apply_instructions", "TEXT"),
+            ("apply_email", "VARCHAR(255)"),
+            ("apply_keywords", "JSON"),
+        ],
+        "inbound_emails": [
+            ("account_created", "BOOLEAN DEFAULT 0"),
+        ],
+        "documents": [
+            ("template", "VARCHAR(20) DEFAULT 'classique'"),
+            ("accent", "VARCHAR(16)"),
+            ("source_profile", "JSON"),
+        ],
+        "applications": [
+            ("apply_channel", "VARCHAR(20) DEFAULT ''"),
+            ("submitted_at", "DATETIME"),
+            ("submitted_documents", "JSON"),
+            ("cover_note", "TEXT"),
+        ],
+        "institutional_offers": [
+            ("subcategory", "VARCHAR(40)"),
+            ("documents", "JSON"),
+            ("source", "VARCHAR(20) DEFAULT 'referentiel'"),
+        ],
+        "learning_resources": [
+            ("source", "VARCHAR(20) DEFAULT 'referentiel'"),
+            ("hidden", "BOOLEAN DEFAULT 0"),
+        ],
+        "source_configs": [
+            ("interval_minutes", "INTEGER DEFAULT 60"),
+            ("last_error", "TEXT"),
+            ("last_items", "INTEGER DEFAULT 0"),
+            ("last_duration_ms", "INTEGER DEFAULT 0"),
+            ("etag", "VARCHAR(255)"),
+            ("last_modified", "VARCHAR(255)"),
+        ],
     }
     with engine.begin() as conn:
         for table, columns in additions.items():
@@ -343,19 +417,232 @@ def _ensure_columns() -> None:
                     conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {ddl}"))
 
 
+def purge_long_dashes() -> None:
+    """Retire les tirets longs des données déjà enregistrées.
+
+    Les sources du WebUI n'en contiennent plus, mais les anciennes bases
+    (profils, offres, documents générés) peuvent encore en stocker. La
+    normalisation est idempotente et couvre aussi les séquences JSON
+    échappées (``\\u2014``) ainsi que les entités HTML courantes.
+    """
+    from sqlalchemy import inspect, text
+
+    inspector = inspect(engine)
+    replacements = [
+        ("\u2013", "-"),
+        ("\u2014", "-"),
+        ("\u2015", "-"),
+        ("\\u2013", "-"),
+        ("\\u2014", "-"),
+        ("\\u2015", "-"),
+        ("&ndash;", "-"),
+        ("&mdash;", "-"),
+        ("&#8211;", "-"),
+        ("&#8212;", "-"),
+        ("&#x2013;", "-"),
+        ("&#x2014;", "-"),
+    ]
+    text_markers = ("CHAR", "TEXT", "CLOB", "JSON")
+
+    with engine.begin() as conn:
+        for table in inspector.get_table_names():
+            if table.startswith("sqlite_"):
+                continue
+            for column in inspector.get_columns(table):
+                if not any(marker in str(column["type"]).upper() for marker in text_markers):
+                    continue
+                name = column["name"]
+                expression = f'"{name}"'
+                conditions = []
+                params = {}
+                for index, (old, new) in enumerate(replacements):
+                    expression = f"replace({expression}, :old{index}, :new{index})"
+                    conditions.append(f'instr("{name}", :old{index}) > 0')
+                    params[f"old{index}"] = old
+                    params[f"new{index}"] = new
+                conn.execute(
+                    text(
+                        f'UPDATE "{table}" SET "{name}" = {expression} '
+                        f'WHERE {" OR ".join(conditions)}'
+                    ),
+                    params,
+                )
+
+
+def sync_learning_resources(db: Session) -> None:
+    """Aligne la table de référence des formations sur le référentiel.
+
+    ``data/learning_resources.json`` fait foi pour les entrées
+    « referentiel » : il est relu à chaque démarrage pour que les
+    formations proposées (et leur nature de lien) restent celles
+    réellement vérifiées. Les entrées « admin » (ajoutées ou corrigées
+    dans la console) ne sont NI écrasées NI supprimées, pas plus que les
+    lignes masquées par l'administrateur. Il s'agit de données de
+    référence uniquement : aucun profil ni suivi d'utilisateur n'est
+    touché.
+    """
+    referential = _load_json("learning_resources.json")
+    all_rows = db.query(models.LearningResource).all()
+    existing = {(row.skill, row.title): row for row in all_rows}
+    wanted: set[tuple[str, str]] = set()
+    changed = False
+    for skill, items in referential.items():
+        for item in items:
+            title = item.get("title", "")
+            if not title:
+                continue
+            wanted.add((skill, title))
+            provider = item.get("provider", "")
+            kind = item.get("type", "free")
+            url = item.get("url")
+            row = existing.get((skill, title))
+            if row is None:
+                db.add(models.LearningResource(
+                    skill=skill, title=title, provider=provider,
+                    type=kind, url=url, source="referentiel",
+                ))
+                changed = True
+            elif (row.source or "referentiel") == "referentiel":
+                # Les lignes « admin » et les lignes masquées ne sont
+                # JAMAIS écrasées : la console garde la main.
+                if (row.url, row.provider, row.type) != (url, provider, kind):
+                    row.url, row.provider, row.type = url, provider, kind
+                    changed = True
+    for key, row in existing.items():
+        if key not in wanted and (row.source or "referentiel") == "referentiel":
+            db.delete(row)
+            changed = True
+    if changed:
+        db.commit()
+
+
+def sync_institutional_offers(db: Session) -> None:
+    """Aligne les programmes publics sur le référentiel éditorial.
+
+    ``data/institutional_offers.json`` fait foi : structuration par
+    institution (MINFOPRA, MINESUP, MINEFOP, ONG, MINDEF, DGSN, appels à
+    projets des ministères). Relu à chaque démarrage pour que la page
+    « Programmes publics » reste conforme au référentiel.
+
+    Les fiches CRÉÉES OU MODIFIÉES par l'administration (``source =
+    "admin"``) sont laissées intactes : leurs ajouts, leurs corrections et
+    leurs documents joints ne sont jamais écrasés par le référentiel.
+    """
+    referential = _load_json("institutional_offers.json")
+    existing = {
+        (row.category, row.subcategory or "", row.title): row
+        for row in db.query(models.InstitutionalOffer)
+    }
+    wanted: set[tuple[str, str, str]] = set()
+    changed = False
+    for item in referential:
+        key = (item["category"], item.get("subcategory") or "", item["title"])
+        wanted.add(key)
+        fields = {
+            "description": item.get("description", ""),
+            "eligibility": item.get("eligibility", ""),
+            "url": item.get("url"),
+            "deadline": item.get("deadline"),
+        }
+        row = existing.get(key)
+        if row is None:
+            db.add(models.InstitutionalOffer(
+                category=item["category"],
+                subcategory=item.get("subcategory"),
+                title=item["title"],
+                source="referentiel",
+                **fields,
+            ))
+            changed = True
+        elif row.source == "admin":
+            # Fiche reprise en main par l'administration : on ne touche à rien.
+            continue
+        elif (row.description, row.eligibility, row.url, row.deadline) != (
+            fields["description"], fields["eligibility"],
+            fields["url"], fields["deadline"],
+        ):
+            for name, value in fields.items():
+                setattr(row, name, value)
+            changed = True
+    # Seules les fiches ISSUES du référentiel disparaissent quand elles en
+    # sortent : les ajouts de l'administration restent en base.
+    for key, row in existing.items():
+        if key not in wanted and (row.source or "referentiel") != "admin":
+            db.delete(row)
+            changed = True
+    if changed:
+        db.commit()
+
+
+def seed_minesup_catalogue(db: Session) -> None:
+    """Amorce l'explorateur MINESUP quand le catalogue est vide.
+
+    Les universités et écoles sont ensuite gérées dans la console
+    d'administration. On n'écrase jamais une correction admin : ce seed ne
+    s'exécute que sur une table entièrement vide.
+    """
+    if db.query(models.MinesupUniversity).count() > 0:
+        return
+    for university in _load_json("minesup_universities.json"):
+        schools = university.get("schools", [])
+        row = models.MinesupUniversity(
+            slug=university["slug"],
+            name=university["name"],
+            short_name=university.get("short_name", ""),
+            city=university.get("city", ""),
+            region=university.get("region", ""),
+            description=university.get("description", ""),
+            website=university.get("website"),
+            source_url=university.get("source_url"),
+            sort_order=university.get("sort_order", 0),
+            source="referentiel",
+        )
+        db.add(row)
+        db.flush()
+        for school in schools:
+            db.add(models.MinesupSchool(
+                university_id=row.id,
+                name=school["name"],
+                short_name=school.get("short_name", ""),
+                kind=school.get("kind", "Grande école"),
+                admission=school.get("admission", ""),
+                eligibility=school.get("eligibility", ""),
+                url=school.get("url"),
+                deadline=school.get("deadline"),
+                sort_order=school.get("sort_order", 0),
+                source="referentiel",
+            ))
+    db.commit()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     Base.metadata.create_all(bind=engine)
     _ensure_columns()
     db = SessionLocal()
     try:
+        from app.services.domains import backfill_job_domains, seed_domains, sync_new_specialties
+
+        # Le référentiel des domaines est disponible avant le profil démo
+        # et avant toute création d'offre. Le resync additif enrichit le
+        # référentiel existant sans écraser les corrections de l'admin.
+        seed_domains(db)
+        sync_new_specialties(db)
         if db.query(models.User).count() == 0:
             seed_database(db)
+        backfill_job_domains(db)
+        sync_learning_resources(db)
+        sync_institutional_offers(db)
+        seed_minesup_catalogue(db)
     finally:
         db.close()
-    # Services d'arrière-plan V2 : bot Telegram + digest quotidien.
-    # Démarrage conditionnel (config admin) et arrêt propre.
+    purge_long_dashes()
+    # Services d'arrière-plan V2 : bot Telegram, digest quotidien et
+    # relève IMAP des candidatures. Démarrage conditionnel (config admin)
+    # et arrêt propre.
     from app.services.digest import digest_service
+    from app.services.inbound_email import inbound_service
+    from app.services.source_scheduler import source_scheduler
     from app.services.telegram_bot import bot_service
     try:
         bot_service.start_if_configured()
@@ -365,13 +652,23 @@ async def lifespan(app: FastAPI):
         digest_service.start()
     except Exception as exc:  # pragma: no cover
         print(f"Planificateur de digest non démarré : {exc}")
+    try:
+        inbound_service.start_if_configured()
+    except Exception as exc:  # pragma: no cover
+        print(f"Relève IMAP non démarrée : {exc}")
+    try:
+        source_scheduler.start()
+    except Exception as exc:  # pragma: no cover
+        print(f"Planificateur de sources non démarré : {exc}")
     yield
+    source_scheduler.stop()
+    inbound_service.stop()
     bot_service.stop()
     digest_service.stop()
 
 
 app = FastAPI(
-    title="OrientSkill AI — Backend MVP",
+    title="OrientSkill AI : Backend MVP",
     description="Plateforme d'intelligence professionnelle pour jeunes Camerounais.",
     version="0.1.0",
     lifespan=lifespan,
@@ -394,7 +691,9 @@ for router in (
     careers.router,
     jobs.router,
     applications.router,
+    interviews.router,
     documents.router,
+    public.router,
     dashboard.router,
     market.router,
     learning.router,
@@ -415,4 +714,4 @@ def health():
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run("app.main:app", host="127.0.0.1", port=8000)
+    uvicorn.run("app.main:app", host="127.0.0.1", port=8110)

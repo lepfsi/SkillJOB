@@ -68,17 +68,22 @@ def test_institutional_programs(client):
     assert response.status_code == 200
     items = response.json()
     categories = {i["category"] for i in items}
-    # Refonte : concours (avec sous-catégories), FNE, MINFOP, MINPME
-    assert {"fne", "minfop", "minpme", "concours"} <= categories
-    concours = [i for i in items if i["category"] == "concours"]
-    subs = {i["subcategory"] for i in concours}
-    assert {"fonction_publique", "grandes_ecoles", "sante", "forets_faune", "armees"} <= subs
-    fp = next(i for i in concours if i["subcategory"] == "fonction_publique")
-    assert "fonction publique" in fp["subcategory_label"].lower()
+    # Refonte : par institution : MINFOPRA, MINESUP, MINEFOP, ONG, MINDEF,
+    # DGSN (police), appels à projets des ministères.
+    assert {"minfopra", "minesup", "minefop", "ong", "mindef", "dgsn",
+            "appels_projets"} <= categories
+    minfopra = [i for i in items if i["category"] == "minfopra"]
+    subs = {i["subcategory"] for i in minfopra}
+    assert {"concours_direct", "concours_integration"} <= subs
+    fp = next(i for i in minfopra if i["subcategory"] == "concours_direct")
+    assert "concours" in fp["subcategory_label"].lower()
+    mindef = [i for i in items if i["category"] == "mindef"]
+    assert {"armee", "gendarmerie", "bir", "garde_presidentielle", "emia",
+            "armee_etrangere"} <= {i["subcategory"] for i in mindef}
 
     # Filtre par catégorie
-    minfop = client.get("/api/institutional?category=minfop").json()
-    assert all(i["category"] == "minfop" for i in minfop)
+    minefop = client.get("/api/institutional?category=minefop").json()
+    assert all(i["category"] == "minefop" for i in minefop)
 
 
 def test_entrepreneurship_space(client):

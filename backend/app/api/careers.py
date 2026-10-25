@@ -54,10 +54,14 @@ def list_careers(
             "required_skills": career.required_skills,
             "match": {
                 "score": match["score"],
+                "level": match["level"],
                 "covered": match["covered"],
+                "partial": match["partial"],
                 "missing": match["missing"],
+                "strengths": match["strengths"],
                 "accessibility": match["accessibility"],
                 "recommended_actions": match["recommended_actions"],
+                "explanation": match["explanation"],
             },
             "related_jobs": _related_jobs(career, jobs),
         })

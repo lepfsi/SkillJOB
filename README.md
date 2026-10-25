@@ -1,9 +1,9 @@
-# OrientSkill AI — Plateforme d'intelligence professionnelle pour les jeunes Camerounais
+# OrientSkill AI : plateforme d'intelligence professionnelle pour les jeunes Camerounais
 
 > **De l'orientation à l'opportunité, l'IA accompagne chaque jeune dans son parcours professionnel.**
 
 Implémentation du MVP défini dans le cahier des charges
-[`projet_ia_minjec_formalisation-1.md`](./projet_ia_minjec_formalisation-1.md) (§55 — modules 1 à 10).
+[`projet_ia_minjec_formalisation-1.md`](./projet_ia_minjec_formalisation-1.md) (§55, modules 1 à 10).
 Projet initié dans le cadre du MINJEC.
 
 ## Philosophie
@@ -16,7 +16,7 @@ Se connaître → Comprendre ses compétences → Comprendre le marché
 
 Le système transforme la donnée en action, sans jamais inventer : le CV ciblé
 et la lettre de motivation n'utilisent **que** les informations du profil
-validé par le jeune (§47 — gouvernance de l'IA).
+validé par le jeune (§47, gouvernance de l'IA).
 
 ## Structure du projet
 
@@ -48,14 +48,14 @@ SkillJob/
 
 ## Lancement rapide
 
-### 1. Backend (port 8000)
+### 1. Backend (port 8110)
 
 ```bash
 cd backend
 python -m venv .venv
-source .venv/Scripts/activate   # Windows (bash) — .venv\Scripts\activate sous cmd
+source .venv/Scripts/activate   # Windows (bash): .venv\Scripts\activate sous cmd
 pip install -r requirements.txt
-python -m uvicorn app.main:app --port 8000 --reload
+python -m uvicorn app.main:app --port 8110 --reload
 ```
 
 - Base SQLite créée et alimentée automatiquement au premier démarrage
@@ -66,7 +66,7 @@ python -m uvicorn app.main:app --port 8000 --reload
   - **Recruteur** : `recruteur@orientskill.cm / recruteur1234` (entreprise « Numérik Services CM »)
   - **Administrateur** : `admin@orientskill.cm / admin1234` (console admin)
 
-### 2. Frontend (port 5173)
+### 2. Frontend (port 5190)
 
 ```bash
 cd frontend
@@ -74,19 +74,19 @@ npm install
 npm run dev
 ```
 
-Ouvrir http://localhost:5173 — le proxy Vite relaie `/api` vers le backend.
+Ouvrir http://localhost:5190: le proxy Vite relaie `/api` vers le backend (port 8110).
 
 ## Ce qui fonctionne réellement (MVP démontrable)
 
 | Module (§55) | Implémentation |
 |---|---|
-| 1. Diagnostic | Import CV (texte collé, PDF, TXT) **et** questionnaire intelligent — brouillon jamais enregistré sans validation humaine |
+| 1. Diagnostic | Import CV (texte collé, PDF, TXT) **et** questionnaire intelligent: brouillon jamais enregistré sans validation humaine |
 | 2. Profil intelligent | Extraction formation / expériences (formelles **et informelles**) / compétences / certifications / langues, normalisation alias FR-EN |
 | 3. Orientation | Métiers compatibles avec score, accessibilité (immédiat / après montée en compétences), actions recommandées |
 | 4. Base d'opportunités | 22 offres camerounaises sourcées (source, URL, dates de publication/collecte) |
 | 5. Matching | Score 0-100 **explicable** : couvertes ✓ / partielles △ / manquantes ○, forces, explication en français, actions |
 | 6. Gap Analysis | Écarts agrégés sur toutes les offres, compétences prioritaires |
-| 7. CV ciblé | CV markdown adapté à l'offre + lettre de motivation + préparation d'entretien — zéro invention |
+| 7. CV ciblé | CV markdown adapté à l'offre + lettre de motivation + préparation d'entretien: zéro invention |
 | 8. Dashboard | Poste de pilotage (§27) : nouvelles opportunités, correspondances fortes, prochaine action, tendances |
 | 9. Assistant | Conversation ancrée sur les données réelles ; **suggestions dynamiques** calculées depuis l'état réel du profil et du marché ; LLM optionnel configurable sans toucher au code |
 | 10. Démonstration marché | Tendances par compétence/secteur calculées sur la base d'offres, mini-ATS candidatures, inbox |
@@ -96,7 +96,7 @@ Ouvrir http://localhost:5173 — le proxy Vite relaie `/api` vers le backend.
 Accessible aux comptes de rôle `admin` (`admin@orientskill.cm / admin1234`), sans toucher au code :
 
 - **Vue générale** : statistiques plateforme (utilisateurs, profils, offres, candidatures, documents) et état des services.
-- **Paramètres** : SMTP (notifications e-mail, test de connexion réel), moteur LLM (fournisseur OpenAI-compatible, modèle, URL, clé — test de connexion), agrégateurs Telegram/WhatsApp (identifiants stockés pour l'activation V2). Les secrets ne sont jamais renvoyés par l'API ; un champ laissé vide conserve la valeur existante.
+- **Paramètres** : SMTP (notifications e-mail, test de connexion réel), moteur LLM (fournisseur OpenAI-compatible, modèle, URL, clé, test de connexion), agrégateurs Telegram/WhatsApp (identifiants stockés pour l'activation V2). Les secrets ne sont jamais renvoyés par l'API ; un champ laissé vide conserve la valeur existante.
 - **Connecteurs** : catalogue formalisé qui distingue ce qui est opérationnel, à configurer, et ce qui relève de la roadmap V2/V3 (LinkedIn via mécanismes autorisés, collecte multi-source, Skill Graph national, vérification de credentials). Détails : `docs/ROADMAP_V2_V3.md`.
 - **Base d'offres** : CRUD complet sur la base locale (compétences requises essentielles/appréciées, source + URL obligatoires).
 
@@ -127,7 +127,7 @@ Classique, **ATS** (compatible robots de tri), Moderne.
   ville, en listes en cascade à l'inscription et dans le profil.
 - **Formation inclusive** : CEP, FSLC, GCE O/A Level, diplôme d'ingénieur,
   recyclages et compétences de terrain (chauffeurs, plombiers, manœuvres,
-  gardiens vigiles) — l'absence de diplôme n'est jamais éliminatoire.
+  gardiens vigiles): l'absence de diplôme n'est jamais éliminatoire.
 - **Programmes publics** : offres du FNE, bourses MINFOP, accompagnements
   MINJEC et MINPME.
 - **Espace entrepreneuriat** (§11bis) : concours, appels à projets,
@@ -140,7 +140,7 @@ Classique, **ATS** (compatible robots de tri), Moderne.
   le compte EST la structure) ou **Recruteur indépendant** (inscription complète).
 - Publication d'offres avec branding, y compris **« Générer depuis une
   description »** (l'IA structure la phrase du recruteur) et **import par URL
-  (LinkedIn / JSON-LD)** — toujours validés par un humain.
+  (LinkedIn / JSON-LD)**: toujours validés par un humain.
 - **Talent search** par compétences, métier, région, secteur, avec matching
   explicable. **Shortlists** de candidats privées par entreprise.
 - **Statut partagé des candidatures** : le recruteur fait avancer le pipeline
@@ -149,11 +149,11 @@ Classique, **ATS** (compatible robots de tri), Moderne.
   (jamais ses coordonnées) et le contacte via la **messagerie interne**
   (identité complète de l'entreprise visible du candidat).
 
-## V2 — Collecte multi-source & canaux (implémenté)
+## V2: Collecte multi-source & canaux (implémenté)
 
 - **Ingestion multi-source** (§50) : connecteurs RSS et API JSON,
   normalisation, **déduplication inter-sources**, scoring de fiabilité par
-  source — console admin « Sources & collecte » avec exécution manuelle.
+  source: console admin « Sources & collecte » avec exécution manuelle.
 - **Import d'offre par URL** (LinkedIn ou autre) via le balisage public
   JSON-LD : mécanisme léger et autorisé, une page à la fois, brouillon à valider.
 - **Bot Telegram** (§25bis) : consultation conversationnelle des offres
@@ -166,9 +166,9 @@ Classique, **ATS** (compatible robots de tri), Moderne.
   dans le matching et le parcours « absence d'information ≠ absence de
   compétence » (§48).
 
-## V3 — Intelligence institutionnelle (implémenté)
+## V3: Intelligence institutionnelle (implémenté)
 
-- **Dashboard institutionnel** (§39) : agrégats anonymisés — offre vs
+- **Dashboard institutionnel** (§39) : agrégats anonymisés: offre vs
   demande de compétences, **écarts avec ratio de tension** (priorités de
   formation), répartition géographique, secteurs, candidatures par étape.
 - **Skill Graph** (§41) : exploration du graphe compétence ↔ métiers ↔
@@ -183,18 +183,18 @@ Classique, **ATS** (compatible robots de tri), Moderne.
 ## Organisation de l'interface
 
 - **Sidebar talent regroupée** : Accueil · Opportunités · Mon parcours ·
-  Compte — hiérarchie claire au lieu d'une liste plate (§78).
+  Compte: hiérarchie claire au lieu d'une liste plate (§78).
 - **Paramètres séparés du Profil** : MFA, notifications et vérification de
   profil vivent dans « Paramètres » (tous rôles) ; la page Profil reste
   dédiée au profil professionnel.
 - **Carte talent côté recruteur** : avatar initiales, badge de vérification,
-  résumé, match explicable, compétences et actions — présentation soignée.
+  résumé, match explicable, compétences et actions: présentation soignée.
 
 ## Ce qui est volontairement simulé / roadmap (V2-V3)
 
 Connecteurs LinkedIn et collecte multi-source automatisée, espace recruteur
 complet, WhatsApp/Telegram, Skill Graph national, vérification de credentials,
-données institutionnelles à grande échelle — voir §56-57 et §76 du cahier des charges.
+données institutionnelles à grande échelle: voir §56-57 et §76 du cahier des charges.
 
 ## Configuration optionnelle
 

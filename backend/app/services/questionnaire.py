@@ -40,7 +40,7 @@ EDUCATION_LEVELS = [
 ]
 
 # Niveau « sans diplôme » : on ne demande NI filière, NI établissement,
-# NI certifications — seulement le domaine de débrouillardise (§5bis).
+# NI certifications : seulement le domaine de débrouillardise (§5bis).
 SANS_DIPLOME = "Compétences acquises sur le terrain (sans diplôme)"
 
 
@@ -85,7 +85,7 @@ def get_steps() -> dict:
                 "questions": [
                     {"id": "q_experience_kinds", "label": "Quels types d'expériences avez-vous vécues ?", "type": "multi_choice",
                      "options": list(EXPERIENCE_KIND_MAP.keys())},
-                    {"id": "q_experience_desc", "label": "Décrivez vos expériences (une par ligne : rôle — structure — période — ce que vous faisiez)", "type": "textarea"},
+                    {"id": "q_experience_desc", "label": "Décrivez vos expériences (une par ligne : rôle, structure, période, ce que vous faisiez)", "type": "textarea"},
                     {"id": "q_languages", "label": "Langues parlées (une par ligne : langue niveau)", "type": "textarea"},
                 ],
             },

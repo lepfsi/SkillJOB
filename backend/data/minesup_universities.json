@@ -1,0 +1,250 @@
+[
+  {
+    "slug": "universite-yaounde-1",
+    "name": "Université de Yaoundé I",
+    "short_name": "UY1",
+    "city": "Yaoundé",
+    "region": "Centre",
+    "description": "Université d'État historique, structurée en facultés et grandes écoles. Elle accueille notamment les formations d'ingénieurs, d'enseignants et de techniciens supérieurs.",
+    "website": "https://www.minesup.gov.cm",
+    "source_url": "https://www.minesup.gov.cm",
+    "sort_order": 10,
+    "schools": [
+      {
+        "name": "École Nationale Supérieure Polytechnique de Yaoundé",
+        "short_name": "ENSPY",
+        "kind": "Grande école d'ingénieurs",
+        "admission": "Concours d'entrée en première année",
+        "eligibility": "Baccalauréat scientifique ou GCE A-Level scientifique, selon l'avis annuel du concours.",
+        "url": "https://www.minesup.gov.cm",
+        "deadline": "Session annuelle publiée par le MINESUP",
+        "sort_order": 10
+      },
+      {
+        "name": "École Normale Supérieure de Yaoundé",
+        "short_name": "ENS Yaoundé",
+        "kind": "École normale supérieure",
+        "admission": "Concours d'entrée",
+        "eligibility": "Baccalauréat ou GCE A-Level, licence selon le cycle visé et l'avis annuel.",
+        "url": "https://www.minesup.gov.cm",
+        "deadline": "Session annuelle publiée par le MINESUP",
+        "sort_order": 20
+      },
+      {
+        "name": "École Normale Supérieure d'Enseignement Technique de Yaoundé",
+        "short_name": "ENSET Yaoundé",
+        "kind": "École normale supérieure",
+        "admission": "Concours d'entrée",
+        "eligibility": "Baccalauréat technique ou scientifique, selon le parcours et l'avis annuel.",
+        "url": "https://www.minesup.gov.cm",
+        "deadline": "Session annuelle publiée par le MINESUP",
+        "sort_order": 30
+      }
+    ]
+  },
+  {
+    "slug": "universite-yaounde-2",
+    "name": "Université de Yaoundé II",
+    "short_name": "UY2",
+    "city": "Yaoundé",
+    "region": "Centre",
+    "description": "Université tournée vers les sciences juridiques, politiques, économiques et de gestion, avec des écoles professionnelles spécialisées.",
+    "website": "https://www.minesup.gov.cm",
+    "source_url": "https://www.minesup.gov.cm",
+    "sort_order": 20,
+    "schools": [
+      {
+        "name": "Institut des Relations Internationales du Cameroun",
+        "short_name": "IRIC",
+        "kind": "Institut spécialisé",
+        "admission": "Concours d'entrée",
+        "eligibility": "Licence ou diplôme équivalent, selon le cycle annoncé par l'institut.",
+        "url": "https://www.minesup.gov.cm",
+        "deadline": "Session annuelle publiée par le MINESUP",
+        "sort_order": 10
+      },
+      {
+        "name": "École Supérieure des Sciences et Techniques de l'Information et de la Communication",
+        "short_name": "ESSTIC",
+        "kind": "Grande école",
+        "admission": "Concours d'entrée",
+        "eligibility": "Baccalauréat ou niveau requis selon le cycle, sur concours.",
+        "url": "https://www.minesup.gov.cm",
+        "deadline": "Session annuelle publiée par le MINESUP",
+        "sort_order": 20
+      },
+      {
+        "name": "Institut Supérieur de Management Public",
+        "short_name": "ISMP",
+        "kind": "Institut spécialisé",
+        "admission": "Concours d'entrée",
+        "eligibility": "Diplôme requis selon le cycle, précisé dans l'avis annuel.",
+        "url": "https://www.minesup.gov.cm",
+        "deadline": "Session annuelle publiée par le MINESUP",
+        "sort_order": 30
+      }
+    ]
+  },
+  {
+    "slug": "universite-douala",
+    "name": "Université de Douala",
+    "short_name": "UD",
+    "city": "Douala",
+    "region": "Littoral",
+    "description": "Université économique du pays, avec des écoles de commerce, d'ingénierie et de formation technique implantées à Douala.",
+    "website": "https://www.minesup.gov.cm",
+    "source_url": "https://www.minesup.gov.cm",
+    "sort_order": 30,
+    "schools": [
+      {
+        "name": "École Supérieure des Sciences Économiques et Commerciales",
+        "short_name": "ESSEC Douala",
+        "kind": "Grande école de commerce",
+        "admission": "Concours d'entrée",
+        "eligibility": "Baccalauréat ou GCE A-Level, selon le cycle et l'avis annuel.",
+        "url": "https://www.minesup.gov.cm",
+        "deadline": "Session annuelle publiée par le MINESUP",
+        "sort_order": 10
+      },
+      {
+        "name": "École Nationale Supérieure Polytechnique de Douala",
+        "short_name": "ENSPD",
+        "kind": "Grande école d'ingénieurs",
+        "admission": "Concours d'entrée",
+        "eligibility": "Baccalauréat scientifique ou GCE A-Level scientifique, selon l'avis annuel.",
+        "url": "https://www.minesup.gov.cm",
+        "deadline": "Session annuelle publiée par le MINESUP",
+        "sort_order": 20
+      },
+      {
+        "name": "École Normale Supérieure d'Enseignement Technique de Douala",
+        "short_name": "ENSET Douala",
+        "kind": "École normale supérieure",
+        "admission": "Concours d'entrée",
+        "eligibility": "Baccalauréat technique ou scientifique, selon le parcours et l'avis annuel.",
+        "url": "https://www.minesup.gov.cm",
+        "deadline": "Session annuelle publiée par le MINESUP",
+        "sort_order": 30
+      }
+    ]
+  },
+  {
+    "slug": "universite-dschang",
+    "name": "Université de Dschang",
+    "short_name": "UDs",
+    "city": "Dschang",
+    "region": "Ouest",
+    "description": "Université de l'Ouest, reconnue pour l'agronomie, les sciences et la formation des enseignants. Elle dispose aussi d'un institut universitaire de technologie.",
+    "website": "https://www.minesup.gov.cm",
+    "source_url": "https://www.minesup.gov.cm",
+    "sort_order": 40,
+    "schools": [
+      {
+        "name": "École Nationale Supérieure d'Agronomie et des Sciences Agricoles",
+        "short_name": "ENSA",
+        "kind": "Grande école d'ingénieurs",
+        "admission": "Concours d'entrée",
+        "eligibility": "Baccalauréat scientifique ou GCE A-Level scientifique, selon l'avis annuel.",
+        "url": "https://www.minesup.gov.cm",
+        "deadline": "Session annuelle publiée par le MINESUP",
+        "sort_order": 10
+      },
+      {
+        "name": "École Normale Supérieure de Dschang",
+        "short_name": "ENS Dschang",
+        "kind": "École normale supérieure",
+        "admission": "Concours d'entrée",
+        "eligibility": "Baccalauréat ou GCE A-Level, licence selon le cycle visé.",
+        "url": "https://www.minesup.gov.cm",
+        "deadline": "Session annuelle publiée par le MINESUP",
+        "sort_order": 20
+      },
+      {
+        "name": "Institut Universitaire de Technologie Fotso Victor",
+        "short_name": "IUT Fotso Victor",
+        "kind": "Institut universitaire de technologie",
+        "admission": "Sélection sur dossier ou concours selon le cycle",
+        "eligibility": "Baccalauréat technique ou scientifique, selon la filière et l'avis annuel.",
+        "url": "https://www.minesup.gov.cm",
+        "deadline": "Calendrier de l'université",
+        "sort_order": 30
+      }
+    ]
+  },
+  {
+    "slug": "universite-ngaoundere",
+    "name": "Université de Ngaoundéré",
+    "short_name": "UN",
+    "city": "Ngaoundéré",
+    "region": "Adamaoua",
+    "description": "Université du grand Nord, avec des formations en agro-industrie, sciences, technologie et enseignement.",
+    "website": "https://www.minesup.gov.cm",
+    "source_url": "https://www.minesup.gov.cm",
+    "sort_order": 50,
+    "schools": [
+      {
+        "name": "École Nationale Supérieure des Sciences Agro-industrielles",
+        "short_name": "ENSAI",
+        "kind": "Grande école d'ingénieurs",
+        "admission": "Concours d'entrée",
+        "eligibility": "Baccalauréat scientifique ou GCE A-Level scientifique, selon l'avis annuel.",
+        "url": "https://www.minesup.gov.cm",
+        "deadline": "Session annuelle publiée par le MINESUP",
+        "sort_order": 10
+      },
+      {
+        "name": "Institut Universitaire de Technologie de Ngaoundéré",
+        "short_name": "IUT Ngaoundéré",
+        "kind": "Institut universitaire de technologie",
+        "admission": "Sélection sur dossier ou concours selon le cycle",
+        "eligibility": "Baccalauréat technique ou scientifique, selon la filière et l'avis annuel.",
+        "url": "https://www.minesup.gov.cm",
+        "deadline": "Calendrier de l'université",
+        "sort_order": 20
+      },
+      {
+        "name": "École Normale Supérieure de Ngaoundéré",
+        "short_name": "ENS Ngaoundéré",
+        "kind": "École normale supérieure",
+        "admission": "Concours d'entrée",
+        "eligibility": "Baccalauréat ou GCE A-Level, licence selon le cycle visé.",
+        "url": "https://www.minesup.gov.cm",
+        "deadline": "Session annuelle publiée par le MINESUP",
+        "sort_order": 30
+      }
+    ]
+  },
+  {
+    "slug": "universite-buea",
+    "name": "University of Buea",
+    "short_name": "UB",
+    "city": "Buea",
+    "region": "Sud-Ouest",
+    "description": "Université anglophone du Sud-Ouest, avec des colleges technologiques et de formation des enseignants.",
+    "website": "https://www.minesup.gov.cm",
+    "source_url": "https://www.minesup.gov.cm",
+    "sort_order": 60,
+    "schools": [
+      {
+        "name": "College of Technology",
+        "short_name": "COLTECH",
+        "kind": "Grande école technologique",
+        "admission": "Concours ou sélection selon le programme",
+        "eligibility": "GCE A-Level scientifique ou baccalauréat scientifique, selon l'avis annuel.",
+        "url": "https://www.minesup.gov.cm",
+        "deadline": "Calendrier de l'université",
+        "sort_order": 10
+      },
+      {
+        "name": "Higher Teacher Training College Kumba",
+        "short_name": "HTTTC Kumba",
+        "kind": "École normale supérieure",
+        "admission": "Concours d'entrée",
+        "eligibility": "GCE A-Level ou diplôme requis selon le cycle, précisé dans l'avis annuel.",
+        "url": "https://www.minesup.gov.cm",
+        "deadline": "Session annuelle publiée par le MINESUP",
+        "sort_order": 20
+      }
+    ]
+  }
+]

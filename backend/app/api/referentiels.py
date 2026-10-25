@@ -8,15 +8,22 @@ entrepreneuriat interactif (business plan, guidance) et notifications.
   espace entrepreneuriat interactif (§11bis).
 - GET /api/entrepreneurship/guidance : comment entreprendre dans SON
   domaine de compétence, calculé depuis le profil réel.
+- GET /api/entrepreneurship/profile : compétences entrepreneuriales
+  réellement présentes dans le profil, situées par rapport à un
+  référentiel issu de NOTRE taxonomie (§11bis, §47).
 """
 import json
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app import config, models, schemas, security
 from app.database import get_db
+from app.services import domains as domains_service
+from app.services import entrepreneurship as entrepreneurship_service
+from app.services import program_documents
 
 router = APIRouter(prefix="/api", tags=["referentiels"])
 
@@ -29,24 +36,52 @@ def geo():
         return json.load(f)
 
 
+@router.get("/domains", response_model=list[schemas.DomainOut])
+def domains(db: Session = Depends(get_db)):
+    """Référentiel commun : domaines actifs et leurs spécialités.
+
+    Il alimente la recherche d'offres, les filtres recruteur et les
+    préférences de profil. Les entrées désactivées par l'admin ne sont pas
+    exposées publiquement.
+    """
+    return domains_service.domain_tree(db)
+
+
 # --------------------------------------------- Programmes publics
 
 INSTITUTION_LABELS = {
-    "fne": "Fonds National de l'Emploi",
-    "minfop": "Ministère de la Formation Professionnelle",
-    "minpme": "Ministère des Petites et Moyennes Entreprises",
-    "concours": "Concours et examens",
+    "minfopra": "Ministère de la Fonction Publique et de la Réforme Administrative",
+    "minesup": "Ministère de l'Enseignement Supérieur",
+    "minefop": "Ministère de l'Emploi et de la Formation Professionnelle",
+    "ong": "Organisations non gouvernementales",
+    "mindef": "Ministère de la Défense",
+    "dgsn": "Délégation Générale à la Sûreté Nationale",
+    "appels_projets": "Appels à projets des ministères",
 }
 
 SUBCATEGORY_LABELS = {
-    "fonction_publique": "Concours de la fonction publique",
-    "grandes_ecoles": "Concours des grandes écoles (MINESUP)",
-    "sante": "Personnel de la santé",
-    "forets_faune": "Eaux, forêts et faune",
-    "armees": "Armées et sécurité",
-    "bourses": "Bourses de formation",
-    "offres_emploi": "Offres d'emploi et stages",
-    "accompagnement_pme": "Accompagnement des PME",
+    "concours_direct": "Concours directs",
+    "concours_integration": "Concours d'intégration",
+    "universites": "Universités d'État",
+    "ecoles": "Écoles de formation par université",
+    "avis_concours": "Avis de concours",
+    "fne": "Fonds National de l'Emploi (FNE)",
+    "bourse_formation": "Bourses de formation professionnelle",
+    "ong_emplois": "Offres d'emploi des ONG",
+    "ong_stages": "Programmes de stage des ONG",
+    "armee": "Concours d'entrée dans l'armée",
+    "gendarmerie": "Gendarmerie nationale",
+    "bir": "Bataillon d'intervention rapide (BIR)",
+    "garde_presidentielle": "Garde présidentielle",
+    "emia": "École militaire interarmes (EMIA)",
+    "armee_etrangere": "Armée étrangère",
+    "police": "Concours d'entrée à la police nationale",
+    "appels_minader": "Appels à projets · MINADER (agriculture)",
+    "appels_minepat": "Appels à projets · MINEPAT (planification)",
+    "appels_minjec": "Appels à projets · MINJEC (jeunesse)",
+    "appels_mintoul": "Appels à projets · MINTOUL (tourisme)",
+    "appels_minfof": "Appels à projets · MINFOF (forêts et faune)",
+    "appels_mincom": "Appels à projets · MINCOM (communication)",
 }
 
 
@@ -74,99 +109,80 @@ def institutional(
             "eligibility": o.eligibility,
             "url": o.url,
             "deadline": o.deadline,
+            # Documents joints par l'administration (PDF) : la fiche les
+            # affiche tels quels, avec un bouton de téléchargement.
+            "documents": program_documents.normalize(o),
         }
         for o in items
     ]
 
 
-ENTREPRENEUR_KIND_LABELS = {
-    "concours": "Concours et appels à projets",
-    "accompagnement": "Accompagnement et incubation",
-    "financement": "Financement",
-    "formation": "Formation entrepreneuriale",
-}
+@router.get("/institutional/minesup")
+def minesup_catalogue(db: Session = Depends(get_db)):
+    """Explorateur MINESUP : universités d'État puis grandes écoles.
 
-# Exigences bancaires types (répertoire de préparation, documenté et
-# actualisable ; jamais présenté comme garanti).
-BANK_PREP = [
-    {
-        "step": "Business plan complet",
-        "detail": "Description de l'activité, étude de marché locale, "
-                  "prévisionnel sur 3 ans, plan de trésorerie mensuel.",
-    },
-    {
-        "step": "Statut juridique à jour",
-        "detail": "Registre de commerce (RCCM), N° de contribuable, "
-                  "statuts notariés ou agréés pour les sociétés.",
-    },
-    {
-        "step": "Apport personnel",
-        "detail": "Les banques exigent généralement 15 à 30 % d'apport "
-                  "démontrant votre engagement dans le projet.",
-    },
-    {
-        "step": "Garanties",
-        "detail": "Nantissement de matériel, caution solidaire, hypothèque "
-                  "ou garantie de programme public (fonds de garantie).",
-    },
-    {
-        "step": "Comptabilité tenue",
-        "detail": "Livres comptables, relevés bancaires de l'activité, "
-                  "factures fournisseurs et clients sur les derniers mois.",
-    },
-    {
-        "step": "Expérience du porteur",
-        "detail": "CV ou références montrant votre maîtrise du métier : "
-                  "votre profil OrientSkill documente vos compétences "
-                  "et expériences, y compris informelles.",
-    },
-]
+    La hiérarchie est portée par la base, pas reconstruite à partir d'un
+    texte libre. Chaque école expose sa voie d'admission, son éligibilité,
+    son calendrier annoncé et son lien officiel.
+    """
+    universities = (
+        db.query(models.MinesupUniversity)
+        .order_by(models.MinesupUniversity.sort_order, models.MinesupUniversity.name)
+        .all()
+    )
+    schools_by_university: dict[int, list[models.MinesupSchool]] = {}
+    if universities:
+        schools = (
+            db.query(models.MinesupSchool)
+            .order_by(models.MinesupSchool.sort_order, models.MinesupSchool.name)
+            .all()
+        )
+        for school in schools:
+            schools_by_university.setdefault(school.university_id, []).append(school)
 
-# Institutions de financement et d'accompagnement (publics et parapublics).
-FINANCING_INSTITUTIONS = [
-    {
-        "name": "Fonds National de l'Emploi (FNE)",
-        "type": "Public",
-        "finances": "Auto-emploi, contrats préprofessionnels, appui aux microprojets des jeunes.",
-        "conditions": "Étude de faisabilité du projet, inscription FNE, apport personnel symbolique.",
-        "url": "https://www.emploi.cm",
-    },
-    {
-        "name": "Programme économique spécial jeunes (PEA-Jeunes, MINPME)",
-        "type": "Public",
-        "finances": "Financement partiel des jeunes entreprises en création.",
-        "conditions": "Projet économique viable, groupe ou individu formalisé, formation à la gestion.",
-        "url": "https://www.minpme.gov.cm",
-    },
-    {
-        "name": "Banques commerciales (BICEC, SCB Crédit Agricole, SGB, Afriland First Bank…)",
-        "type": "Banque",
-        "finances": "Crédits d'investissement et d'exploitation des PME.",
-        "conditions": "Business plan, garanties (souvent 100 %), comptabilité tenue, apport personnel.",
-        "url": None,
-    },
-    {
-        "name": "Institutions de microfinance (IMF agréées)",
-        "type": "Microfinance",
-        "finances": "Microcrédits rapides aux très petites entreprises sans garanties classiques.",
-        "conditions": "Épargne préalable ou caution solidaire, projet simple et réaliste.",
-        "url": None,
-    },
-    {
-        "name": "Fonds de garantie publics et partenariaux",
-        "type": "Garantie",
-        "finances": "Garantie des prêts bancaires accordés aux jeunes promoteurs (le fonds se porte caution partielle).",
-        "conditions": "Dossier instruit par la banque partenaire, adhésion au dispositif.",
-        "url": None,
-    },
-    {
-        "name": "CDC (Caisse de Dépôts et Consignations) et structures parapubliques",
-        "type": "Parapublic",
-        "finances": "Participations et financements structurés de projets à impact.",
-        "conditions": "Projets structurés avec étude complète, montage juridique.",
-        "url": None,
-    },
-]
+    return [
+        {
+            "id": u.id,
+            "slug": u.slug,
+            "name": u.name,
+            "short_name": u.short_name,
+            "city": u.city,
+            "region": u.region,
+            "description": u.description,
+            "website": u.website,
+            "source_url": u.source_url,
+            "schools": [
+                {
+                    "id": s.id,
+                    "name": s.name,
+                    "short_name": s.short_name,
+                    "kind": s.kind,
+                    "admission": s.admission,
+                    "eligibility": s.eligibility,
+                    "url": s.url,
+                    "deadline": s.deadline,
+                }
+                for s in schools_by_university.get(u.id, [])
+            ],
+        }
+        for u in universities
+    ]
+
+
+@router.get("/institutional/{item_id}/documents/{key}")
+def institutional_document(item_id: int, key: str, db: Session = Depends(get_db)):
+    """Téléchargement d'un PDF joint à un programme public."""
+    offer = db.get(models.InstitutionalOffer, item_id)
+    if offer is None:
+        raise HTTPException(status_code=404, detail="Programme introuvable")
+    entry = program_documents.find(offer, key)
+    if entry is None:
+        raise HTTPException(status_code=404, detail="Document introuvable")
+    return FileResponse(
+        program_documents.path_for(entry),
+        media_type="application/pdf",
+        filename=entry.get("filename") or "document.pdf",
+    )
 
 
 @router.get("/entrepreneurship")
@@ -177,27 +193,27 @@ def entrepreneurship(
 ):
     """Espace entrepreneuriat (§11bis) : ressources, institutions de
     financement public/parapublic, exigences bancaires."""
-    query = db.query(models.EntrepreneurResource)
-    if kind:
-        query = query.filter(models.EntrepreneurResource.kind == kind)
-    items = query.order_by(models.EntrepreneurResource.id).all()
     return {
-        "resources": [
-            {
-                "id": r.id,
-                "kind": r.kind,
-                "kind_label": ENTREPRENEUR_KIND_LABELS.get(r.kind, r.kind),
-                "title": r.title,
-                "description": r.description,
-                "organizer": r.organizer,
-                "url": r.url,
-                "sectors": r.sectors,
-            }
-            for r in items
-        ],
-        "bank_prep": BANK_PREP,
-        "financing_institutions": FINANCING_INSTITUTIONS,
+        "resources": entrepreneurship_service.list_resources(db, kind),
+        "bank_prep": entrepreneurship_service.BANK_PREP,
+        "financing_institutions": entrepreneurship_service.FINANCING_INSTITUTIONS,
     }
+
+
+@router.get("/entrepreneurship/profile")
+def entrepreneur_profile(
+    user: models.User = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """« Mon profil entrepreneurial » : compétences entrepreneuriales
+    réellement présentes dans le profil validé, situées par rapport au
+    référentiel (issu de notre taxonomie), et compétences métier du
+    porteur qui ne figurent pas dans ce référentiel."""
+    from app.services.profile_store import get_profile_row, profile_to_dict
+    from app.services.skills_taxonomy import load_taxonomy
+
+    profile = profile_to_dict(get_profile_row(db, user.id), user.id)
+    return entrepreneurship_service.entrepreneur_profile(profile, load_taxonomy())
 
 
 @router.get("/entrepreneurship/guidance")

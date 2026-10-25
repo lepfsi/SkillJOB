@@ -1,4 +1,4 @@
-# OrientSkill AI — Frontend
+# OrientSkill AI : Frontend
 
 Frontend du MVP "OrientSkill AI", plateforme d'intelligence professionnelle pour les jeunes Camerounais.
 
@@ -6,7 +6,7 @@ Frontend du MVP "OrientSkill AI", plateforme d'intelligence professionnelle pour
 
 - Vite + React 18 + react-router-dom v6 (JavaScript)
 - CSS maison unique (`src/styles.css`), mobile-first
-- Proxy `/api` → `http://localhost:8000` (backend FastAPI)
+- Proxy `/api` → `http://localhost:8110` (backend FastAPI)
 
 ## Lancement
 
@@ -15,7 +15,7 @@ npm install
 npm run dev
 ```
 
-Application disponible sur http://localhost:5173 (le backend doit tourner sur http://localhost:8000).
+Application disponible sur http://localhost:5190 (le backend doit tourner sur http://localhost:8110).
 
 ## Build de production
 
@@ -26,9 +26,9 @@ npm run preview
 
 ## Structure
 
-- `src/api/client.js` — wrapper fetch (Bearer JWT depuis `localStorage` clé `orientskill_token`, redirect login sur 401)
-- `src/context/AuthContext.jsx` — login / register / logout / utilisateur courant
-- `src/components/` — Layout, MatchBadge, SkillTag, éléments communs
-- `src/pages/` — Login, Register, Onboarding, Questionnaire, DraftReview, Dashboard, Inbox, Opportunities, OpportunityDetail, Applications, Career, Skills, Learning, Documents, Profile, Assistant
+- `src/api/client.js` : wrapper fetch (Bearer JWT depuis `localStorage` clé `orientskill_token`, redirect login sur 401)
+- `src/context/AuthContext.jsx` : login / register / logout / utilisateur courant
+- `src/components/` : Layout, MatchBadge, SkillTag, éléments communs
+- `src/pages/` : Login, Register, Onboarding, Questionnaire, DraftReview, Dashboard, Inbox, Opportunities, OpportunityDetail, Applications, Career, Skills, Learning, Documents, Profile, Assistant
 
 Le contrat d'API suivi est décrit dans `../docs/API_CONTRACT.md`.

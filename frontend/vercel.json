@@ -6,6 +6,14 @@
       "destination": "https://skilljob.onrender.com/api/$1"
     },
     {
+      "source": "/docs",
+      "destination": "https://skilljob.onrender.com/docs"
+    },
+    {
+      "source": "/openapi.json",
+      "destination": "https://skilljob.onrender.com/openapi.json"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }

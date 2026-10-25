@@ -9,7 +9,7 @@ réponse pour le test manuel uniquement.
 import json
 import logging
 import smtplib
-from email.mime.text import MIMEText
+from email.message import EmailMessage
 from typing import Any, Optional
 from urllib.parse import quote
 
@@ -19,6 +19,19 @@ from app.services import settings_store
 
 logger = logging.getLogger("orientskill.notifications")
 
+# ------------------------------------------------- Événements (§25, §52)
+# Types d'événements notifiables. Le candidat choisit, POUR CHAQUE
+# événement, s'il veut aussi l'e-mail ; sinon la notification reste
+# dans l'application (inbox / messagerie / briefing).
+
+EVENT_TYPES: dict[str, str] = {
+    "new_match": "Nouvelle offre correspondant au profil",
+    "expiring": "Offre correspondante dont la date limite approche",
+    "agent": "Conseil ou alerte importante de l'agent",
+    "message": "Message d'un recruteur",
+    "application": "Mise à jour d'une candidature",
+}
+
 DEFAULT_PREFS: dict[str, Any] = {
     "email_enabled": False,
     "email": "",
@@ -26,6 +39,8 @@ DEFAULT_PREFS: dict[str, Any] = {
     "whatsapp_number": "",
     "telegram_enabled": False,
     "telegram_username": "",
+    # Choix par événement : e-mail souhaité (false = in-app uniquement).
+    "events": {event: False for event in EVENT_TYPES},
 }
 
 
@@ -35,20 +50,72 @@ def normalize_prefs(raw: Optional[dict]) -> dict[str, Any]:
         prefs[key] = bool(prefs.get(key))
     for key in ("email", "whatsapp_number", "telegram_username"):
         prefs[key] = str(prefs.get(key) or "").strip()
+    events = prefs.get("events") or {}
+    prefs["events"] = {
+        event: bool(events.get(event, False)) for event in EVENT_TYPES
+    }
     return prefs
+
+
+def email_wanted(prefs: dict, event: Optional[str]) -> bool:
+    """E-mail souhaité pour cet événement ? (True si pas d'événement :
+    envoi manuel / test des canaux.)"""
+    if not event:
+        return True
+    return bool((prefs.get("events") or {}).get(event, False))
 
 
 # ------------------------------------------------------------- canaux
 
-def send_email(db, to_email: str, subject: str, body: str) -> tuple[bool, str]:
+def _add_attachments(msg: EmailMessage, attachments: Optional[list[Any]]) -> None:
+    """Ajoute des pièces jointes en conservant leur type MIME.
+
+    Deux formes acceptées : dictionnaire (filename, content, maintype,
+    subtype) pour les flux entrants, ou couple (filename, bytes) pour les
+    PDF historiques. Un type inconnu retombe sur application/octet-stream.
+    """
+    for item in attachments or []:
+        if isinstance(item, dict):
+            filename = str(item.get("filename") or "piece-jointe")
+            content = item.get("content") or b""
+            maintype = str(item.get("maintype") or "application")
+            subtype = str(item.get("subtype") or "octet-stream")
+        else:
+            filename, content = item[0], item[1]
+            maintype, subtype = "application", "pdf"
+        msg.add_attachment(
+            content,
+            maintype=maintype,
+            subtype=subtype,
+            filename=filename,
+        )
+
+
+def send_email(
+    db,
+    to_email: str,
+    subject: str,
+    body: str,
+    attachments: Optional[list[Any]] = None,
+    reply_to: str = "",
+) -> tuple[bool, str]:
+    """Envoie un e-mail texte, avec pièces jointes optionnelles.
+
+    ``attachments`` accepte des dictionnaires (voir ``_add_attachments``)
+    pour les calendriers .ics et les CV/lettres reçus par e-mail.
+    """
     conf = settings_store.get_raw_group(db, "smtp")
     if not (conf.get("enabled") and conf.get("host") and to_email):
         return False, "Service e-mail non configuré (voir administrateur)."
     try:
-        msg = MIMEText(body, "plain", "utf-8")
+        msg = EmailMessage()
         msg["Subject"] = subject
         msg["From"] = conf.get("from_email") or conf.get("username") or "no-reply@orientskill.cm"
         msg["To"] = to_email
+        if reply_to:
+            msg["Reply-To"] = reply_to
+        msg.set_content(body, charset="utf-8")
+        _add_attachments(msg, attachments)
         with smtplib.SMTP(conf["host"], int(conf.get("port") or 587), timeout=8) as server:
             if conf.get("use_tls", True):
                 server.starttls()
@@ -58,6 +125,44 @@ def send_email(db, to_email: str, subject: str, body: str) -> tuple[bool, str]:
         return True, "E-mail envoyé."
     except Exception as exc:
         logger.warning("Envoi e-mail échoué : %s", exc)
+        return False, f"Échec e-mail : {exc}"
+
+
+def send_application_email(
+    db,
+    to_email: str,
+    subject: str,
+    body: str,
+    reply_to: str = "",
+    attachments: Optional[list[tuple[str, bytes]]] = None,
+) -> tuple[bool, str]:
+    """Candidature transférée au publieur : corps texte + PDF joints.
+
+    ``reply_to`` : adresse du candidat ; la réponse du recruteur part
+    directement chez lui (notre adresse reste en expéditeur pour la
+    traçabilité SMTP). ``attachments`` : liste (nom_fichier, bytes PDF).
+    """
+    conf = settings_store.get_raw_group(db, "smtp")
+    if not (conf.get("enabled") and conf.get("host") and to_email):
+        return False, "Service e-mail non configuré (voir administrateur)."
+    try:
+        msg = EmailMessage()
+        msg["Subject"] = subject
+        msg["From"] = conf.get("from_email") or conf.get("username") or "candidatures@orientskill.cm"
+        msg["To"] = to_email
+        if reply_to:
+            msg["Reply-To"] = reply_to
+        msg.set_content(body, charset="utf-8")
+        _add_attachments(msg, attachments)
+        with smtplib.SMTP(conf["host"], int(conf.get("port") or 587), timeout=15) as server:
+            if conf.get("use_tls", True):
+                server.starttls()
+            if conf.get("username") and conf.get("password"):
+                server.login(conf["username"], conf["password"])
+            server.send_message(msg)
+        return True, "Candidature transmise par e-mail."
+    except Exception as exc:
+        logger.warning("Envoi candidature e-mail échoué : %s", exc)
         return False, f"Échec e-mail : {exc}"
 
 
@@ -152,12 +257,24 @@ def send_whatsapp(db, number: str, text: str) -> tuple[bool, str]:
 
 # ----------------------------------------------------------- dispatch
 
-def dispatch(db, user, subject: str, body: str) -> list[dict[str, Any]]:
-    """Envoie une notification sur tous les canaux ACTIVÉS du destinataire.
-    Best effort : jamais d'exception remontée à l'appelant métier."""
+def dispatch(
+    db, user, subject: str, body: str, event: Optional[str] = None
+) -> list[dict[str, Any]]:
+    """Envoie une notification sur les canaux ACTIVÉS du destinataire.
+
+    ``event`` : type d'événement (voir EVENT_TYPES). Quand il est
+    renseigné et que le destinataire n'a PAS demandé l'e-mail pour cet
+    événement, la notification reste in-app (inbox / messagerie) : aucun
+    e-mail n'est envoyé. Best effort : jamais d'exception remontée à
+    l'appelant métier.
+    """
     prefs = normalize_prefs(getattr(user, "notification_prefs", None) or {})
     results: list[dict[str, Any]] = []
-    if prefs["email_enabled"] and prefs["email"]:
+    if (
+        prefs["email_enabled"]
+        and prefs["email"]
+        and email_wanted(prefs, event)
+    ):
         ok, detail = send_email(db, prefs["email"], subject, body)
         results.append({"channel": "email", "ok": ok, "detail": detail})
     if prefs["telegram_enabled"] and prefs["telegram_username"]:

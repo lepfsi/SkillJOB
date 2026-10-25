@@ -8,10 +8,14 @@ import Onboarding from "./pages/Onboarding.jsx";
 import Questionnaire from "./pages/Questionnaire.jsx";
 import DraftReview from "./pages/DraftReview.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
-import Inbox from "./pages/Inbox.jsx";
+import Agent from "./pages/Agent.jsx";
+import Notifications from "./pages/Notifications.jsx";
 import Opportunities from "./pages/Opportunities.jsx";
 import OpportunityDetail from "./pages/OpportunityDetail.jsx";
 import Applications from "./pages/Applications.jsx";
+import Interviews from "./pages/Interviews.jsx";
+import PublicApply from "./pages/PublicApply.jsx";
+import Poster from "./pages/Poster.jsx";
 import Career from "./pages/Career.jsx";
 import Skills from "./pages/Skills.jsx";
 import Learning from "./pages/Learning.jsx";
@@ -27,6 +31,10 @@ import AdminHome from "./pages/admin/AdminHome.jsx";
 import AdminSettings from "./pages/admin/AdminSettings.jsx";
 import AdminConnecteurs from "./pages/admin/AdminConnecteurs.jsx";
 import AdminJobs from "./pages/admin/AdminJobs.jsx";
+import AdminDomains from "./pages/admin/AdminDomains.jsx";
+import AdminLearning from "./pages/admin/AdminLearning.jsx";
+import AdminReports from "./pages/admin/AdminReports.jsx";
+import AdminApplications from "./pages/admin/AdminApplications.jsx";
 import AdminUsers from "./pages/admin/AdminUsers.jsx";
 import AdminVerifications from "./pages/admin/AdminVerifications.jsx";
 import AdminSources from "./pages/admin/AdminSources.jsx";
@@ -84,18 +92,25 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/postuler/:jobId" element={<PublicApply />} />
+      <Route path="/visuel/:jobId" element={<Poster />} />
+      <Route path="/inbox" element={<Navigate to="/notifications" replace />} />
 
       {/* -------------------- Espace candidat -------------------- */}
       <Route path="/" element={<RequireCandidate><Dashboard /></RequireCandidate>} />
-      <Route path="/inbox" element={<RequireCandidate><Inbox /></RequireCandidate>} />
+      <Route path="/agent" element={<RequireCandidate><Agent /></RequireCandidate>} />
+      <Route path="/notifications" element={<RequireCandidate><Notifications /></RequireCandidate>} />
       <Route path="/opportunites" element={<RequireCandidate><Opportunities /></RequireCandidate>} />
       <Route path="/opportunites/:id" element={<RequireCandidate><OpportunityDetail /></RequireCandidate>} />
       <Route path="/programmes" element={<RequireCandidate><Institutional /></RequireCandidate>} />
       <Route path="/entrepreneuriat" element={<RequireCandidate><Entrepreneurship /></RequireCandidate>} />
       <Route path="/candidatures" element={<RequireCandidate><Applications /></RequireCandidate>} />
+      <Route path="/entretiens" element={<RequireCandidate><Interviews /></RequireCandidate>} />
+      <Route path="/entretiens/:token" element={<Interviews />} />
       <Route path="/carriere" element={<RequireCandidate><Career /></RequireCandidate>} />
       <Route path="/competences" element={<RequireCandidate><Skills /></RequireCandidate>} />
       <Route path="/learning" element={<RequireCandidate><Learning /></RequireCandidate>} />
+      <Route path="/learning/:resourceKey" element={<RequireCandidate><Learning /></RequireCandidate>} />
       <Route path="/documents" element={<RequireCandidate><Documents /></RequireCandidate>} />
       <Route path="/profil" element={<RequireCandidate><Profile /></RequireCandidate>} />
       <Route path="/assistant" element={<RequireAny><Assistant /></RequireAny>} />
@@ -115,6 +130,10 @@ export default function App() {
       <Route path="/admin/utilisateurs" element={<RequireAdmin><AdminUsers /></RequireAdmin>} />
       <Route path="/admin/verifications" element={<RequireAdmin><AdminVerifications /></RequireAdmin>} />
       <Route path="/admin/offres" element={<RequireAdmin><AdminJobs /></RequireAdmin>} />
+      <Route path="/admin/domaines" element={<RequireAdmin><AdminDomains /></RequireAdmin>} />
+      <Route path="/admin/formations" element={<RequireAdmin><AdminLearning /></RequireAdmin>} />
+      <Route path="/admin/signalements" element={<RequireAdmin><AdminReports /></RequireAdmin>} />
+      <Route path="/admin/candidatures" element={<RequireAdmin><AdminApplications /></RequireAdmin>} />
       <Route path="/admin/sources" element={<RequireAdmin><AdminSources /></RequireAdmin>} />
       <Route path="/admin/contenus" element={<RequireAdmin><AdminPublicContent /></RequireAdmin>} />
       <Route path="/admin/institutionnel" element={<RequireAdmin><AdminInstitutional /></RequireAdmin>} />

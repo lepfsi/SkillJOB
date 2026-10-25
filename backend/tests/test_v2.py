@@ -8,6 +8,7 @@ import pytest
 
 from app import models
 from app.services import ingestion, telegram_bot
+from app.services.job_parser import parse_job_description
 
 
 # ------------------------------------------------ Parsing des flux
@@ -145,6 +146,219 @@ def test_sources_crud_and_run(client, monkeypatch):
     # Suppression de la source
     deleted = client.delete(f"/api/admin/sources/{source_id}", headers=headers)
     assert deleted.status_code == 200
+
+
+RSS_DATED_SAMPLE = """<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/">
+<channel>
+  <title>Offres datées</title>
+  <item>
+    <title>Architecte données junior chez DataLab CM à Yaoundé</title>
+    <link>https://exemple.cm/offre/date-1</link>
+    <description>Data : SQL, Python, Power BI.</description>
+    <dc:creator>DataLab CM</dc:creator>
+    <pubDate>Tue, 20 Oct 2026 09:30:00 GMT</pubDate>
+  </item>
+</channel></rss>"""
+
+
+RSS_DUPLICATE_URL_SAMPLE = """<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel>
+  <item>
+    <title>Développeur mobile senior chez AppFactory CM à Douala</title>
+    <link>https://exemple.cm/offre/mobile-1</link>
+    <description>Android, Kotlin, API REST.</description>
+  </item>
+  <item>
+    <title>Développeur mobile senior (nouveau) chez AppFactory CM à Douala</title>
+    <link>https://exemple.cm/offre/mobile-1?utm_source=newsletter</link>
+    <description>Android, Kotlin, API REST.</description>
+  </item>
+</channel></rss>"""
+
+
+def test_parse_rss_reads_namespaced_author_and_date():
+    items = ingestion.parse_rss(RSS_DATED_SAMPLE.encode("utf-8"))
+    assert len(items) == 1
+    assert items[0]["author"] == "DataLab CM"
+    assert items[0]["published"] == "Tue, 20 Oct 2026 09:30:00 GMT"
+    parsed = ingestion._parse_date(items[0]["published"])
+    assert parsed is not None
+    assert parsed.strftime("%Y-%m-%d %H:%M") == "2026-10-20 09:30"
+
+
+def test_job_parser_strips_feed_company_suffix_from_title():
+    parsed = parse_job_description(
+        "Ingénieur DevOps confirmé chez CloudForge CM à Douala"
+    )
+    assert parsed["title"] == "Ingénieur DevOps confirmé"
+    assert parsed["company"] == "CloudForge CM"
+    assert parsed["location"] == "Douala"
+
+    parsed = parse_job_description("Comptable senior chez SBC Douala")
+    assert parsed["title"] == "Comptable senior"
+    assert parsed["company"] == "SBC"
+    assert parsed["location"] == "Douala"
+
+
+def test_parse_json_feed_reads_json_feed_standard_fields():
+    raw = json.dumps({
+        "version": "https://jsonfeed.org/version/1.1",
+        "items": [{
+            "title": "Data engineer chez Kmer Analytics à Douala",
+            "url": "https://exemple.cm/offre/json-1",
+            "content_html": "<p>Python, SQL, Airflow.</p>",
+            "date_published": "2026-10-21T10:00:00Z",
+            "authors": [{"name": "Kmer Analytics"}],
+            "location": {
+                "address": {
+                    "addressLocality": "Douala",
+                    "addressCountry": "CM",
+                }
+            },
+        }],
+    }).encode("utf-8")
+    items = ingestion.parse_json_feed(raw)
+    assert len(items) == 1
+    assert items[0]["title"].startswith("Data engineer")
+    assert items[0]["description"] == "Python, SQL, Airflow."
+    assert items[0]["author"] == "Kmer Analytics"
+    assert items[0]["location"] == "Douala, CM"
+    parsed = ingestion._parse_date(items[0]["published"])
+    assert parsed is not None
+    assert parsed.strftime("%Y-%m-%d %H:%M") == "2026-10-21 10:00"
+
+
+def test_source_schedule_and_source_date_are_exposed(client, monkeypatch):
+    headers = _admin_headers(client)
+    created = client.post("/api/admin/sources", json={
+        "name": "Flux daté CM", "kind": "rss",
+        "url": "https://exemple.cm/feed-date.xml",
+        "sector": "Informatique / IT",
+        "interval_minutes": 15,
+    }, headers=headers)
+    assert created.status_code == 201, created.text
+    source_id = created.json()["id"]
+
+    before = client.get("/api/admin/sources", headers=headers).json()
+    source = next(item for item in before if item["id"] == source_id)
+    assert source["interval_minutes"] == 15
+    assert source["is_due"] is True
+    assert source["next_run_at"]
+
+    monkeypatch.setattr(
+        ingestion, "_fetch",
+        lambda url, timeout=15: RSS_DATED_SAMPLE.encode("utf-8"),
+    )
+    run = client.post(f"/api/admin/sources/{source_id}/run", headers=headers)
+    assert run.status_code == 200, run.text
+    assert run.json()["imported"] == 1
+
+    after = client.get("/api/admin/sources", headers=headers).json()
+    source = next(item for item in after if item["id"] == source_id)
+    assert source["reliability_pct"] == 100
+    assert source["last_items"] == 1
+    assert source["last_duration_ms"] >= 0
+    assert source["is_due"] is False
+    assert source["health"] == "ok"
+
+    login = client.post("/api/auth/login", json={
+        "email": "demo@orientskill.cm", "password": "demo1234",
+    })
+    dheaders = {"Authorization": f"Bearer {login.json()['token']}"}
+    jobs = client.get(
+        "/api/jobs?search=Architecte données junior", headers=dheaders
+    ).json()
+    assert len(jobs) == 1
+    assert jobs[0]["published_at"].startswith("2026-10-20T09:30")
+
+    client.delete(f"/api/admin/sources/{source_id}", headers=headers)
+
+
+def test_source_url_dedup_and_test_endpoint(client, monkeypatch):
+    headers = _admin_headers(client)
+    created = client.post("/api/admin/sources", json={
+        "name": "Flux doublon URL", "kind": "rss",
+        "url": "https://exemple.cm/feed-doublon.xml",
+    }, headers=headers)
+    source_id = created.json()["id"]
+    monkeypatch.setattr(
+        ingestion, "_fetch",
+        lambda url, timeout=15: RSS_DUPLICATE_URL_SAMPLE.encode("utf-8"),
+    )
+
+    test = client.post("/api/admin/sources/test", json={
+        "kind": "rss", "url": "https://exemple.cm/feed-doublon.xml",
+    }, headers=headers)
+    assert test.status_code == 200, test.text
+    assert test.json()["ok"] is True
+    assert test.json()["items"] == 2
+    assert "Développeur mobile" in test.json()["sample"]["title"]
+
+    run = client.post(f"/api/admin/sources/{source_id}/run", headers=headers)
+    assert run.status_code == 200, run.text
+    assert run.json()["imported"] == 1
+    assert run.json()["skipped"] == 1
+
+    client.delete(f"/api/admin/sources/{source_id}", headers=headers)
+
+
+RSS_CROSS_SOURCE_SAMPLE = """<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"><channel>
+  <item>
+    <title>Chef de projet digital chez Kmer Studio à Douala</title>
+    <link>https://exemple.cm/offre/cross-1</link>
+    <description>Gestion de projet, agile, communication.</description>
+  </item>
+</channel></rss>"""
+
+
+def test_run_all_dedupes_across_sources(client, monkeypatch):
+    headers = _admin_headers(client)
+    created = []
+    for name in ("Flux croisé A", "Flux croisé B"):
+        res = client.post("/api/admin/sources", json={
+            "name": name, "kind": "rss",
+            "url": f"https://exemple.cm/{name.lower().replace(' ', '-')}.xml",
+        }, headers=headers)
+        assert res.status_code == 201, res.text
+        created.append((res.json()["id"], name))
+    monkeypatch.setattr(
+        ingestion, "_fetch",
+        lambda url, timeout=15: RSS_CROSS_SOURCE_SAMPLE.encode("utf-8"),
+    )
+    results = client.post("/api/admin/sources/run-all", headers=headers).json()
+    by_name = {item["source"]: item for item in results}
+    assert by_name["Flux croisé A"]["imported"] == 1
+    assert by_name["Flux croisé B"]["imported"] == 0
+    assert by_name["Flux croisé B"]["skipped"] == 1
+    for source_id, _name in created:
+        client.delete(f"/api/admin/sources/{source_id}", headers=headers)
+
+
+def test_due_sources_respects_each_interval(client):
+    from app.database import SessionLocal
+
+    headers = _admin_headers(client)
+    created = client.post("/api/admin/sources", json={
+        "name": "Flux planifié", "kind": "rss",
+        "url": "https://exemple.cm/feed-planifie.xml",
+        "interval_minutes": 15,
+    }, headers=headers)
+    source_id = created.json()["id"]
+    db = SessionLocal()
+    try:
+        source = db.get(models.SourceConfig, source_id)
+        source.last_run_at = datetime.utcnow() - timedelta(minutes=20)
+        db.commit()
+        assert source_id in [item.id for item in ingestion.due_sources(db)]
+
+        source.last_run_at = datetime.utcnow() - timedelta(minutes=5)
+        db.commit()
+        assert source_id not in [item.id for item in ingestion.due_sources(db)]
+    finally:
+        db.close()
+    client.delete(f"/api/admin/sources/{source_id}", headers=headers)
 
 
 # ------------------------------------------------- Shortlists recruteur

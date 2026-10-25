@@ -1,7 +1,7 @@
 # Projet IA MINJEC
 ## Plateforme intelligente d’accompagnement vers l’emploi et l’insertion professionnelle des jeunes
 
-**Document de formalisation du projet — Version de travail**
+**Document de formalisation du projet : Version de travail**
 
 ---
 
@@ -1805,7 +1805,7 @@ Pour le concours, le périmètre initial doit rester démontrable.
 
 Le MVP doit démontrer la boucle complète sans chercher à industrialiser immédiatement toutes les intégrations.
 
-### Module 1 — Diagnostic
+### Module 1 : Diagnostic
 
 Deux entrées :
 
@@ -1814,7 +1814,7 @@ Deux entrées :
 
 Le mode vocal peut être présenté comme extension du prototype.
 
-### Module 2 — Profil intelligent
+### Module 2 : Profil intelligent
 
 Extraction et validation :
 
@@ -1825,7 +1825,7 @@ Extraction et validation :
 - soft skills ;
 - centres d'intérêt.
 
-### Module 3 — Orientation
+### Module 3 : Orientation
 
 Le système propose :
 
@@ -1833,15 +1833,15 @@ Le système propose :
 - compétences à développer ;
 - parcours court recommandé.
 
-### Module 4 — Base locale d'opportunités
+### Module 4 : Base locale d'opportunités
 
 Base initiale contrôlée d'offres, stages, missions et opportunités.
 
-### Module 5 — Matching
+### Module 5 : Matching
 
 Comparaison profil ↔ opportunité avec score explicable.
 
-### Module 6 — Gap Analysis
+### Module 6 : Gap Analysis
 
 Le système explique :
 
@@ -1850,19 +1850,19 @@ Le système explique :
 - manquants ;
 - actions recommandées.
 
-### Module 7 — CV ciblé
+### Module 7 : CV ciblé
 
 Génération d'une version adaptée à l'opportunité sélectionnée.
 
-### Module 8 — Dashboard
+### Module 8 : Dashboard
 
 Vue du parcours, des opportunités et des prochaines actions.
 
-### Module 9 — Assistant
+### Module 9 : Assistant
 
 Conversation avec le jeune pour comprendre ses résultats et poursuivre son parcours.
 
-### Module 10 — Démonstration marché
+### Module 10 : Démonstration marché
 
 Une première vue des tendances de compétences peut être alimentée par un jeu de données maîtrisé pour démontrer le concept.
 
@@ -2322,11 +2322,11 @@ APPRENTISSAGE
 
 La démonstration peut suivre un seul personnage.
 
-### Étape 1 — Profil
+### Étape 1 : Profil
 
 Un jeune importe son CV.
 
-### Étape 2 — Analyse
+### Étape 2 : Analyse
 
 L'IA extrait :
 
@@ -2335,15 +2335,15 @@ L'IA extrait :
 - compétences ;
 - certifications.
 
-### Étape 3 — Marché
+### Étape 3 : Marché
 
 Le système affiche les métiers compatibles et les compétences demandées.
 
-### Étape 4 — Offre
+### Étape 4 : Offre
 
 Une offre est sélectionnée.
 
-### Étape 5 — Matching
+### Étape 5 : Matching
 
 Le système explique :
 
@@ -2360,7 +2360,7 @@ Ce que vous pouvez améliorer :
 ...
 ```
 
-### Étape 6 — CV
+### Étape 6 : CV
 
 Le candidat clique :
 
@@ -2368,11 +2368,11 @@ Le candidat clique :
 
 Le système génère le CV.
 
-### Étape 7 — Préparation
+### Étape 7 : Préparation
 
 Le système génère les questions probables d'entretien.
 
-### Étape 8 — Recruteur
+### Étape 8 : Recruteur
 
 La démonstration montre ensuite le même système côté recruteur :
 

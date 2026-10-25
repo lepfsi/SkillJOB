@@ -2,12 +2,15 @@
 
 Sources d'événements : nouvelles offres compatibles, matches forts,
 candidatures suivies, tendances de marché, recommandations d'apprentissage.
+Rétention in-app : 30 jours, puis les événements disparaissent.
 """
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any, Optional
 
 from app.models import utcnow
 from app.services.matching import LEVEL_STRONG, compute_match
+
+RETENTION_DAYS = 30
 
 
 def _as_dt(value: Any) -> datetime:
@@ -55,6 +58,25 @@ def build_inbox(
                     ),
                     "job_id": job.id,
                 })
+
+        # Échéances proches : offres correspondantes non postulées.
+        # Toujours visibles in-app ; l'e-mail est un opt-in par événement.
+        from app.services.alerts import expiring_matches
+
+        for job, _match in expiring_matches(
+            profile_skills, jobs, applications, taxonomy, now=now
+        ):
+            events.append({
+                "at": now,
+                "kind": "expiring",
+                "message": (
+                    f"Date limite proche : « {job.title} » chez {job.company} "
+                    f"se termine le {job.deadline.strftime('%d/%m/%Y')}. "
+                    "Pensez à envoyer votre candidature."
+                ),
+                "job_id": job.id,
+            })
+
         missing: list[str] = []
         for job in jobs[:10]:
             for name in compute_match(profile_skills, job.required_skills, taxonomy)["missing"]:
@@ -91,6 +113,10 @@ def build_inbox(
         })
 
     events += market_trend_events(jobs)
+
+    # Rétention : au-delà de 30 jours réels, l'événement disparaît.
+    horizon = utcnow() - timedelta(days=RETENTION_DAYS)
+    events = [event for event in events if event["at"] >= horizon]
 
     events.sort(key=lambda e: e["at"], reverse=True)
     for i, event in enumerate(events[:20], start=1):

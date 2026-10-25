@@ -28,7 +28,7 @@ et **Vercel transmet la requête à Render côté serveur**. Avantages :
 (push sur la branche connectée, ou « Redeploy » dans le dashboard).
 
 Mode alternatif (non nécessaire) : définir `VITE_API_URL=https://skilljob.onrender.com`
-dans les variables d'environnement Vercel — le client appelle alors Render
+dans les variables d'environnement Vercel : le client appelle alors Render
 en direct (CORS requis, voir §3).
 
 ## 2. Render : variables d'environnement OBLIGATOIRES
@@ -40,7 +40,7 @@ Dashboard Render → service backend → **Environment** :
 | `SECRET_KEY` | une longue chaîne aléatoire (`openssl rand -hex 32`) | Sans elle, les JWT sont signés avec la clé de dev présente dans le code → n'importe qui peut forger des jetons |
 | `DATABASE_URL` | URL PostgreSQL Render (voir §4) | **Sans elle, SQLite est utilisé sur un disque ÉPHÉMÈRE : toutes les données (comptes, offres importées, candidatures) sont effacées à chaque déploiement ou redémarrage** |
 | `CORS_ORIGINS` | `https://skill-job-iota.vercel.app` | Ceinture de sécurité si un appel direct à Render est tenté (le rewrite Vercel rend le CORS inutile en usage normal) |
-| `CORS_ORIGINS` en dev | ajouter `,http://localhost:5173` | Pour continuer à développer en local contre le Render |
+| `CORS_ORIGINS` en dev | ajouter `,http://localhost:5190` | Pour continuer à développer en local contre le Render |
 
 ## 3. Base de données : PostgreSQL Render (recommandé, gratuit)
 

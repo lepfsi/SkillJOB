@@ -26,14 +26,29 @@ export function relTime(iso) {
 }
 
 // Seuils alignés sur le backend (matching.py) : forte >= 75, moyenne >= 45.
-export function scoreLevel(score) {
-  if (score == null) return null;
+export function scoreLevel(score) {  if (score == null) return null;
   if (score >= 75) return "forte";
   if (score >= 45) return "moyenne";
   return "faible";
 }
 
 export const LEVEL_LABELS = { forte: "Forte", moyenne: "Moyenne", faible: "Faible" };
+
+// Initiales d'un nom (logo d'entreprise, avatar) : « Express Union » -> « EU ».
+export function initialsOf(name) {
+  return (name || "?")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => w[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+}
+
+// Accord singulier / pluriel simple : plural(3, "", "s") -> "s".
+export function plural(n, one, many) {
+  return n > 1 ? many : one;
+}
 
 export const STATUS_ORDER = [
   "identifiee", "cv_prepare", "envoyee", "en_attente",
@@ -72,6 +87,14 @@ export const SOURCE_LABELS = {
   evidence: "Avec preuves",
 };
 
+// Natures de preuve d'une compétence (profil + formations vérifiées).
+export const EVIDENCE_KIND_LABELS = {
+  experience: "Expérience",
+  project: "Projet",
+  certification: "Certification",
+  education: "Formation",
+};
+
 export const ACCESSIBILITY_LABELS = {
   immediate: "Accessible immédiatement",
   with_upskilling: "Après montée en compétences",
@@ -87,17 +110,84 @@ export const RESOURCE_TYPE_LABELS = {
 
 export const CONTRACT_TYPES = ["CDI", "CDD", "Stage", "Freelance", "Apprentissage"];
 
-export const TEMPLATE_LABELS = {
+// Modèles de documents (cf. GET /api/cv-templates et /api/letter-templates).
+// Ces libellés servent de repli : les noms officiels viennent du catalogue.
+export const CV_TEMPLATE_LABELS = {
   classique: "Classique",
-  ats: "ATS",
+  ats: "ATS (robots de recrutement)",
   moderne: "Moderne",
+  deux_colonnes: "Deux colonnes",
+  elegant: "Élégant",
+  compact: "Compact (1 page)",
 };
 
+export const LETTER_TEMPLATE_LABELS = {
+  classique: "Classique",
+  moderne: "Moderne",
+  email: "Courriel",
+};
+
+// Couleurs d'accent au choix du candidat (stockées sur le document).
+// « hex » = accent vif affiché dans les pastilles (cf. familles cv_pdf).
+// Un modèle garde sa couleur propre tant que le candidat n'en choisit pas ;
+// le modèle ATS suit aussi une couleur explicitement choisie.
+export const ACCENTS = [
+  { key: "vert", label: "Vert", hex: "#2FB37A" },
+  { key: "bleu", label: "Bleu", hex: "#3AA6E0" },
+  { key: "orange", label: "Orange", hex: "#F0932B" },
+  { key: "bordeaux", label: "Bordeaux", hex: "#C2475D" },
+  { key: "ardoise", label: "Ardoise", hex: "#7FA3B5" },
+  { key: "violet", label: "Violet", hex: "#7C5CE0" },
+  { key: "turquoise", label: "Turquoise", hex: "#22B8B0" },
+  { key: "rouge", label: "Rouge", hex: "#D9534F" },
+  { key: "rose", label: "Rose", hex: "#D66A9A" },
+  { key: "indigo", label: "Indigo", hex: "#4C5FD5" },
+  { key: "ambre", label: "Ambre", hex: "#D9A21B" },
+  { key: "menthe", label: "Menthe", hex: "#3FBF8F" },
+  { key: "brun", label: "Brun", hex: "#8B5E3C" },
+];
+
+export function accentHex(key) {
+  if (key && /^#[0-9a-fA-F]{6}$/.test(key)) return key;
+  return ACCENTS.find((a) => a.key === key)?.hex || null;
+}
+
+export function accentLabel(key) {
+  if (!key) return "";
+  if (/^#[0-9a-fA-F]{6}$/.test(key)) return `Personnalisée (${key.toUpperCase()})`;
+  return ACCENTS.find((a) => a.key === key)?.label || key;
+}
+
+// Accent par défaut de chaque modèle quand le candidat n'en choisit pas
+// (miroir de cv_builder.DEFAULT_ACCENTS côté backend).
+export const DEFAULT_ACCENT_BY_TEMPLATE = {
+  classique: "vert",
+  ats: null,
+  moderne: "orange",
+  deux_colonnes: "vert",
+  elegant: "bordeaux",
+  compact: "bleu",
+};
+
+// Couleur de repli quand le modèle n'a pas d'accent nommé par défaut.
+export const DEFAULT_ACCENT_HEX_BY_TEMPLATE = {
+  ats: "#2BD9C5",
+};
+
+export function templateAccentHex(templateId, accentKey) {
+  if (accentKey && /^#[0-9a-fA-F]{6}$/.test(accentKey)) return accentKey;
+  const key = accentKey || DEFAULT_ACCENT_BY_TEMPLATE[templateId];
+  return accentHex(key) || DEFAULT_ACCENT_HEX_BY_TEMPLATE[templateId] || null;
+}
+
 export const INSTITUTION_LABELS = {
-  fne: "Fonds National de l'Emploi",
-  minfop: "Ministère de la Formation Professionnelle",
-  minjec: "Ministère de la Jeunesse",
-  minpme: "Ministère des PME",
+  minfopra: "MINFOPRA · Fonction publique et réforme administrative",
+  minesup: "MINESUP · Enseignement supérieur",
+  minefop: "MINEFOP · Emploi et formation professionnelle",
+  ong: "ONG et organisations internationales",
+  mindef: "MINDEF · Défense",
+  dgsn: "DGSN · Sûreté nationale (police)",
+  appels_projets: "Appels à projets des ministères",
 };
 
 export const ENTREPRENEUR_KIND_LABELS = {
@@ -126,8 +216,11 @@ export function mapInternalPath(href) {
     "/learning": "/learning",
     "/documents": "/documents",
     "/jobs": "/opportunites",
+    "/applications": "/candidatures",
+    "/entrepreneurship": "/entrepreneuriat",
   };
   if (map[href]) return map[href];
+  if (href.startsWith("/entrepreneurship#")) return `/entrepreneuriat${href.slice("/entrepreneurship".length)}`;
   if (href.startsWith("/jobs/")) return `/opportunites/${href.slice("/jobs/".length)}`;
   return href;
 }
@@ -188,10 +281,16 @@ export function sanitizeProfile(p) {
       }))
       .filter((s) => s.skill),
     preferences: {
+      domain_id: intOrNull(p.preferences?.domain_id),
+      specialty_ids: (p.preferences?.specialty_ids || [])
+        .map((id) => intOrNull(id))
+        .filter((id) => id != null),
+      domain_other: str(p.preferences?.domain_other),
       sectors: (p.preferences?.sectors || []).map(str).filter(Boolean),
       target_roles: (p.preferences?.target_roles || []).map(str).filter(Boolean),
       contract_types: (p.preferences?.contract_types || []).map(str).filter(Boolean),
       remote_ok: !!p.preferences?.remote_ok,
+      linkedin_url: str(p.preferences?.linkedin_url) || null,
     },
   };
 }
@@ -218,7 +317,7 @@ export function mdToHtml(md) {
     let out = t
       .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
       .replace(/(^|[^*])\*([^*]+)\*/g, "$1<em>$2</em>");
-    // Liens markdown : [texte](https://…) — uniquement http(s)
+    // Liens markdown : [texte](https://…) : uniquement http(s)
     out = out.replace(
       /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
       '<a href="$2" target="_blank" rel="noreferrer">$1</a>'

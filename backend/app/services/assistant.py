@@ -17,10 +17,78 @@ from typing import Any, Optional
 from sqlalchemy.orm import Session
 
 from app.services import llm_client
+from app.services import cv_builder
+from app.services.applications import CLOSED_STATUSES, STATUS_LABELS as APPLICATION_LABELS
 from app.services.market import market_trends
 from app.services.matching import compute_match
 from app.services.orientation import match_career
 from app.services.skills_taxonomy import normalize
+
+
+# Aide contextuelle quand l'agent est ouvert depuis une page précise et
+# que la demande reste vague : chaque page a son angle d'attaque réel.
+_PAGE_HINTS = {
+    "entrepreneuriat": (
+        "Ici, sur Entrepreneuriat, on peut travailler ton projet pour de "
+        "vrai : clarifier ton offre, vérifier ton modèle économique, ou "
+        "identifier un financement adapté parmi ceux du référentiel. Dis-moi "
+        "où en est ton projet, je pars de là."
+    ),
+    "offres": (
+        "Tu es sur les offres : dis-moi le poste ou la ville qui t'intéresse, "
+        "je te sors les offres réelles qui collent à ton profil et j'explique "
+        "les écarts."
+    ),
+    "candidatures": (
+        "Tu es sur tes candidatures : on peut préparer un entretien, relire "
+        "une candidature ou décider d'une relance, à partir de ce que tu as "
+        "réellement envoyé."
+    ),
+    "documents": (
+        "Tu es sur tes documents : je peux t'aider à choisir le bon modèle et "
+        "à adapter un CV ou une lettre à une offre précise, sans rien inventer."
+    ),
+    "competences": (
+        "Tu es sur tes compétences : on peut cibler celles qui manquent le "
+        "plus dans les offres de ton domaine et trouver une ressource réelle "
+        "pour les monter."
+    ),
+    "formations": (
+        "Tu es sur les formations : dis-moi la compétence à travailler, je te "
+        "relie à une ressource réelle du référentiel."
+    ),
+    "carriere": (
+        "Tu es sur les métiers : je peux t'expliquer les passerelles "
+        "réalistes depuis ton profil et les compétences à combler."
+    ),
+    "profil": (
+        "Tu es sur ton profil : on peut compléter ce qui bloque réellement les "
+        "recruteurs et rendre ton dossier plus lisible."
+    ),
+}
+
+
+def _find_job_by_mention(ctx, message: str):
+    """Offre mentionnée dans la question (titre complet ou fragment entre
+    guillemets). Aucune invention : on ne cite que des offres réelles."""
+    text = message.lower()
+    for job in ctx.jobs:
+        title = (job.title or "").lower()
+        if len(title) >= 6 and title in text:
+            return job
+    m = re.search(r"[«\u201c]([^»\u201d]{4,})[»\u201d]", message)
+    if m:
+        frag = m.group(1).strip().lower()
+        for job in ctx.jobs:
+            if frag and frag in (job.title or "").lower():
+                return job
+    return None
+
+
+def _learning_href(resource: dict) -> str:
+    """Lien profond vers la fiche exacte d'une formation dans Learning."""
+    key = resource.get("key")
+    return f"/learning/{key}" if key else "/learning"
 
 
 def _top_matches(profile_skills: list[dict], jobs: list[Any], taxonomy, n: int = 3):
@@ -66,6 +134,42 @@ def _career_missing(profile_skills: list[dict], career: Any, taxonomy) -> list[s
     return match_career(profile_skills, career, taxonomy)["missing"]
 
 
+def _cv_completion_notes(profile: dict) -> list[str]:
+    """Ce qui rend un CV « vide », détecté depuis le profil réel. On
+    propose d'AJOUTER des faits vrais, jamais d'en inventer (§47, §5bis)."""
+    notes = []
+    if not (profile.get("experiences") or []):
+        notes.append(
+            "aucune expérience enregistrée : ajoutez même les expériences "
+            "informelles (aide familiale, petit commerce, bénévolat) : elles "
+            "comptent dans le CV et le matching (§5bis)"
+        )
+    if len(profile.get("skills") or []) < 5:
+        notes.append(
+            "peu de compétences listées : le questionnaire en capte d'autres "
+            "que vous n'avez peut-être pas pensé à mentionner"
+        )
+    if not (profile.get("education") or []):
+        notes.append(
+            "formation absente : ajoutez-la, même si le parcours n'est pas terminé"
+        )
+    if not profile.get("summary"):
+        notes.append("pas de résumé de profil : il devient l'accroche du CV")
+    if not (profile.get("certifications") or []):
+        notes.append(
+            "aucune certification : ajoutez celles en cours ou préparez-en une "
+            "avec les formations suivies"
+        )
+    return notes[:3]
+
+
+def _entrepreneur_guidance(profile, taxonomy) -> dict:
+    """Pistes « comment entreprendre dans MON domaine » (§11bis)."""
+    from app.services.business_plan import guidance_for
+
+    return guidance_for(profile, taxonomy)
+
+
 # ------------------------------------------------- recherche web
 
 _SEARCH_TRIGGERS = re.compile(
@@ -99,7 +203,7 @@ def _detect_search(message: str) -> "str | None":
 def _web_search(query: str) -> list[dict]:
     """Recherche web bornée via l'interface HTML publique de DuckDuckGo
     (sans clé API) : 1 requête, timeout 10 s, 4 résultats maximum.
-    Retourne [{title, url, snippet}] — liste vide si échec."""
+    Retourne [{title, url, snippet}] : liste vide si échec."""
     try:
         url = "https://html.duckduckgo.com/html/?q=" + urllib.parse.quote(query)
         request = urllib.request.Request(
@@ -154,7 +258,10 @@ class _Context:
     contexte transmis au LLM (les pouvoirs de l'agent : données vivantes)."""
 
     def __init__(self, profile, jobs, careers, taxonomy, resources=None, role="candidate",
-                 applications=None, verified=False, web_results=None):
+                 applications=None, verified=False, web_results=None,
+                 entrepreneur_resources=None, financing=None, enrollments=None,
+                 documents=None, agent_mode="preparation", user=None,
+                 page_context=None):
         self.profile = profile
         self.skills = profile.get("skills", []) if profile else []
         self.jobs = jobs
@@ -163,8 +270,16 @@ class _Context:
         self.resources = resources or {}
         self.role = role
         self.applications = applications or []
+        self.enrollments = enrollments or []
+        self.documents = documents or []
+        self.agent_mode = agent_mode or "preparation"
+        self.user = user
+        self.page_context = (page_context or "").strip()[:120]
         self.verified = verified
         self.web_results = web_results or []
+        self.entrepreneur_resources = entrepreneur_resources or []
+        self.financing = financing or []
+        self._entrepreneur: Optional[dict] = None
         self.best_match = _top_matches(self.skills, jobs, taxonomy, n=1)[0] if (profile and jobs) else None
         self.top_career = _top_careers(self.skills, careers, taxonomy, n=1)[0] if (profile and careers) else None
         self.gaps = _priority_gaps(self.skills, jobs, careers, taxonomy) if profile else []
@@ -174,11 +289,103 @@ class _Context:
         """Ressources réelles (titre + URL) pour une compétence."""
         return self.resources.get(skill, [])
 
+    def first_resource_for(self, skill: str) -> Optional[dict]:
+        rows = self.resources_for(skill)
+        return rows[0] if rows else None
+
+    def has_document(self, kind: str, job_id: Optional[int] = None) -> bool:
+        for doc in self.documents:
+            if doc.get("kind") != kind:
+                continue
+            if job_id is None or doc.get("job_id") == job_id:
+                return True
+        return False
+
+    def next_action(self) -> dict:
+        """Action la plus utile maintenant, calculée depuis les données réelles.
+
+        L'agent ne déclenche rien seul : il propose une action cliquable,
+        le candidat garde la décision.
+        """
+        if not self.profile:
+            return {
+                "label": "Créer votre profil pour débloquer les recommandations",
+                "type": "build_profile",
+                "href": "/profile",
+            }
+        applied_ids = {a.get("job_id") for a in self.applications}
+        interview = next(
+            (a for a in self.applications if a.get("status") == "entretien"), None
+        )
+        if interview:
+            return {
+                "label": f"Préparer l'entretien pour « {interview.get('job_title')} »",
+                "type": "prepare_interview",
+                "job_id": interview.get("job_id"),
+                "href": f"/jobs/{interview.get('job_id')}",
+            }
+        prepared = next(
+            (a for a in self.applications if a.get("status") == "cv_prepare"), None
+        )
+        if prepared:
+            return {
+                "label": f"Valider la candidature préparée pour « {prepared.get('job_title')} »",
+                "type": "review_application",
+                "job_id": prepared.get("job_id"),
+                "href": "/applications",
+            }
+        if self.best_match:
+            job, match = self.best_match
+            if match["score"] >= 75 and job.id not in applied_ids:
+                return {
+                    "label": f"Adapter votre CV pour « {job.title} » chez {job.company}",
+                    "type": "adapt_cv",
+                    "job_id": job.id,
+                    "href": f"/jobs/{job.id}",
+                }
+        if self.gaps:
+            skill = self.gaps[0]
+            resource = self.first_resource_for(skill)
+            return {
+                "label": f"Développer « {skill} », demandée par le marché",
+                "type": "learn",
+                "skill": skill,
+                "href": _learning_href(resource) if resource else "/learning",
+            }
+        if self.best_match:
+            job, _match = self.best_match
+            return {
+                "label": f"Candidater à « {job.title} » chez {job.company}",
+                "type": "apply",
+                "job_id": job.id,
+                "href": f"/jobs/{job.id}",
+            }
+        return {
+            "label": "Explorer les offres correspondant à votre profil",
+            "type": "explore",
+            "href": "/jobs",
+        }
+
+    def entrepreneur(self) -> dict:
+        """Lecture entrepreneuriale du profil (§11bis), calculée à la
+        demande : compétences du référentiel couvertes / partielles /
+        manquantes, d'après NOTRE taxonomie."""
+        if self._entrepreneur is None:
+            from app.services.entrepreneurship import entrepreneur_profile
+
+            self._entrepreneur = entrepreneur_profile(self.profile, self.taxonomy)
+        return self._entrepreneur
+
     def context_document(self) -> str:
         """Document de contexte complet pour le LLM : tout ce que l'agent
         sait, avec les liens EXACTS à citer. Le LLM n'invente rien, il
         puise ici (§47 : ancrage sur données réelles)."""
         parts: list[str] = []
+
+        if self.user is not None:
+            full_name = (getattr(self.user, "full_name", "") or "").strip()
+            if full_name:
+                parts.append("IDENTITÉ DE L'UTILISATEUR : " + full_name)
 
         if self.profile:
             identity = [
@@ -187,12 +394,39 @@ class _Context:
             ]
             parts.append("PROFIL : " + " · ".join(filter(None, identity))
                          + (" · identité vérifiée" if self.verified else ""))
+            if self.profile.get("summary"):
+                parts.append("RÉSUMÉ DU PROFIL : " + self.profile["summary"])
             skills_line = ", ".join(
                 f"{s['skill']} ({s.get('proficiency', '')})"
                 for s in self.skills[:10]
             )
             if skills_line:
                 parts.append("COMPÉTENCES DU PROFIL : " + skills_line)
+            experiences = self.profile.get("experiences") or []
+            if experiences:
+                exp_lines = []
+                for exp in experiences[:5]:
+                    label = exp.get("title") or exp.get("role") or "expérience"
+                    org = exp.get("company") or exp.get("organization") or ""
+                    kind = exp.get("type") or ""
+                    exp_lines.append(
+                        f"{label}" + (f" chez {org}" if org else "")
+                        + (f" ({kind})" if kind else "")
+                    )
+                parts.append("EXPÉRIENCES : " + " ; ".join(exp_lines))
+            education = self.profile.get("education") or []
+            if education:
+                edu_lines = []
+                for edu in education[:4]:
+                    label = edu.get("title") or edu.get("degree") or "formation"
+                    org = edu.get("school") or edu.get("institution") or ""
+                    edu_lines.append(label + (f" · {org}" if org else ""))
+                parts.append("FORMATION : " + " ; ".join(edu_lines))
+            certifications = self.profile.get("certifications") or []
+            if certifications:
+                parts.append("CERTIFICATIONS : " + " ; ".join(
+                    c.get("name", "") for c in certifications[:5]
+                ))
 
         # Métiers recommandés (orientation §9bis)
         for career, m in _top_careers(self.skills, self.careers, self.taxonomy, n=3):
@@ -215,20 +449,75 @@ class _Context:
             parts.append("ÉCARTS PRIORITAIRES (par rapport à vos métiers visés) : "
                          + ", ".join(self.gaps[:5]))
 
+        # Entrepreneuriat (§11bis) : domaine, pistes et compétences réelles
+        if self.profile:
+            guidance = _entrepreneur_guidance(self.profile, self.taxonomy)
+            if guidance.get("category_label"):
+                parts.append(
+                    "ENTREPRENEURIAT : domaine d'atout « "
+                    + guidance["category_label"] + " » · pistes : "
+                    + " ; ".join(guidance.get("opportunities", [])[:4])
+                )
+            ent = self.entrepreneur()
+            couvertes = [
+                i["name"] for g in ent["groups"] for i in g["items"]
+                if i["state"] != "missing"
+            ]
+            parts.append(
+                f"COMPÉTENCES ENTREPRENEURIALES ({ent['covered_count']}/{ent['total']} "
+                "couvertes, référentiel issu de la taxonomie) : "
+                + (", ".join(couvertes) if couvertes else "aucune pour l'instant")
+            )
+        if self.financing:
+            parts.append(
+                "FINANCEMENTS RÉPERTORIÉS (ne pas en inventer d'autres) : "
+                + " ; ".join(f"{f['name']} ({f['type']})" for f in self.financing[:5])
+            )
+        if self.entrepreneur_resources:
+            parts.append(
+                "PROGRAMMES ENTREPRENEURIAUX RÉPERTORIÉS : "
+                + " ; ".join(r["title"] for r in self.entrepreneur_resources[:6])
+                + " · page : /entrepreneurship"
+            )
+
         # Formations disponibles : liens EXACTS à recopier dans la réponse
         formation_lines = []
         for skill in self.gaps[:4]:
             for r in self.resources_for(skill)[:2]:
-                url = f" · {r['url']}" if r.get("url") else ""
-                formation_lines.append(
-                    f"[{r['title']}]({r['url']}) · {r['provider']}{url} [compétence : {skill}]"
-                    if r.get("url")
-                    else f"{r['title']} · {r['provider']} (sans lien) [compétence : {skill}]"
-                )
+                fiche = _learning_href(r)
+                if r.get("url"):
+                    nature = r.get("link_kind_label") or "Lien"
+                    formation_lines.append(
+                        f"[{r['title']}]({r['url']}) · {r['provider']} "
+                        f"(lien : {nature}) · fiche OrientSkill : {fiche} "
+                        f"[compétence : {skill}]"
+                    )
+                else:
+                    formation_lines.append(
+                        f"{r['title']} · {r['provider']} (sans lien : "
+                        f"{r.get('link_kind_label') or 'formation sur place'}) "
+                        f"· fiche OrientSkill : {fiche} [compétence : {skill}]"
+                    )
         if formation_lines:
             parts.append(
                 "FORMATIONS DISPONIBLES (cite ces liens markdown EXACTEMENT, "
-                "sans en inventer d'autres) :\n" + "\n".join(formation_lines)
+                "sans en inventer d'autres ; précise la nature du lien quand "
+                "ce n'est pas la formation exacte) :\n" + "\n".join(formation_lines)
+            )
+
+        # Formations réellement suivies par le jeune (suivi + preuves)
+        if self.enrollments:
+            suivies = []
+            for e in self.enrollments[:6]:
+                état = e.get("status_label", "?")
+                if e.get("verifiable"):
+                    état += ", preuve fournie"
+                if e.get("added_to_profile"):
+                    état += ", rattachée au profil"
+                suivies.append(f"« {e.get('title', '?')} » ({e.get('provider') or 'fournisseur non précisé'}) · {e.get('skill', '?')} · {état}")
+            parts.append(
+                "FORMATIONS SUIVIES PAR LE JEUNE (données réelles, ne pas en "
+                "inventer) : " + " ; ".join(suivies)
             )
 
         # Candidatures
@@ -237,6 +526,24 @@ class _Context:
                 f"{a.get('job_title', '?')} → {a.get('status', '?')}"
                 for a in self.applications[:5]
             ))
+
+        # Prochaine action réelle et documents déjà produits
+        action = self.next_action()
+        parts.append(
+            f"PROCHAINE ACTION PRIORITAIRE : {action.get('label', '?')} "
+            f"· lien interne : {action.get('href', '/dashboard')}"
+        )
+        if self.documents:
+            docs = " ; ".join(
+                f"{'CV' if d.get('kind') == 'cv' else 'Lettre'} « {d.get('title', '?')} »"
+                + (f" (offre {d.get('job_id')})" if d.get("job_id") else "")
+                for d in self.documents[:5]
+            )
+            parts.append("DOCUMENTS DÉJÀ GÉNÉRÉS (ne pas prétendre qu'ils n'existent pas) : " + docs)
+        parts.append(
+            "MODE DE L'AGENT : " + self.agent_mode
+            + " · l'agent prépare, le candidat valide toujours avant envoi."
+        )
 
         # Résultats de recherche web (fraîchement collectés, citables)
         if self.web_results:
@@ -283,7 +590,8 @@ def dynamic_suggestions(ctx: _Context) -> list[str]:
         out.append(f"Prépare mon CV pour « {ctx.best_match[0].title} »")
     if ctx.gaps:
         out.append(f"Quelles formations suivre pour {ctx.gaps[0]} ?")
-    if not out:
+    out.insert(0, "Que dois-je faire maintenant ?")
+    if not out[1:]:
         out.append("Montre-moi les offres les plus récentes.")
     out.append("Où en sont mes candidatures ?")
     return out[:4]
@@ -392,7 +700,7 @@ def _rules_reply(message: str, ctx: _Context) -> dict[str, Any]:
         }
 
     # ---- Analyse d'une page web (accès internet BORNÉ : une seule page,
-    # fournie par l'utilisateur — jamais de collecte de masse)
+    # fournie par l'utilisateur : jamais de collecte de masse)
     url_match = re.search(r"https?://[^\s]+", message)
     if url_match and not re.search(r"linkedin", norm):
         url = url_match.group(0).rstrip(".,;)")
@@ -431,7 +739,7 @@ def _rules_reply(message: str, ctx: _Context) -> dict[str, Any]:
                     "reply": (
                         "Je repère dans ta demande : " + ", ".join(skills)
                         + ". Lance la recherche de talents avec ces compétences "
-                        "— le matching est expliqué (couvertes, partielles, "
+                        " : le matching est expliqué (couvertes, partielles, "
                         "manquantes) et tu peux shortlister les meilleurs."
                     ),
                     "suggestions": dynamic_suggestions(ctx),
@@ -462,6 +770,62 @@ def _rules_reply(message: str, ctx: _Context) -> dict[str, Any]:
                 "suggestions": dynamic_suggestions(ctx),
                 "links": [{"label": "Publier une offre", "href": "/recruiter/jobs"}],
             }
+
+    # ---- Prochaine étape : l'agent s'appuie sur l'état réel du dossier
+    if re.search(
+        r"(quoi faire|que faire|dois[- ]je faire|par o[uù]|prochaine [eé]tape|"
+        r"priorit[eé]|aujourd.?hui|comment avancer|o[uù] commencer)",
+        norm,
+    ):
+        blocked = no_profile_reply()
+        if blocked:
+            return {
+                "reply": blocked,
+                "suggestions": ["Comment créer mon profil sans CV ?"],
+                "links": [{"label": "Créer mon profil", "href": "/profile"}],
+                "actions": [{"type": "build_profile", "label": "On construit ton profil ?"}],
+            }
+        action = ctx.next_action()
+        lines = [f"La prochaine action la plus utile : **{action['label']}**."]
+        kind = action.get("type")
+        if kind == "prepare_interview":
+            lines.append(
+                "Je peux te préparer un pitch, les questions probables et les "
+                "points à vérifier sur l'offre. Tu valides le contenu avant l'entretien."
+            )
+        elif kind == "review_application":
+            lines.append(
+                "La candidature et ses documents sont prêts : relis-les puis "
+                "confirme l'envoi. Rien n'est envoyé sans ta validation."
+            )
+        elif kind == "adapt_cv":
+            lines.append(
+                "Le CV ciblé reprend uniquement ton profil validé et les "
+                "compétences demandées par cette offre. Le CV généraliste reste privé."
+            )
+        elif kind == "learn":
+            lines.append(
+                "Une formation réelle correspond à cette compétence. La fiche "
+                "précise ce que le lien ouvre avant que tu cliques."
+            )
+        elif kind == "apply":
+            lines.append(
+                "Vérifie la source de l'offre, puis choisis le modèle de CV "
+                "ciblé adapté. La lettre reste facultative."
+            )
+        if ctx.documents:
+            lines.append(
+                f"Tu as déjà {len(ctx.documents)} document(s) dans ta bibliothèque : "
+                "inutile de tout régénérer, tu peux les relire et les télécharger."
+            )
+        return {
+            "reply": "\n\n".join(lines),
+            "suggestions": follow_ups("Où en sont mes candidatures ?"),
+            "links": [
+                {"label": "Faire cette action", "href": action.get("href", "/dashboard")},
+                {"label": "Mes documents", "href": "/documents"},
+            ],
+        }
 
     # ---- Salutations : une vraie conversation commence simplement
     if re.search(r"\b(bonjour|salut|hello|bonsoir|mbote|coucou|yo)\b", norm):
@@ -544,6 +908,110 @@ def _rules_reply(message: str, ctx: _Context) -> dict[str, Any]:
             ] if ctx.role == "recruiter" else [{"label": "Base d'offres", "href": "/admin/jobs"}],
         }
 
+    # ---- Entrepreneuriat (§11bis) : « comment entreprendre dans mon
+    # domaine ? », financements, concours, incubateurs, business plan.
+    _ent_core = re.search(
+        r"(entreprendre|entrepreneur\w*|business[- ]?plan|startup|incubateur|"
+        r"auto[- ]?emploi|micro[- ]?finance|microcr[ée]dit|"
+        r"cr[ée]er (mon|ma|une) (entreprise|activit[ée]|boutique|soci[ée]t[ée]|bo[îi]te|affaire)|"
+        r"lancer (mon|ma|une) (entreprise|activit[ée]|boutique|startup|affaire)|"
+        r"monter (mon|ma|une) (entreprise|activit[ée]|boutique|affaire)|"
+        r"mon (propre )?(business|projet d'entreprise)|[àa] mon compte|"
+        r"devenir (mon|son) (propre )?patron)",
+        norm,
+    )
+    # « financement » seul ne suffit pas : il faut un contexte de PROJET
+    # (sinon « financer ma formation » reste du ressort de l'apprentissage).
+    _ent_study = re.search(
+        r"(formation|[eé]tudes?|[eé]cole|universit[eé]|bourse|master|licence)",
+        norm,
+    )
+    _ent_money = re.search(
+        r"(financement|financer|banque|banquier|cr[ée]dit|apport personnel|"
+        r"fonds de garantie|dossier bancaire)",
+        norm,
+    )
+    _ent_project = re.search(
+        r"(projet|entreprise|activit[ée]|business|soci[ée]t[ée]|boutique|affaire)",
+        norm,
+    )
+    if ctx.role == "candidate" and (
+        _ent_core or (not _ent_study and _ent_money and _ent_project)
+    ):
+        guidance = _entrepreneur_guidance(ctx.profile, ctx.taxonomy)
+        state = ctx.entrepreneur()
+        lines: list[str] = []
+        if ctx.profile:
+            line = (
+                f"D'après ton profil ({ctx.profile.get('title') or 'compétences multiples'}), "
+                f"ton domaine d'atout est le {guidance.get('category_label') or 'à préciser'}."
+            )
+            if ctx.skills:
+                line += (" Tes compétences ("
+                         + ", ".join(s["skill"] for s in ctx.skills[:5])
+                         + ") y sont directement mobilisables.")
+            lines.append(line)
+        else:
+            lines.append(
+                "L'entrepreneuriat est une trajectoire à part entière ici : "
+                "financements, concours, incubateurs et accompagnement sont "
+                "répertoriés. Complète ton profil et je précise le domaine où "
+                "tes compétences sont le plus mobilisables."
+            )
+
+        if guidance.get("opportunities"):
+            lines.append("\nPistes à instruire (jamais garanties) :")
+            lines.extend(f"- {idea}" for idea in guidance["opportunities"][:3])
+        if guidance.get("steps"):
+            lines.append("\nPremières étapes :")
+            lines.extend(f"- {step}" for step in guidance["steps"][:3])
+
+        couvertes = [
+            i["name"] for g in state["groups"] for i in g["items"]
+            if i["state"] != "missing"
+        ]
+        if couvertes:
+            lines.append(
+                "\nCôté entreprise, ton profil couvre déjà "
+                f"{len(couvertes)} compétence(s) du référentiel "
+                f"({', '.join(couvertes[:4])})."
+            )
+        if ctx.gaps:
+            lines.append("À renforcer : " + ", ".join(ctx.gaps[:3]) + ".")
+        if ctx.financing:
+            lines.append(
+                "\nFinancements à instruire : "
+                + ", ".join(f["name"] for f in ctx.financing[:3]) + "…"
+            )
+        if ctx.entrepreneur_resources:
+            kinds: dict[str, int] = {}
+            for r in ctx.entrepreneur_resources:
+                kinds[r["kind_label"]] = kinds.get(r["kind_label"], 0) + 1
+            lines.append(
+                "Déjà répertoriés sur ta page Entrepreneuriat : "
+                + " ; ".join(f"{label} : {n}" for label, n in kinds.items())
+                + "."
+            )
+        lines.append(
+            "\nJe peux te générer un business plan à partir de TES chiffres "
+            "(activité, cible, capital, localisation) : il rejoint tes "
+            "documents, sans rien inventer."
+        )
+        links = [
+            {"label": "Ma page Entrepreneuriat", "href": "/entrepreneurship"},
+            {"label": "Générer mon business plan", "href": "/entrepreneurship#business-plan"},
+        ]
+        if ctx.gaps:
+            links.append({"label": "Combler mes écarts", "href": "/learning"})
+        return {
+            "reply": "\n".join(lines),
+            "suggestions": follow_ups(
+                "Quels financements pour mon projet ?",
+                "Quelles compétences me manquent ?",
+            ),
+            "links": links,
+        }
+
     # ---- Métiers compatibles (orientation, §26)
     if re.search(r"(metier|orientation|carrier|viser|quel boulot|quelle direction)", norm):
         blocked = no_profile_reply()
@@ -588,30 +1056,87 @@ def _rules_reply(message: str, ctx: _Context) -> dict[str, Any]:
                 + ". La page Apprentissage propose des formations concrètes "
                 "pour chacune, avec leurs liens."
             )
+            first = (ctx.resources_for(ctx.gaps[0]) or [])[:1]
             links = [{"label": "Apprentissage", "href": "/learning"}]
+            if first:
+                links.insert(0, {
+                    "label": f"Fiche : {first[0]['title'][:42]}",
+                    "href": _learning_href(first[0]),
+                })
         return {
             "reply": reply,
             "suggestions": follow_ups(f"Quelles formations suivre pour {ctx.gaps[0]} ?"),
             "links": links,
         }
 
-    # ---- Candidatures
-    if re.search(r"\b(candidature|postule|postuler|relance)\b", norm):
-        blocked = no_profile_reply()
-        if blocked:
-            return {"reply": blocked, "suggestions": [], "links": [{"label": "Compléter mon profil", "href": "/profile"}],
-            "actions": [{"type": "build_profile", "label": "On construit ton profil ?"}]}
-        reply = (
-            "La page Candidatures joue le rôle de mini-ATS personnel : chaque "
-            "offre suivie affiche son pipeline (identifiée, CV préparé, envoyée, "
-            "entretien, offre) et son historique daté. Relancez plutôt les "
-            "candidatures en attente depuis plus de dix jours."
-        )
-        links = [{"label": "Mes candidatures", "href": "/applications"}]
-        return {"reply": reply, "suggestions": follow_ups(), "links": links}
+    # ---- Candidatures : le mini-ATS personnel, avec les données RÉELLES
+    # (sauf demande de RÉDACTION : « rédige mon mail de candidature… »
+    # relève de l'agent rédacteur, traité plus bas)
+    if re.search(r"\b(candidatures?|postule|postuler|relances?)\b", norm) and not re.search(
+        r"(mail|courriel|e-?mail|messagerie|r[eé]dige|[eé]cris|r[eé]daction)", norm
+    ):
+        if not ctx.applications:
+            # Rien à lister : on guide (le profil n'est pas nécessaire pour
+            # suivre une candidature, mais il l'est pour la suite).
+            blocked = no_profile_reply()
+            if blocked:
+                return {"reply": blocked, "suggestions": [], "links": [{"label": "Compléter mon profil", "href": "/profile"}],
+                "actions": [{"type": "build_profile", "label": "On construit ton profil ?"}]}
+            return {
+                "reply": (
+                    "Tu ne suis encore aucune candidature. La page Candidatures "
+                    "sert de mini-ATS personnel : pour chaque offre suivie, tu "
+                    "retrouves l'étape franchie (identifiée → CV préparé → "
+                    "envoyée → en attente → entretien → offre), les documents "
+                    "générés et l'historique daté. Ouvre une offre qui "
+                    "t'intéresse et clique sur « Suivre ma candidature »."
+                ),
+                "suggestions": follow_ups("Quelles offres me correspondent ?"),
+                "links": [{"label": "Parcourir les offres", "href": "/jobs"}],
+            }
 
-    # ---- Offres / opportunités / stages
-    if re.search(r"(offre|emploi|job|stage|opportun|recrut|poste)", norm):
+        ongoing = [
+            a for a in ctx.applications
+            if a.get("status") not in CLOSED_STATUSES
+        ]
+        interviews = [a for a in ctx.applications if a.get("status") == "entretien"]
+        waiting = [a for a in ctx.applications if a.get("status") == "en_attente"]
+
+        lines = [
+            "Tu suis " + str(len(ctx.applications)) + " candidature(s), dont "
+            + str(len(ongoing)) + " encore en cours :"
+        ]
+        for a in ctx.applications[:6]:
+            status = a.get("status") or ""
+            lines.append(
+                "- « " + str(a.get("job_title") or "?") + " » : "
+                + APPLICATION_LABELS.get(status, status)
+            )
+        if interviews:
+            lines.append(
+                "Ton entretien pour « " + str(interviews[0].get("job_title"))
+                + " » se prépare : questions probables, pitch et conseils sont "
+                "générés uniquement depuis ton profil validé (§47)."
+            )
+        if waiting:
+            lines.append(
+                str(len(waiting)) + " candidature(s) en attente de réponse : "
+                "fais avancer l'étape dès que tu reçois un retour, l'historique "
+                "reste daté et vérifiable."
+            )
+        links = [{"label": "Mes candidatures", "href": "/applications"}]
+        if interviews and interviews[0].get("job_id"):
+            links.append({
+                "label": "Préparer l'entretien",
+                "href": "/jobs/" + str(interviews[0]["job_id"]),
+            })
+        return {"reply": "\n".join(lines), "suggestions": follow_ups(), "links": links}
+
+    # ---- Offres / opportunités / stages (sauf demande CV/lettre :
+    # « adapte mon CV pour l'offre X » relève de l'adaptation)
+    if re.search(r"(offre|emploi|job|stage|opportun|recrut|poste)", norm) and not re.search(
+        r"\b(cv|curriculum)\b|lettre|adapt|mail|courriel", norm
+    ):
         ordered = sorted(ctx.jobs, key=lambda j: j.published_at, reverse=True)
         if ctx.profile:
             ordered = [j for j, _m in _top_matches(ctx.skills, ctx.jobs, ctx.taxonomy, n=5)]
@@ -637,37 +1162,157 @@ def _rules_reply(message: str, ctx: _Context) -> dict[str, Any]:
             "links": links,
         }
 
-    # ---- CV / lettre / candidature
-    if re.search(r"\b(cv|curriculum)\b|lettre|candidature", norm):
+    # ---- Courriel d'accompagnement : rédigé depuis le profil valide,
+    # prêt à coller dans une messagerie (§47 : aucun fait inventé).
+    if re.search(r"(courriel|e-?mail|\bmail\b|messagerie|message d'accompagnement)", norm):
+        blocked = no_profile_reply()
+        if blocked:
+            return {
+                "reply": blocked,
+                "suggestions": [],
+                "links": [{"label": "Compléter mon profil", "href": "/profile"}],
+                "actions": [{"type": "build_profile", "label": "On construit ton profil ?"}],
+            }
+        job = _find_job_by_mention(ctx, message)
+        if job is None and ctx.best_match:
+            job = ctx.best_match[0]
+        # « généraliste / sans offre » explicite : on ne retombe PAS sur la
+        # meilleure correspondance, l'utilisateur veut un document non ciblé.
+        generalist = bool(re.search(
+            r"(generaliste|sans offre|sans ciblage|sans poste|non cible)", norm))
+        if generalist:
+            job = None
+        structure = cv_builder.build_letter_paragraphs(
+            ctx.profile, job, ctx.user, ctx.taxonomy)
+        headline = ctx.profile.get("title") or "profil professionnel"
+        subject = (
+            f"Candidature au poste de {job.title} - {job.company}"
+            if job is not None
+            else f"Candidature spontanée - {headline}"
+        )
+        blocks = [
+            "Voici votre courriel d'accompagnement, prêt à coller, uniquement "
+            "des faits de votre profil validé :",
+            f"**Objet : {subject}**",
+            "Madame, Monsieur,",
+        ]
+        blocks += list(structure["paragraphs"])
+        blocks.append(structure["closing"][0])
+        signature = [structure["signature"]]
+        extra = []
+        if headline:
+            extra.append(headline)
+        if ctx.profile.get("location"):
+            extra.append(str(ctx.profile["location"]))
+        if getattr(ctx.user, "email", None):
+            extra.append(str(ctx.user.email))
+        if extra:
+            signature.append(" · ".join(extra))
+        blocks.append("\n".join(["", "--", *signature]))
+        links = [{"label": "Mes documents", "href": "/documents"}]
+        actions = []
+        if job is not None:
+            links.insert(0, {"label": f"Choisir ma lettre : {job.title}",
+                             "href": f"/opportunites/{job.id}?galerie=lettre"})
+            actions = [
+                {"type": "generate_letter", "job_id": job.id,
+                 "label": "Adapter ma lettre (choisir le modèle)"},
+            ]
+        else:
+            links.insert(0, {"label": "Créer ma lettre généraliste",
+                             "href": "/documents?lettre=1"})
+        return {
+            "reply": "\n\n".join(blocks),
+            "suggestions": follow_ups("Prépare mon entretien."),
+            "links": links,
+            "actions": actions,
+        }
+
+    # ---- CV / lettre / candidature : l'AGENT propose les textes
+    # d'adaptation (réorganisation factuelle du profil, §47), puis le
+    # candidat choisit son modèle dans la galerie de l'offre.
+    if re.search(r"\b(cv|curriculum)\b|lettre|candidature|adapt", norm):
         blocked = no_profile_reply()
         if blocked:
             return {"reply": blocked, "suggestions": [], "links": [{"label": "Compléter mon profil", "href": "/profile"}],
             "actions": [{"type": "build_profile", "label": "On construit ton profil ?"}]}
-        if not ctx.best_match:
-            reply = "Aucune offre disponible pour générer un CV ciblé."
-            links = []
-        else:
-            job, m = ctx.best_match
+        # Offre mentionnée dans la question ? Sinon meilleure correspondance.
+        # « Généraliste / sans offre » explicite : aucun ciblage, jamais.
+        generalist = bool(re.search(
+            r"(generaliste|sans offre|sans ciblage|sans poste|non cible)", norm))
+        job = None if generalist else _find_job_by_mention(ctx, message)
+        if job is None and not generalist and ctx.best_match:
+            job = ctx.best_match[0]
+        if job is None:
             reply = (
-                f"Ta meilleure correspondance actuelle est « {job.title} » "
-                f"chez {job.company} (score {m['score']}/100). "
-                "Je peux générer un CV ciblé et une lettre de motivation qui "
-                "réorganisent UNIQUEMENT les informations de votre profil "
-                "validé : rien n'est inventé. Le PDF est aux normes A4. "
-                "Ouvrez l'offre puis choisissez « Créer mon CV ciblé »."
+                "Aucune offre disponible pour l'instant. Je peux quand même "
+                "préparer des documents GÉNÉRALISTES depuis votre profil validé "
+                ", sans ciblage d'offre : un CV complet, ou une lettre de "
+                "motivation dont vous complétez le destinataire."
             )
-            links = [{"label": f"Offre : {job.title}", "href": f"/jobs/{job.id}"},
-                     {"label": "Mes documents", "href": "/documents"}]
+            links = [
+                {"label": "Créer mon CV généraliste", "href": "/documents"},
+                {"label": "Créer ma lettre généraliste", "href": "/documents?lettre=1"},
+            ]
+            actions = []
+            notes = _cv_completion_notes(ctx.profile) if ctx.profile else []
+            if notes:
+                reply += (" Avant l'export, il reste à ajouter, pour un dossier "
+                          "bien rempli : " + " ; ".join(notes) + ".")
+                links.append({"label": "Compléter mon profil", "href": "/profile"})
+                actions = [{"type": "build_profile", "label": "Compléter mon profil"}]
+            return {
+                "reply": reply,
+                "suggestions": follow_ups("Quelles compétences me manquent ?"),
+                "links": links,
+                "actions": actions,
+            }
+        m = compute_match(ctx.skills, job.required_skills, ctx.taxonomy) if ctx.skills else None
+        lines = [f"Pour l'offre « {job.title} » ({job.company}), voici les textes que je propose d'insérer, uniquement à partir de votre profil validé :"]
+        summary = ctx.profile.get("summary") if ctx.profile else None
+        if not summary and m and m["covered"]:
+            summary = (
+                f"Profil orienté « {job.title} » ; compétences pertinentes "
+                f"déjà acquises : {', '.join(m['covered'][:5])}."
+            )
+        if summary:
+            lines += ["", "Accroche du CV :", summary]
+        if m and m["covered"]:
+            lines += ["", "Compétences à mettre en avant : " + ", ".join(m["covered"][:6]) + "."]
+        letter = cv_builder.build_letter_paragraphs(
+            ctx.profile, job, ctx.user, ctx.taxonomy)
+        if letter["paragraphs"]:
+            lines += ["", "Lettre (ouverture) :", letter["paragraphs"][0]]
+            if len(letter["paragraphs"]) > 1:
+                lines += ["", "Lettre (correspondance) :", letter["paragraphs"][1]]
+        lines += [
+            "",
+            "Validez en choisissant le modèle et la couleur : les documents "
+            "reprendront exactement ces éléments, sans rien inventer 🙂",
+        ]
+        notes = _cv_completion_notes(ctx.profile) if ctx.profile else []
+        if notes:
+            lines += ["", "Pour un dossier bien rempli, il reste à ajouter :"]
+            lines += [f"- {n}" for n in notes]
+        links = [
+            {"label": f"Choisir le modèle de CV : {job.title}", "href": f"/opportunites/{job.id}?galerie=cv"},
+            {"label": f"Choisir le modèle de lettre", "href": f"/opportunites/{job.id}?galerie=lettre"},
+            {"label": "Mes documents", "href": "/documents"},
+        ]
+        actions = [
+            {"type": "generate_cv", "job_id": job.id,
+             "label": "Adapter mon CV (choisir le modèle)"},
+            {"type": "generate_letter", "job_id": job.id,
+             "label": "Adapter ma lettre (choisir le modèle)"},
+        ]
+        if notes:
+            links.append({"label": "Compléter mon profil", "href": "/profile"})
+            actions.append({"type": "build_profile", "label": "Compléter mon profil"})
         return {
-            "reply": reply,
-            "suggestions": follow_ups("Quelles questions d'entretien anticiper ?"),
+            "reply": "\n".join(lines),
+            "suggestions": follow_ups(f"Prépare mon entretien pour « {job.title} »"),
             "links": links,
-            "actions": [
-                {"type": "generate_cv", "job_id": job.id,
-                 "label": "Générer mon CV ciblé"},
-                {"type": "generate_letter", "job_id": job.id,
-                 "label": "Rédiger ma lettre de motivation"},
-            ],
+            "actions": actions,
         }
 
     # ---- Entretien
@@ -716,6 +1361,57 @@ def _rules_reply(message: str, ctx: _Context) -> dict[str, Any]:
         links = [{"label": "Marché", "href": "/market"}]
         return {"reply": reply, "suggestions": follow_ups("Comment mes compétences se positionnent-elles ?"), "links": links}
 
+    # ---- Mes formations suivies et leurs preuves (§19)
+    if re.search(
+        r"(formation(s)? suivie|mon suivi|suivi de (mes|ma) formation|"
+        r"o[uù] en sont? mes formations|ajouter (une|ma) formation (a|à) mon profil|"
+        r"preuve de formation|certificat.*(profil|preuve)|badge|"
+        r"formation[^.?]{0,25}preuve|preuve[^.?]{0,25}formation|"
+        r"devient une preuve|rendre[^.?]{0,20}v[eé]rifiable|"
+        r"v[eé]rifier[^.?]{0,20}(formation|certificat))",
+        norm,
+    ) and not re.search(r"(offre|poste|candidature)", norm):
+        blocked = no_profile_reply()
+        if blocked:
+            return {"reply": blocked, "suggestions": [],
+                    "links": [{"label": "Compléter mon profil", "href": "/profile"}],
+                    "actions": [{"type": "build_profile", "label": "On construit ton profil ?"}]}
+        lines = []
+        if not ctx.enrollments:
+            lines.append(
+                "Vous ne suivez aucune formation pour l'instant. Ouvrez une "
+                "formation depuis la page Apprentissage : elle rejoint votre "
+                "suivi, avec son avancement."
+            )
+        else:
+            vérifiées = [e for e in ctx.enrollments if e.get("verifiable")]
+            ajoutées = [e for e in ctx.enrollments if e.get("added_to_profile")]
+            lines.append(
+                f"Vous suivez {len(ctx.enrollments)} formation(s) : "
+                f"{len(vérifiées)} avec une pièce vérifiable, "
+                f"{len(ajoutées)} rattachée(s) à votre profil."
+            )
+            for e in ctx.enrollments[:4]:
+                ligne = f"- « {e['title']} » · {e['provider'] or 'fournisseur non précisé'} · {e['status_label']}"
+                if e.get("verifiable"):
+                    ligne += f" · pièce : {e.get('proof_label', 'fournie')}"
+                if e.get("added_to_profile"):
+                    ligne += " · au profil"
+                lines.append(ligne)
+        lines.append(
+            "Rappel : c'est la pièce (certificat, attestation, badge ou "
+            "portfolio) fournie par le fournisseur qui rend la formation "
+            "vérifiable ; l'ajout au profil reste votre décision."
+        )
+        return {
+            "reply": "\n".join(lines),
+            "suggestions": follow_ups(
+                f"Quelles formations suivre pour {ctx.gaps[0]} ?" if ctx.gaps
+                else "Quels métiers puis-je viser ?"
+            ),
+            "links": [{"label": "Mes formations", "href": "/learning"}],
+        }
+
     # ---- Formation / apprentissage (avec liens réels vers les cours)
     if re.search(r"(formation|apprendre|cours|certif|etudier|upskill|remis(es|e)? (à|a|en) niveau|mise (à|a) niveau|recyclage|perfectionnement|se perfectionner)", norm):
         blocked = no_profile_reply()
@@ -738,15 +1434,28 @@ def _rules_reply(message: str, ctx: _Context) -> dict[str, Any]:
             if asked and resources:
                 lines.append(f"Pour « {asked} », voici des formations concrètes :")
                 for r in resources[:3]:
+                    # La nature du lien est dite : aucune page trompeuse.
+                    nature = r.get("link_kind_label") or ""
+                    suffixe = f" · {nature}" if nature and nature != "Formation exacte" else ""
                     if r.get("url"):
                         # Lien markdown : cliquable dans le chat
-                        lines.append(f"- [{r['title']}]({r['url']}) · {r['provider']}")
-                        links.append({
-                            "label": f"{r['title'][:40]} · {r['provider']}",
-                            "href": r["url"],
-                        })
+                        lines.append(f"- [{r['title']}]({r['url']}) · {r['provider']}{suffixe}")
                     else:
-                        lines.append(f"- {r['title']} · {r['provider']}")
+                        lines.append(
+                            f"- {r['title']} · {r['provider']}"
+                            + (f" ({nature})" if nature else "")
+                        )
+                    # Bouton interne : ouvre LA fiche de cette formation
+                    # (et non la page Apprentissage générique).
+                    links.append({
+                        "label": f"Fiche : {r['title'][:40]}",
+                        "href": _learning_href(r),
+                    })
+                lines.append(
+                    "Ouvrez celle qui vous convient depuis la page Apprentissage : "
+                    "vous pourrez y suivre votre avancement et joindre votre pièce "
+                    "pour la rendre vérifiable."
+                )
             elif asked:
                 lines.append(
                     f"Aucune ressource référencée pour « {asked} » pour l'instant ; "
@@ -866,7 +1575,7 @@ def _rules_reply(message: str, ctx: _Context) -> dict[str, Any]:
         if interviews:
             lines.append(
                 "Et tu as " + str(len(interviews)) + " entretien(s) à préparer : "
-                "on peut le simuler ensemble quand tu veux."
+                "on peut le simuler ensemble quand tu veux 🙂"
             )
         lines.append("On commence par quoi ?")
         links = []
@@ -882,6 +1591,14 @@ def _rules_reply(message: str, ctx: _Context) -> dict[str, Any]:
 
     # ---- Fallback honnête, mais vivant : on oriente vers le concret
     import random as _random
+
+    page_hint = _PAGE_HINTS.get((ctx.page_context or "").strip().lower())
+    if page_hint:
+        return {
+            "reply": page_hint,
+            "suggestions": dynamic_suggestions(ctx),
+            "links": [{"label": "Tableau de bord", "href": "/dashboard"}],
+        }
 
     fallbacks = [
         "Là, je ne suis pas sûr d'avoir saisi. Reformule autrement : par "
@@ -919,19 +1636,24 @@ def _llm_reply(
         "COMMENT TU PARLES :\n"
         "- Phrases courtes et naturelles, comme dans une vraie discussion.\n"
         "- Réponds À LA QUESTION POSÉE. Si on te dit « bonjour », réponds "
-        "« salut » et propose ton aide en UNE phrase — ne balance jamais un "
+        "« salut » et propose ton aide en UNE phrase, ne balance jamais un "
         "bilan complet non demandé.\n"
         "- Pas de structure type « Opportunité immédiate : » ni de titres "
         "de sections. Les listes, seulement si l'utilisateur demande "
         "plusieurs éléments.\n"
         "- Tu te souviens de la conversation : ne redemande pas ce que tu "
-        "sais déjà, ne répète pas le même conseil deux fois.\n\n"
+        "sais déjà, ne répète pas le même conseil deux fois.\n"
+        "- Une émoticône quand c'est naturel (encouragement, réussite, "
+        "conclusion positive), jamais sur chaque phrase.\n\n"
         "CE QUE TU SAIS FAIRE (propose-le au bon moment, pas d'un coup) :\n"
         "- orienter vers des métiers, expliquer les écarts ;\n"
         "- recommander des formations avec leurs vrais liens (ceux du "
         "contexte, jamais d'URL inventée) ;\n"
         "- préparer les entretiens (propose une simulation quand c'est "
         "pertinent) ;\n"
+        "- générer un CV ciblé ou une lettre de motivation à partir du "
+        "profil validé (l'utilisateur valide ensuite, tu ne modifies "
+        "rien sans accord) ;\n"
         "- conseiller en entrepreneuriat (business plan, financements) ;\n"
         "- suivre les candidatures. Une suggestion d'action par réponse "
         "maximum.\n\n"
@@ -941,8 +1663,18 @@ def _llm_reply(
         "- Formations : 1 ou 2 liens max, intégrés naturellement à la "
         "phrase.\n"
         "- Si l'info n'est ni dans le contexte ni dans les résultats web, "
-        "dis-le simplement.\n\n"
-        "CONTEXTE (données réelles de l'utilisateur) :\n"
+        "dis-le simplement.\n"
+        "- Tu ne prétends jamais ignorer une donnée présente dans le "
+        "contexte (prénom, métier, ville, candidatures).\n"
+        "- Historique de conversation : conservé 30 jours par défaut ; "
+        "l'utilisateur peut l'effacer ou passer en mode éphémère.\n\n"
+        + (
+            "PAGE OÙ SE TROUVE L'UTILISATEUR : « " + ctx.page_context + " ». "
+            "Oriente naturellement tes conseils et tes actions vers ce qui se "
+            "fait sur cette page, sans l'annoncer mécaniquement.\n\n"
+            if ctx.page_context else ""
+        )
+        + "CONTEXTE (données réelles de l'utilisateur) :\n"
         + ctx.context_document()
     )
     messages = [{"role": "system", "content": system}]
@@ -963,6 +1695,13 @@ def answer(
     role: str = "candidate",
     applications: Optional[list[dict]] = None,
     verified: bool = False,
+    entrepreneur_resources: Optional[list[dict]] = None,
+    financing: Optional[list[dict]] = None,
+    enrollments: Optional[list[dict]] = None,
+    documents: Optional[list[dict]] = None,
+    agent_mode: str = "preparation",
+    user: Any = None,
+    context: Optional[str] = None,
 ) -> dict[str, Any]:
     """Point d'entrée : LLM si configuré (avec succès), sinon règles.
     Les suggestions sont TOUJOURS calculées depuis les données réelles.
@@ -999,6 +1738,13 @@ def answer(
         resources=resources, role=role,
         applications=applications, verified=verified,
         web_results=web_results,
+        entrepreneur_resources=entrepreneur_resources,
+        financing=financing,
+        enrollments=enrollments,
+        documents=documents,
+        agent_mode=agent_mode,
+        user=user,
+        page_context=context,
     )
     llm_text = _llm_reply(message, history, ctx, db) if db is not None else None
     rules = _rules_reply(message, ctx)
