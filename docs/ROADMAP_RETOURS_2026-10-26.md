@@ -8,7 +8,7 @@ Avancement au 26 octobre 2026 : le point 1 (notification de décision de
 vérification) et le point 5 (conversations empilées et réglages dans la
 conversation) sont implémentés et vérifiés. Les autres points restent à traiter.
 
-Nouveaux retours intégrés le 26 octobre 2026 : les points 13 à 22 complètent
+Nouveaux retours intégrés le 26 octobre 2026 : les points 13 à 23 complètent
 cette feuille de route. Ils sont classés dans la priorité correspondante et
 restent à traiter. La numérotation continue à la suite pour ne pas modifier les
 points déjà suivis.
@@ -192,6 +192,48 @@ et décisions motivées.
 - L'utilisateur reçoit une notification in-app et un e-mail si activé.
 - Chaque décision est horodatée et traçable.
 - Aucun recours ne reste sans statut après traitement.
+
+### 23. Moteur d'alertes e-mail trop volumineux et redondant
+
+**Constat**
+Le moteur d'alertes envoie plusieurs fois la même offre par e-mail. Un
+utilisateur a reçu 24 e-mails en 3 heures pour une seule offre correspondant à
+50 % de son profil. Ce volume est ressenti comme du spam et peut faire fuir les
+utilisateurs. Les causes probables sont un seuil d'envoi trop bas, l'absence de
+déduplication par offre et des passes de digest répétées sur la même fenêtre.
+
+**Objectif**
+Envoyer un seul e-mail par offre réellement pertinente, avec un seuil supérieur
+à 60 %, et conserver toutes les autres correspondances dans la zone
+Notifications de l'application.
+
+**Actions**
+- Relever le seuil d'envoi e-mail à plus de 60 %. Les offres entre 45 % et
+  60 % restent visibles in-app, sans e-mail.
+- Dédupliquer les envois par utilisateur et par offre dans `notification_log`.
+- Vérifier la déduplication avant chaque envoi et journaliser l'envoi réel.
+- Remplacer les passes répétées par un digest quotidien unique ou par un envoi
+  immédiat plafonné.
+- Ajouter un plafond de fréquence, par exemple un e-mail d'alerte emploi par
+  utilisateur et par jour.
+- Rendre le planificateur idempotent : plusieurs exécutions sur la même
+  période ne doivent pas renvoyer les mêmes offres.
+- Conserver les notifications in-app pour toutes les correspondances à partir
+  de 45 %.
+- Ajouter un réglage de fréquence et de seuil dans les préférences e-mail.
+- Ajouter des tests sur le seuil, la déduplication et le plafond de fréquence.
+- Surveiller le volume d'e-mails par utilisateur et alerter en cas d'anomalie.
+
+**Critères d'acceptation**
+- Une offre à 50 % ne déclenche aucun e-mail mais reste dans la zone
+  Notifications.
+- Une offre à plus de 60 % déclenche au maximum un e-mail par utilisateur,
+  même si le planificateur s'exécute plusieurs fois.
+- Un utilisateur ne reçoit pas plus d'un e-mail d'alerte emploi par jour, sauf
+  message critique de compte ou de sécurité.
+- Toutes les correspondances restent consultables dans l'application.
+- Les tests couvrent la déduplication et le seuil de 60 %.
+- Aucun e-mail réel n'est envoyé pendant les vérifications.
 
 ## Priorité 1 : parcours candidat et recruteur
 
@@ -533,6 +575,6 @@ charte OrientSkill.
 
 1. Valider cette roadmap avec la direction produit.
 2. Chiffrer chaque lot de travail.
-3. Commencer par les lots de priorité 0, notamment les points 13 à 16.
+3. Commencer par les lots de priorité 0, notamment les points 13 à 16 et 23.
 4. Traiter ensuite les points 17 à 20 de priorité 1.
 5. Revoir l'ensemble dans une semaine après les premiers correctifs.
