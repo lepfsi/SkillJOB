@@ -8,6 +8,11 @@ Avancement au 26 octobre 2026 : le point 1 (notification de décision de
 vérification) et le point 5 (conversations empilées et réglages dans la
 conversation) sont implémentés et vérifiés. Les autres points restent à traiter.
 
+Nouveaux retours intégrés le 26 octobre 2026 : les points 13 à 22 complètent
+cette feuille de route. Ils sont classés dans la priorité correspondante et
+restent à traiter. La numérotation continue à la suite pour ne pas modifier les
+points déjà suivis.
+
 ## Objectif
 
 Corriger les irritants de confiance, de compréhension et de pilotage avant d'élargir la plateforme. Les points ci-dessous sont classés par priorité produit, avec pour chacun :
@@ -75,6 +80,118 @@ Chaque recommandation doit être explicable, personnalisée et traçable.
 - Aucune recommandation n'apparait sans raison affichée.
 - Les recommandations diffèrent selon les profils réels.
 - Un compte sans lien avec Excel ne reçoit pas Excel en priorité.
+
+### 13. Contrôle de l'agent sans paramètres réels
+
+**Constat**
+La page « Mon agent » affiche un bloc « Contrôle de votre agent », mais il ne
+donne pas accès à un ensemble complet de réglages. Le choix du mode existe,
+mais il n'est pas relié à des paramètres visibles de périmètre, de fréquence,
+de canaux ou de validation. Dans les paramètres du compte, aucun bloc ne
+reprend ces réglages.
+
+**Objectif**
+Faire du bloc « Contrôle de votre agent » un vrai centre de réglages, avec des
+paramètres persistés, compréhensibles et réellement appliqués par l'agent.
+
+**Actions**
+- Définir les paramètres utiles : mode de travail, actions autorisées,
+  fréquence de veille, canaux d'alerte et niveau de validation humaine.
+- Ajouter un modèle et une API de préférences agent, distincts du mode actuel.
+- Afficher un résumé des réglages actifs dans « Mon agent ».
+- Relier chaque paramètre à un effet vérifiable dans le comportement de l'agent.
+- Auditer les modes existants pour supprimer ceux qui n'ont pas d'effet réel.
+
+**Critères d'acceptation**
+- Le bloc affiche au moins le mode, le périmètre d'action et le niveau de
+  validation.
+- Chaque modification est enregistrée et conservée après rechargement.
+- Un paramètre affiché sans effet est supprimé ou rendu explicite.
+- Le candidat ne peut activer que les actions autorisées par son rôle.
+
+### 14. Lien « Gérer les paramètres » sans réglages de mode
+
+**Constat**
+Le lien « Gérer les paramètres » du bloc « Contrôle de votre agent » renvoie
+vers la page Paramètres, mais celle-ci ne contient aucun réglage relatif au
+mode ou au comportement de l'agent. L'utilisateur arrive dans une zone sans
+rapport avec le lien.
+
+**Objectif**
+Le lien doit mener directement à une section de paramètres qui contient les
+réglages de l'agent, ou disparaître si ces réglages n'existent pas.
+
+**Actions**
+- Ajouter une section « Agent » dans les paramètres du compte.
+- Y reprendre le mode, le périmètre, la fréquence et la validation.
+- Faire pointer le lien vers cette section avec une ancre ou une route dédiée.
+- Afficher un état vide explicite si un réglage n'est pas encore disponible.
+- Vérifier le parcours sur les rôles candidat et recruteur.
+
+**Critères d'acceptation**
+- Le clic sur « Gérer les paramètres » affiche immédiatement les réglages de
+  l'agent.
+- La même valeur est visible dans « Mon agent » et dans les paramètres.
+- Aucun lien ne mène à une zone sans réglage correspondant.
+- Le parcours fonctionne sans rechargement manuel.
+
+### 15. Statuts de candidature incohérents entre candidat, recruteur et admin
+
+**Constat**
+Pour une offre publiée par un recruteur, le candidat peut faire passer sa
+candidature à « offre reçue » ou « en entretien ». Ces étapes devraient être
+décidées par le recruteur ou l'admin. L'admin peut aussi modifier un statut
+sans validation préalable, ce qui crée des décisions contradictoires.
+
+**Objectif**
+Définir une machine à états unique et des permissions claires pour chaque rôle.
+
+**Actions**
+- Documenter les statuts et les transitions autorisées par rôle.
+- Candidat : postuler, retirer sa candidature, décliner une offre, accepter une
+  offre si le processus le prévoit.
+- Recruteur : examiner, présélectionner, convoquer à un entretien, refuser,
+  transmettre une offre.
+- Admin : valider, corriger ou arbitrer une transition, avec motif et trace.
+- Appliquer les règles côté API, pas seulement dans l'interface.
+- Ajouter un journal des changements de statut avec auteur, date et motif.
+- Mettre à jour les boutons et libellés côté candidat, recruteur et admin.
+
+**Critères d'acceptation**
+- Le candidat ne peut plus passer une candidature à « offre reçue » ou
+  « en entretien ».
+- Chaque transition est refusée par l'API si le rôle n'est pas autorisé.
+- Le candidat peut décliner une offre et cette décision est visible par le
+  recruteur et l'admin.
+- Toute modification admin est tracée avec un motif.
+- Les statuts affichés sont identiques dans les trois espaces.
+
+### 16. Absence de page dédiée au traitement des recours
+
+**Constat**
+Les recours existent et peuvent être déposés, mais leur traitement est enfoui
+dans la gestion des utilisateurs. L'admin n'a pas de page dédiée pour suivre,
+instruire et décider les recours.
+
+**Objectif**
+Centraliser les recours dans un espace admin unique, avec statuts, historique
+et décisions motivées.
+
+**Actions**
+- Ajouter une page « Recours » dans l'espace admin.
+- Lister les recours avec filtres par statut, date, type et utilisateur.
+- Afficher le contexte, le message du candidat et l'historique des échanges.
+- Permettre d'accepter, refuser ou demander un complément, avec motif
+  obligatoire.
+- Notifier l'utilisateur de la décision et conserver une trace dans le journal.
+- Afficher l'ancienneté des recours en attente.
+
+**Critères d'acceptation**
+- L'admin voit tous les recours ouverts dans une page dédiée.
+- Chaque recours peut être instruit et clos avec une décision motivée.
+- L'utilisateur reçoit une notification in-app et un e-mail si activé.
+- Chaque décision est horodatée et traçable.
+- Aucun recours ne reste sans statut après traitement.
 
 ## Priorité 1 : parcours candidat et recruteur
 
@@ -193,6 +310,117 @@ Le recruteur doit pouvoir relire l'offre telle qu'elle apparaîtra aux candidats
 - L'aperçu reflète exactement la fiche publique.
 - Le recruteur peut corriger et revoir l'aperçu autant de fois que nécessaire.
 
+### 17. Sidebar de la page Notifications qui bloque le défilement
+
+**Constat**
+Sur la page Notifications, la sidebar ne s'arrête pas au niveau attendu. Elle
+gêne le défilement du contenu et de la barre de défilement lorsque l'on
+traverse l'en-tête.
+
+**Objectif**
+Rendre la sidebar stable et non bloquante, avec un défilement fluide du
+contenu.
+
+**Actions**
+- Reproduire le problème sur desktop, tablette et mobile.
+- Corriger la position sticky, la hauteur maximale et les débordements.
+- Faire en sorte que la sidebar s'arrête avant le pied de page et ne recouvre
+  jamais le contenu.
+- Vérifier le comportement de la barre de défilement et du focus clavier.
+- Ajouter une vérification visuelle aux largeurs 1280, 768 et 375 px.
+
+**Critères d'acceptation**
+- La page défile normalement avec la barre de défilement.
+- La sidebar ne recouvre ni le titre ni le contenu.
+- Le comportement est identique sur desktop et mobile.
+- La navigation clavier reste possible.
+
+### 18. Préférences e-mail du candidat
+
+**Constat**
+Le candidat ne dispose pas de préférences claires pour choisir les
+notifications qu'il reçoit par e-mail. Il peut donc recevoir tous les
+événements dans sa boîte mail.
+
+**Objectif**
+Donner au candidat la maîtrise des e-mails qu'il reçoit, sans supprimer les
+notifications importantes dans l'application.
+
+**Actions**
+- Ajouter une section « Notifications e-mail » dans les paramètres du candidat.
+- Lister les catégories : nouvelles offres, offres expirantes, messages,
+  candidatures, vérification et agent.
+- Permettre d'activer ou désactiver chaque catégorie.
+- Prévoir une fréquence immédiate ou un résumé quotidien pour les offres.
+- Conserver l'envoi des messages critiques de compte et de sécurité.
+- Appliquer les préférences dans le service de notification.
+- Ajouter un lien de désabonnement dans les e-mails non critiques.
+
+**Critères d'acceptation**
+- Le candidat peut activer ou désactiver chaque catégorie.
+- Une catégorie désactivée n'envoie aucun e-mail mais reste visible dans
+  l'application.
+- Les e-mails critiques de compte restent envoyés.
+- Les préférences sont conservées après déconnexion.
+- Aucun e-mail réel n'est envoyé pendant les tests.
+
+### 19. Paramètres e-mail spécifiques aux recruteurs et aux admins
+
+**Constat**
+La section « Quand souhaitez-vous un e-mail ? » des recruteurs et des admins
+reprend les événements du candidat. Ces rôles n'ont pas les mêmes besoins et
+ne peuvent pas choisir leurs propres alertes.
+
+**Objectif**
+Afficher à chaque rôle uniquement les événements qui le concernent.
+
+**Actions**
+- Définir un catalogue d'événements par rôle.
+- Recruteur : nouvelle candidature, message de candidat, réponse à une
+  invitation, offre publiée ou expirée, vérification d'entreprise.
+- Admin : demande de vérification, recours, signalement, échec d'ingestion,
+  alerte critique.
+- Adapter l'API des préférences pour renvoyer les événements du rôle connecté.
+- Rendre l'interface dynamique à partir de ce catalogue.
+- Migrer les préférences existantes sans envoyer d'e-mails non demandés.
+
+**Critères d'acceptation**
+- Le recruteur ne voit que les événements recruteur.
+- L'admin ne voit que les événements admin.
+- Les événements candidat ne sont plus affichés à ces rôles.
+- Chaque rôle peut activer ou désactiver ses alertes indépendamment.
+- Les tests couvrent la séparation des catalogues.
+
+### 20. Page recruteur des candidatures reçues
+
+**Constat**
+Les candidatures reçues sont visibles dans le dashboard recruteur, mais il
+n'existe pas de page dédiée qui les regroupe par offre. Le recruteur ne peut
+pas parcourir facilement l'ensemble des candidatures liées à une offre.
+
+**Objectif**
+Créer une page « Candidatures reçues » où chaque offre affiche ses
+candidatures empilées.
+
+**Actions**
+- Ajouter une route et une entrée de navigation « Candidatures reçues ».
+- Regrouper les candidatures par offre, avec le nombre total et le nombre de
+  nouvelles.
+- Afficher les candidatures en pile sous l'offre, avec possibilité de replier
+  ou déplier.
+- Afficher le nom, le score de correspondance, la date et le statut de chaque
+  candidat.
+- Ajouter des filtres par offre, statut et date, ainsi qu'une recherche.
+- Relier chaque candidature à sa fiche détaillée et aux actions autorisées.
+- Prévoir un état vide et une pagination.
+
+**Critères d'acceptation**
+- Le recruteur voit toutes les candidatures reçues, groupées par offre.
+- Chaque offre affiche le total et le nombre de nouvelles candidatures.
+- Les candidatures s'empilent sous l'offre et peuvent être ouvertes.
+- Les actions de statut respectent les permissions du recruteur.
+- La page reste utilisable avec un grand nombre de candidatures.
+
 ## Priorité 2 : administration et identité visuelle
 
 ### 10. Notifications administrateur paramétrables
@@ -252,9 +480,59 @@ Renforcer la lisibilité et la crédibilité visuelle de l'ensemble.
 - Les badges et cartes deviennent plus institutionnels.
 - Aucune régression d'accessibilité n'est introduite.
 
+### 21. Page de notifications pour l'admin
+
+**Constat**
+L'admin n'a pas de page de notifications dédiée. Les alertes administratives
+sont dispersées ou envoyées par e-mail, sans boîte de réception commune.
+
+**Objectif**
+Fournir à l'admin une boîte de notifications centralisée, filtrable et reliée
+aux actions à traiter.
+
+**Actions**
+- Ajouter une page « Notifications » dans l'espace admin.
+- Lister les événements : demandes de vérification, recours, signalements,
+  échecs d'ingestion et alertes critiques.
+- Ajouter les filtres par catégorie, statut et date.
+- Permettre de marquer comme lu, de traiter ou de renvoyer vers la page
+  concernée.
+- Afficher les compteurs non lus dans la navigation.
+- Définir la durée de conservation et les droits d'accès.
+
+**Critères d'acceptation**
+- L'admin dispose d'une page de notifications dédiée.
+- Chaque notification renvoie vers l'action correspondante.
+- L'état lu ou non lu est conservé.
+- Seuls les admins peuvent accéder à cette page.
+- Les compteurs correspondent aux notifications affichées.
+
+### 22. En-tête du dashboard recruteur à moderniser
+
+**Constat**
+L'en-tête du dashboard recruteur paraît daté et manque de hiérarchie visuelle.
+
+**Objectif**
+Obtenir un en-tête plus moderne, sobre et professionnel, cohérent avec la
+charte OrientSkill.
+
+**Actions**
+- Reprendre la hiérarchie : accueil, entreprise, date et actions principales.
+- Mettre en avant l'action « Publier une offre » et les indicateurs clés.
+- Réduire les arrondis et les effets décoratifs.
+- Améliorer la typographie, les espacements et le responsive.
+- Vérifier le contraste et la lisibilité sur mobile.
+
+**Critères d'acceptation**
+- L'en-tête affiche clairement l'identité du recruteur et l'action principale.
+- Les indicateurs clés sont lisibles sans surcharge.
+- Le rendu est cohérent sur desktop et mobile.
+- Aucune régression d'accessibilité n'est introduite.
+
 ## Prochaines étapes
 
 1. Valider cette roadmap avec la direction produit.
 2. Chiffrer chaque lot de travail.
-3. Commencer par les lots de priorité 0.
-4. Revoir l'ensemble dans une semaine après les premiers correctifs.
+3. Commencer par les lots de priorité 0, notamment les points 13 à 16.
+4. Traiter ensuite les points 17 à 20 de priorité 1.
+5. Revoir l'ensemble dans une semaine après les premiers correctifs.
