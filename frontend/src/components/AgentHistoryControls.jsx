@@ -2,42 +2,42 @@ import { useEffect, useState } from "react";
 import { api } from "../api/client.js";
 import { Icon, I } from "./icons.jsx";
 
-// Contrôle réel de l'historique de conversation avec l'agent :
+// Contrôles d'une conversation précise avec l'agent :
 // - conservation 30 jours par défaut ;
-// - bascule en mode éphémère (aucune nouvelle trace en base) ;
-// - effacement immédiat par l'utilisateur.
+// - bascule en mode éphémère ;
+// - effacement immédiat de la conversation affichée.
 
-export default function AgentHistoryControls() {
-  const [mode, setMode] = useState("persist");
-  const [retentionDays, setRetentionDays] = useState(30);
+export default function AgentHistoryControls({ conversationId, onUpdated, onDeleted }) {
+  const [conversation, setConversation] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
+    if (!conversationId) return;
     let alive = true;
-    api("/assistant/history")
+    api(`/assistant/conversations/${conversationId}`)
       .then((data) => {
         if (!alive) return;
-        setMode(data.mode || "persist");
-        setRetentionDays(data.retention_days || 30);
+        setConversation(data.conversation || null);
       })
       .catch((err) => alive && setError(err.detail));
     return () => {
       alive = false;
     };
-  }, []);
+  }, [conversationId]);
 
   async function switchMode() {
+    if (!conversation || busy) return;
     setBusy(true);
     setError("");
     try {
-      const next = mode === "persist" ? "ephemeral" : "persist";
-      const data = await api("/assistant/history/settings", {
+      const next = conversation.history_mode === "ephemeral" ? "persist" : "ephemeral";
+      const data = await api(`/assistant/conversations/${conversation.id}`, {
         method: "PUT",
-        body: { mode: next },
+        body: { history_mode: next },
       });
-      setMode(data.mode || next);
-      setRetentionDays(data.retention_days || 30);
+      setConversation(data);
+      if (onUpdated) onUpdated(data);
     } catch (err) {
       setError(err.detail);
     } finally {
@@ -46,16 +46,15 @@ export default function AgentHistoryControls() {
   }
 
   async function clear() {
-    if (!window.confirm(
-      "Effacer l'historique de conversation avec l'agent ?"
-    )) {
+    if (!conversation || busy) return;
+    if (!window.confirm(`Effacer la conversation « ${conversation.title} » ?`)) {
       return;
     }
     setBusy(true);
     setError("");
     try {
-      await api("/assistant/history", { method: "DELETE" });
-      window.dispatchEvent(new Event("orientskill:history-cleared"));
+      await api(`/assistant/conversations/${conversation.id}`, { method: "DELETE" });
+      if (onDeleted) onDeleted(conversation.id);
     } catch (err) {
       setError(err.detail);
     } finally {
@@ -63,16 +62,18 @@ export default function AgentHistoryControls() {
     }
   }
 
+  if (!conversation) return null;
+
   return (
     <div className="ag-history">
       <div className="ag-history-head">
         <span className="ag-history-icon"><Icon d={I.clock} size={15} /></span>
         <div>
-          <h3>Historique de conversation</h3>
+          <h3>Historique de cette conversation</h3>
           <p>
-            {mode === "ephemeral"
-              ? "Mode éphémère : vos nouveaux échanges ne sont pas conservés. Les anciens restent jusqu'à effacement."
-              : `Conservé ${retentionDays} jours, puis supprimé automatiquement.`}
+            {conversation.history_mode === "ephemeral"
+              ? "Mode éphémère : vos nouveaux échanges ne sont pas conservés."
+              : `Conservé ${conversation.retention_days} jours, puis supprimé automatiquement.`}
           </p>
         </div>
       </div>
@@ -83,7 +84,7 @@ export default function AgentHistoryControls() {
           onClick={switchMode}
           disabled={busy}
         >
-          {mode === "ephemeral"
+          {conversation.history_mode === "ephemeral"
             ? "Revenir à l'historique conservé"
             : "Passer en mode éphémère"}
         </button>
@@ -93,7 +94,7 @@ export default function AgentHistoryControls() {
           onClick={clear}
           disabled={busy}
         >
-          Effacer l'historique
+          Effacer cette conversation
         </button>
       </div>
       {error && <div className="alert alert-error small">{error}</div>}

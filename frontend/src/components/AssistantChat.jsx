@@ -2,15 +2,16 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { api } from "../api/client.js";
-import { mapInternalPath, mdToHtml } from "../lib.js";
+import { mapInternalPath, mdToHtml, relTime } from "../lib.js";
 import { Icon, I, ArrowIcon } from "./icons.jsx";
+import AgentHistoryControls from "./AgentHistoryControls.jsx";
 
-// Chat de l'assistant Ori, partagé :
-// - page « Assistant » (pleine page, tous les rôles) ;
-// - page « Mon agent » (barre de commande compacte, candidat).
-// Ori parle naturellement, rend le markdown (gras, listes, liens
-// cliquables) et propose des ACTIONS réelles (CV, lettre, entretien,
-// profil). L'utilisateur garde toujours le contrôle.
+// Chat de l'assistant Ori :
+// - page « Assistant » (pleine page) ;
+// - page « Mon agent » (version compacte).
+// L'utilisateur peut empiler plusieurs conversations, en ouvrir une,
+// la fermer, la reprendre ou la supprimer. Les réglages d'historique
+// restent attachés à la conversation affichée.
 
 const CANDIDATE_OPENINGS = [
   "Salut ! Moi c'est Ori. Une offre à analyser, un entretien à préparer, une compétence à monter ? Dis-moi tout.",
@@ -46,7 +47,6 @@ function ActionButtons({ actions, onExecuted }) {
     setError("");
     try {
       if (action.type === "generate_cv") {
-        // Chaîne complète : l'offre → galerie de modèles → document.
         navigate(`/opportunites/${action.job_id}?galerie=cv`);
       } else if (action.type === "generate_letter") {
         navigate(`/opportunites/${action.job_id}?galerie=lettre`);
@@ -84,8 +84,7 @@ function ActionButtons({ actions, onExecuted }) {
 }
 
 function buildPrepMessage(prep) {
-  const lines = ["C'est fait ! Voici ta préparation d'entretien :",
-                 "", `**Ton pitch**`, prep.pitch, ""];
+  const lines = ["C'est fait ! Voici ta préparation d'entretien :", "", `**Ton pitch**`, prep.pitch, ""];
   if (prep.likely_questions.length) {
     lines.push("**Questions probables**");
     prep.likely_questions.forEach((q) => lines.push(`- ${q}`));
@@ -108,69 +107,138 @@ function buildPrepMessage(prep) {
   return lines.join("\n");
 }
 
-export default function AssistantChat({ compact = false, suggestions: starter = null, initialMessage = null, pageContext = null }) {
+export default function AssistantChat({
+  compact = false,
+  suggestions: starter = null,
+  initialMessage = null,
+  pageContext = null,
+}) {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isRecruiter = user?.role === "recruiter";
   const openings = isRecruiter ? RECRUITER_OPENINGS : CANDIDATE_OPENINGS;
-  const [messages, setMessages] = useState(() => [
-    { role: "assistant", content: openings[Math.floor(Math.random() * openings.length)] },
-  ]);
+  const defaultSuggestions = starter || (isRecruiter ? RECRUITER_SUGGESTIONS : CANDIDATE_SUGGESTIONS);
+
+  const [conversations, setConversations] = useState([]);
+  const [activeConversation, setActiveConversation] = useState(null);
+  const [messages, setMessages] = useState([]);
   const [links, setLinks] = useState([]);
   const [actions, setActions] = useState([]);
-  const [suggestions, setSuggestions] = useState(
-    starter || (isRecruiter ? RECRUITER_SUGGESTIONS : CANDIDATE_SUGGESTIONS)
-  );
+  const [suggestions, setSuggestions] = useState(defaultSuggestions);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
+  const [closed, setClosed] = useState(true);
+  const [error, setError] = useState("");
   const bottomRef = useRef(null);
   const sentInitial = useRef(false);
 
-  // Historique persisté (30 jours par défaut) : la conversation reprend
-  // là où elle s'était arrêtée. Le mode éphémère n'écrit simplement rien.
-  useEffect(() => {
-    if (initialMessage) return;
-    let alive = true;
-    api("/assistant/history")
-      .then((data) => {
-        if (!alive) return;
-        const stored = (data.messages || []).map((m) => ({
-          role: m.role,
-          content: m.content,
-        }));
-        if (stored.length > 0) setMessages(stored);
-      })
-      .catch(() => {});
-    return () => {
-      alive = false;
-    };
-  }, [initialMessage]);
+  const openingMessage = () => ({
+    role: "assistant",
+    content: openings[Math.floor(Math.random() * openings.length)],
+  });
 
-  // Effacement demandé depuis « Mon agent » : le fil revient à zéro.
-  useEffect(() => {
-    const onCleared = () => {
-      setMessages([
-        { role: "assistant", content: openings[Math.floor(Math.random() * openings.length)] },
-      ]);
-    };
-    window.addEventListener("orientskill:history-cleared", onCleared);
-    return () => {
-      window.removeEventListener("orientskill:history-cleared", onCleared);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!compact) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, compact]);
-
-  // Message initial (lien profond ?q=...) : envoyé une seule fois.
-  useEffect(() => {
-    if (initialMessage && !sentInitial.current) {
-      sentInitial.current = true;
-      send(initialMessage);
+  async function loadConversations() {
+    try {
+      const rows = await api("/assistant/conversations");
+      setConversations(rows || []);
+      // Par défaut, les conversations restent fermées : l'utilisateur
+      // choisit explicitement celle qu'il veut reprendre.
+      if (initialMessage) {
+        if ((rows || []).length > 0) {
+          await openConversation(rows[0].id, rows);
+        } else {
+          await createConversation();
+        }
+      } else {
+        setActiveConversation((rows || [])[0] || null);
+        setMessages([]);
+        setClosed(true);
+      }
+    } catch (err) {
+      setConversations([]);
+      setError(err.detail || "Impossible de charger vos conversations.");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialMessage]);
+  }
+
+  async function openConversation(conversationId, knownRows = null) {
+    try {
+      const data = await api(`/assistant/conversations/${conversationId}`);
+      setActiveConversation(data.conversation);
+      const stored = (data.messages || []).map((m) => ({
+        role: m.role,
+        content: m.content,
+      }));
+      setMessages(stored.length > 0 ? stored : [openingMessage()]);
+      setLinks([]);
+      setActions([]);
+      setSuggestions(defaultSuggestions);
+      setClosed(false);
+      setError("");
+      if (knownRows) setConversations(knownRows);
+    } catch (err) {
+      setClosed(true);
+      setError(err.detail || "Impossible d'ouvrir cette conversation.");
+    }
+  }
+
+  async function createConversation() {
+    if (busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      const created = await api("/assistant/conversations", {
+        method: "POST",
+        body: { title: "Nouvelle conversation" },
+      });
+      setConversations((prev) => [created, ...prev.filter((c) => c.id !== created.id)]);
+      setActiveConversation(created);
+      setMessages([openingMessage()]);
+      setLinks([]);
+      setActions([]);
+      setSuggestions(defaultSuggestions);
+      setClosed(false);
+    } catch (err) {
+      setError(err.detail || "Impossible de créer une nouvelle conversation.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function afterConversationDeleted(conversationId) {
+    const remaining = conversations.filter((c) => c.id !== conversationId);
+    setConversations(remaining);
+    if (activeConversation?.id !== conversationId) return;
+    if (remaining.length > 0) {
+      await openConversation(remaining[0].id, remaining);
+      return;
+    }
+    const created = await api("/assistant/conversations", {
+      method: "POST",
+      body: { title: "Nouvelle conversation" },
+    });
+    setConversations([created]);
+    setActiveConversation(created);
+    setMessages([openingMessage()]);
+    setLinks([]);
+    setActions([]);
+    setSuggestions(defaultSuggestions);
+    setClosed(false);
+  }
+
+  async function deleteConversation(conversationId) {
+    const row = conversations.find((c) => c.id === conversationId);
+    if (!row) return;
+    if (!window.confirm(`Effacer la conversation « ${row.title} » ?`)) return;
+    setBusy(true);
+    try {
+      await api(`/assistant/conversations/${conversationId}`, { method: "DELETE" });
+      await afterConversationDeleted(conversationId);
+    } catch (err) {
+      setError(err.detail || "Impossible de supprimer cette conversation.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   function assistantMessage(content) {
     setMessages((prev) => [...prev, { role: "assistant", content }]);
@@ -179,7 +247,7 @@ export default function AssistantChat({ compact = false, suggestions: starter = 
 
   async function send(text) {
     const message = (text ?? input).trim();
-    if (!message || busy) return;
+    if (!message || busy || !activeConversation) return;
     setInput("");
     setBusy(true);
     setLinks([]);
@@ -191,6 +259,7 @@ export default function AssistantChat({ compact = false, suggestions: starter = 
         method: "POST",
         body: {
           message,
+          conversation_id: activeConversation.id,
           context: pageContext || undefined,
           history: history
             .slice(-12)
@@ -198,9 +267,13 @@ export default function AssistantChat({ compact = false, suggestions: starter = 
         },
       });
       setMessages((prev) => [...prev, { role: "assistant", content: res.reply }]);
-      setSuggestions(res.suggestions || []);
+      setSuggestions(res.suggestions || defaultSuggestions);
       setLinks(res.links || []);
       setActions(res.actions || []);
+      const rows = await api("/assistant/conversations");
+      setConversations(rows || []);
+      const refreshed = (rows || []).find((c) => c.id === activeConversation.id);
+      if (refreshed) setActiveConversation(refreshed);
     } catch (err) {
       setMessages((prev) => [
         ...prev,
@@ -211,14 +284,27 @@ export default function AssistantChat({ compact = false, suggestions: starter = 
     }
   }
 
-  // En mode compact, on n'affiche le fil qu'une fois la conversation lancée.
-  const visible = compact
-    ? messages.filter((_, i) => i > 0 || messages.length > 1)
-    : messages;
+  useEffect(() => {
+    loadConversations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!compact) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages, compact]);
+
+  useEffect(() => {
+    if (initialMessage && !sentInitial.current && activeConversation) {
+      sentInitial.current = true;
+      setClosed(false);
+      send(initialMessage);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialMessage, activeConversation]);
 
   const thread = (
     <div className={compact ? "ag-thread" : "chat-box"}>
-      {visible.map((m, i) => (
+      {messages.map((m, i) => (
         m.role === "user" ? (
           <div key={i} className="chat-msg chat-user">{m.content}</div>
         ) : (
@@ -234,10 +320,63 @@ export default function AssistantChat({ compact = false, suggestions: starter = 
     </div>
   );
 
-  const extras = (
+  const conversationList = (
+    <div className="chat-conversations">
+      <div className="chat-conversations-head">
+        <h3>Mes conversations</h3>
+        <button
+          type="button"
+          className="btn btn-primary btn-small"
+          onClick={createConversation}
+          disabled={busy}
+        >
+          Nouvelle conversation
+        </button>
+      </div>
+      <div className="chat-conversation-stack">
+        {conversations.map((c) => (
+          <div
+            key={c.id}
+            className={`chat-conversation-row${c.id === activeConversation?.id && !closed ? " is-active" : ""}`}
+          >
+            <button
+              type="button"
+              className="chat-conversation-main"
+              onClick={() => openConversation(c.id)}
+            >
+              <span className="chat-conversation-title">{c.title}</span>
+              <span className="chat-conversation-last">
+                {c.last_message ? c.last_message.slice(0, 90) : "Nouvelle conversation"}
+              </span>
+              <span className="chat-conversation-meta">
+                {c.message_count} message{c.message_count === 1 ? "" : "s"} · {relTime(c.updated_at)}
+              </span>
+            </button>
+            <div className="chat-conversation-actions">
+              <button
+                type="button"
+                className="btn btn-outline btn-small"
+                onClick={() => openConversation(c.id)}
+              >
+                Ouvrir
+              </button>
+              <button
+                type="button"
+                className="btn btn-remove btn-small"
+                onClick={() => deleteConversation(c.id)}
+              >
+                Supprimer
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  const actionExtras = (
     <>
       {actions.length > 0 && <ActionButtons actions={actions} onExecuted={assistantMessage} />}
-
       {links.length > 0 && (
         <div className="actions-row" style={{ marginTop: actions.length ? "0.3rem" : 0 }}>
           {links.map((l) => {
@@ -265,47 +404,97 @@ export default function AssistantChat({ compact = false, suggestions: starter = 
           })}
         </div>
       )}
-
-      {suggestions.length > 0 && (
-        <div className="chat-suggestions">
-          {suggestions.map((s) => (
-            <button key={s} type="button" className="suggestion" onClick={() => send(s)}>
-              {s}
-            </button>
-          ))}
-        </div>
-      )}
     </>
   );
+
+  const suggestionRow = suggestions.length > 0 && (
+    <div className="chat-suggestions">
+      {suggestions.map((s) => (
+        <button key={s} type="button" className="suggestion" onClick={() => send(s)}>
+          {s}
+        </button>
+      ))}
+    </div>
+  );
+
+  const header = (
+    <header className="chat-header">
+      <div className="chat-header-main">
+        <span className="chat-header-icon"><Icon d={I.bot} size={18} /></span>
+        <div>
+          <h2>{closed ? "Mes conversations" : activeConversation?.title}</h2>
+          <p>
+            {closed
+              ? "Reprenez une conversation existante ou ouvrez-en une nouvelle."
+              : `${activeConversation?.message_count || messages.length} message${(activeConversation?.message_count || messages.length) === 1 ? "" : "s"} · ${activeConversation?.history_mode === "ephemeral" ? "éphémère" : "conservée"}`}
+          </p>
+        </div>
+      </div>
+      <div className="chat-header-actions">
+        <button
+          type="button"
+          className="btn btn-outline btn-small"
+          onClick={createConversation}
+          disabled={busy}
+        >
+          Nouvelle
+        </button>
+        {!closed && (
+          <button
+            type="button"
+            className="btn btn-ghost btn-small"
+            onClick={() => setClosed(true)}
+          >
+            Fermer
+          </button>
+        )}
+      </div>
+    </header>
+  );
+
+  const errorBanner = error ? (
+    <div className="alert alert-error" role="alert">{error}</div>
+  ) : null;
 
   if (compact) {
     return (
       <div className="ag-chat">
-        {messages.length > 1 && thread}
-        {actions.length > 0 || links.length > 0 ? <div className="ag-chat-extras">{extras}</div> : null}
-        <form
-          className="ag-composer"
-          onSubmit={(e) => {
-            e.preventDefault();
-            send();
-          }}
-        >
-          <span className="ag-composer-icon"><Icon d={I.bot} size={20} /></span>
-          <input
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            placeholder="Que voulez-vous que je fasse pour vous ?"
-            aria-label="Message à l'assistant"
-          />
-          <button
-            className="ag-send"
-            disabled={busy || !input.trim()}
-            aria-label="Envoyer"
+        {header}
+        {errorBanner}
+        {closed ? conversationList : (
+          <>
+            <AgentHistoryControls
+              conversationId={activeConversation?.id}
+              onUpdated={(row) => setActiveConversation(row)}
+              onDeleted={afterConversationDeleted}
+            />
+            {thread}
+            {actions.length > 0 || links.length > 0 ? (
+              <div className="ag-chat-extras">{actionExtras}</div>
+            ) : null}
+          </>
+        )}
+        {!closed && (
+          <form
+            className="ag-composer"
+            onSubmit={(e) => {
+              e.preventDefault();
+              send();
+            }}
           >
-            <ArrowIcon direction="up" size={16} />
-          </button>
-        </form>
-        {suggestions.length > 0 && (
+            <span className="ag-composer-icon"><Icon d={I.bot} size={20} /></span>
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Que voulez-vous que je fasse pour vous ?"
+              aria-label="Message à l'assistant"
+            />
+            <button className="ag-send" disabled={busy || !input.trim()} aria-label="Envoyer">
+              <ArrowIcon direction="up" size={16} />
+            </button>
+          </form>
+        )}
+        {!closed && suggestions.length > 0 && (
           <div className="ag-chat-suggestions">
             {suggestions.map((s) => (
               <button key={s} type="button" className="suggestion" onClick={() => send(s)}>
@@ -319,25 +508,39 @@ export default function AssistantChat({ compact = false, suggestions: starter = 
   }
 
   return (
-    <div className="panel">
-      {thread}
-      {extras}
-      <form
-        className="chat-form"
-        onSubmit={(e) => {
-          e.preventDefault();
-          send();
-        }}
-      >
-        <input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Pose ta question…"
-        />
-        <button className="btn btn-primary" disabled={busy || !input.trim()}>
-          Envoyer
-        </button>
-      </form>
+    <div className="panel chat-panel">
+      {header}
+      {errorBanner}
+      {closed ? conversationList : (
+        <>
+          <AgentHistoryControls
+            conversationId={activeConversation?.id}
+            onUpdated={(row) => setActiveConversation(row)}
+            onDeleted={(id) => deleteConversation(id)}
+          />
+          {thread}
+          {actionExtras}
+          {suggestionRow}
+        </>
+      )}
+      {!closed && (
+        <form
+          className="chat-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            send();
+          }}
+        >
+          <input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Pose ta question…"
+          />
+          <button className="btn btn-primary" disabled={busy || !input.trim()}>
+            Envoyer
+          </button>
+        </form>
+      )}
     </div>
   );
 }

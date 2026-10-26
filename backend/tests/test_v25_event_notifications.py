@@ -13,7 +13,10 @@ from app.services import notifications
 from app.services.alerts import build_agent_body, run_alerts_once
 from app.services.eventlog import build_inbox
 
-EVENT_KEYS = {"new_match", "expiring", "agent", "message", "application"}
+EVENT_KEYS = {
+    "new_match", "expiring", "agent", "message", "application",
+    "verification_decision",
+}
 
 
 class FakeSMTP:

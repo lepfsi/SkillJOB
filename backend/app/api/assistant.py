@@ -1,7 +1,7 @@
 """Assistant conversationnel (§26) : règles + LLM optionnel + ressources."""
 from datetime import timedelta
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app import models, schemas, security
@@ -53,14 +53,198 @@ def _retention_days(user: models.User) -> int:
     return max(1, int(value))
 
 
+def _conversation_dict(db: Session, row: models.AgentConversation) -> dict:
+    query = db.query(models.AssistantMessage).filter(
+        models.AssistantMessage.conversation_id == row.id
+    )
+    count = query.count()
+    last = query.order_by(models.AssistantMessage.created_at.desc()).first()
+    return {
+        "id": row.id,
+        "title": row.title,
+        "history_mode": row.history_mode or "persist",
+        "retention_days": row.retention_days or 30,
+        "created_at": row.created_at,
+        "updated_at": row.updated_at or row.created_at,
+        "message_count": count,
+        "last_message": last.content if last else None,
+    }
+
+
+def _default_conversation(db: Session, user: models.User) -> models.AgentConversation:
+    """Conversation principale : créée au premier accès, puis réutilisée."""
+    conversation = (
+        db.query(models.AgentConversation)
+        .filter(models.AgentConversation.user_id == user.id)
+        .order_by(models.AgentConversation.updated_at.desc())
+        .first()
+    )
+    if conversation is None:
+        conversation = models.AgentConversation(
+            user_id=user.id,
+            title="Conversation principale",
+            history_mode=_history_mode(user),
+            retention_days=_retention_days(user),
+        )
+        db.add(conversation)
+        db.commit()
+        db.refresh(conversation)
+        # Les anciens messages (avant la multi-conversation) rejoignent la
+        # conversation principale : rien n'est perdu, rien n'est dupliqué.
+        db.query(models.AssistantMessage).filter(
+            models.AssistantMessage.user_id == user.id,
+            models.AssistantMessage.conversation_id.is_(None),
+        ).update(
+            {models.AssistantMessage.conversation_id: conversation.id},
+            synchronize_session=False,
+        )
+        db.commit()
+    return conversation
+
+
+def _conversation_or_404(
+    db: Session, user: models.User, conversation_id: int
+) -> models.AgentConversation:
+    row = db.get(models.AgentConversation, conversation_id)
+    if row is None or row.user_id != user.id:
+        raise HTTPException(status_code=404, detail="Conversation introuvable")
+    return row
+
+
 def _cleanup_history(db: Session, user: models.User) -> None:
-    """Rétention : supprime les messages plus anciens que la période."""
+    """Rétention des messages hors conversation (anciens historiques)."""
     cutoff = models.utcnow() - timedelta(days=_retention_days(user))
     db.query(models.AssistantMessage).filter(
         models.AssistantMessage.user_id == user.id,
+        models.AssistantMessage.conversation_id.is_(None),
         models.AssistantMessage.created_at < cutoff,
     ).delete(synchronize_session=False)
     db.commit()
+
+
+def _cleanup_conversation(db: Session, row: models.AgentConversation) -> None:
+    """Rétention propre à la conversation : 30 jours par défaut."""
+    cutoff = models.utcnow() - timedelta(days=max(1, row.retention_days or 30))
+    db.query(models.AssistantMessage).filter(
+        models.AssistantMessage.conversation_id == row.id,
+        models.AssistantMessage.created_at < cutoff,
+    ).delete(synchronize_session=False)
+    db.commit()
+
+
+@router.get("/conversations", response_model=list[schemas.AssistantConversationOut])
+def assistant_conversations(
+    user: models.User = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Pile des conversations de l'agent, de la plus récente à la plus ancienne."""
+    _default_conversation(db, user)
+    _cleanup_history(db, user)
+    rows = (
+        db.query(models.AgentConversation)
+        .filter(models.AgentConversation.user_id == user.id)
+        .order_by(models.AgentConversation.updated_at.desc())
+        .all()
+    )
+    for row in rows:
+        _cleanup_conversation(db, row)
+    return [_conversation_dict(db, row) for row in rows]
+
+
+@router.post(
+    "/conversations",
+    status_code=201,
+    response_model=schemas.AssistantConversationOut,
+)
+def assistant_create_conversation(
+    payload: schemas.AssistantConversationCreateIn | None = None,
+    user: models.User = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Ouvre une nouvelle conversation, empilée au-dessus des précédentes."""
+    title = (payload.title if payload and payload.title else "Nouvelle conversation").strip()
+    row = models.AgentConversation(
+        user_id=user.id,
+        title=title or "Nouvelle conversation",
+        history_mode=_history_mode(user),
+        retention_days=_retention_days(user),
+    )
+    db.add(row)
+    db.commit()
+    db.refresh(row)
+    return _conversation_dict(db, row)
+
+
+@router.get(
+    "/conversations/{conversation_id}",
+    response_model=schemas.AssistantConversationHistoryOut,
+)
+def assistant_conversation_history(
+    conversation_id: int,
+    user: models.User = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Messages d'une conversation précise."""
+    row = _conversation_or_404(db, user, conversation_id)
+    _cleanup_history(db, user)
+    _cleanup_conversation(db, row)
+    messages = (
+        db.query(models.AssistantMessage)
+        .filter(models.AssistantMessage.conversation_id == row.id)
+        .order_by(models.AssistantMessage.created_at.asc())
+        .limit(200)
+        .all()
+    )
+    return {
+        "conversation": _conversation_dict(db, row),
+        "messages": [
+            {"role": m.role, "content": m.content, "created_at": m.created_at}
+            for m in messages
+        ],
+    }
+
+
+@router.put(
+    "/conversations/{conversation_id}",
+    response_model=schemas.AssistantConversationOut,
+)
+def assistant_update_conversation(
+    conversation_id: int,
+    payload: schemas.AssistantConversationUpdateIn,
+    user: models.User = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Renomme une conversation ou change ses réglages d'historique."""
+    row = _conversation_or_404(db, user, conversation_id)
+    data = payload.model_dump(exclude_unset=True)
+    if data.get("title") is not None:
+        title = str(data["title"]).strip()
+        if not title:
+            raise HTTPException(status_code=422, detail="Titre obligatoire.")
+        row.title = title
+    if data.get("history_mode") is not None:
+        row.history_mode = data["history_mode"]
+    if data.get("retention_days") is not None:
+        row.retention_days = max(1, int(data["retention_days"]))
+    db.commit()
+    db.refresh(row)
+    return _conversation_dict(db, row)
+
+
+@router.delete("/conversations/{conversation_id}", response_model=dict)
+def assistant_delete_conversation(
+    conversation_id: int,
+    user: models.User = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Supprime une conversation et ses messages."""
+    row = _conversation_or_404(db, user, conversation_id)
+    db.query(models.AssistantMessage).filter(
+        models.AssistantMessage.conversation_id == row.id
+    ).delete(synchronize_session=False)
+    db.delete(row)
+    db.commit()
+    return {"ok": True}
 
 
 @router.get("/history", response_model=schemas.AssistantHistoryOut)
@@ -70,6 +254,12 @@ def assistant_history(
 ):
     """Historique de conversation de l'utilisateur, borné à la rétention."""
     _cleanup_history(db, user)
+    for conversation in (
+        db.query(models.AgentConversation)
+        .filter(models.AgentConversation.user_id == user.id)
+        .all()
+    ):
+        _cleanup_conversation(db, conversation)
     rows = (
         db.query(models.AssistantMessage)
         .filter(models.AssistantMessage.user_id == user.id)
@@ -99,6 +289,14 @@ def assistant_history_settings(
     peut toujours effacer l'existant avec `DELETE /history`.
     """
     user.agent_history_mode = payload.mode
+    # Le réglage global sert de défaut : on l'applique aux conversations
+    # existantes. Chaque conversation peut ensuite être ajustée seule.
+    db.query(models.AgentConversation).filter(
+        models.AgentConversation.user_id == user.id
+    ).update(
+        {models.AgentConversation.history_mode: payload.mode},
+        synchronize_session=False,
+    )
     db.commit()
     db.refresh(user)
     return assistant_history(user=user, db=db)
@@ -174,6 +372,16 @@ def chat(
         prefs["domain_name"] = domain_name
         prefs["specialty_names"] = specialty_names
 
+    # Conversation ciblée : celle du fil affiché, ou la plus récente.
+    if payload.conversation_id:
+        conversation = _conversation_or_404(db, user, payload.conversation_id)
+    else:
+        conversation = _default_conversation(db, user)
+
+    # Titre automatique : la première question de l'utilisateur nomme le fil.
+    if conversation.title in ("Nouvelle conversation", "Conversation principale"):
+        conversation.title = payload.message.strip()[:80] or conversation.title
+
     result = assistant_service.answer(
         payload.message, history, profile, jobs, careers, load_taxonomy(),
         db=db, resources=_resources_map(db), role=user.role,
@@ -188,20 +396,28 @@ def chat(
         context=payload.context,
     )
 
-    # Historique : conservé 30 jours par défaut, jamais écrit en mode
-    # éphémère. L'utilisateur garde la main (effacement possible).
-    if _history_mode(user) == "persist":
+    # Historique : conservé selon le réglage de LA conversation. Le mode
+    # éphémère n'écrit rien ; l'effacement reste possible à tout moment.
+    now = models.utcnow()
+    conversation.updated_at = now
+    if (conversation.history_mode or "persist") == "persist":
         _cleanup_history(db, user)
-        now = models.utcnow()
+        _cleanup_conversation(db, conversation)
         db.add_all([
             models.AssistantMessage(
-                user_id=user.id, role="user", content=payload.message,
+                user_id=user.id,
+                conversation_id=conversation.id,
+                role="user",
+                content=payload.message,
                 created_at=now,
             ),
             models.AssistantMessage(
-                user_id=user.id, role="assistant", content=result["reply"],
+                user_id=user.id,
+                conversation_id=conversation.id,
+                role="assistant",
+                content=result["reply"],
                 created_at=now,
             ),
         ])
-        db.commit()
+    db.commit()
     return result

@@ -747,6 +747,26 @@ def _notification_events(db: Session, user: models.User) -> list[dict]:
             "job_id": invite.job_id,
         })
 
+    # Décision sur la vérification du profil : succès ou refus motivé.
+    verification_decided_at = getattr(user, "verification_decided_at", None)
+    verification_status = getattr(user, "verification_status", "none")
+    if verification_decided_at and verification_status in ("verified", "rejected"):
+        note = (getattr(user, "verification_note", "") or "").strip()
+        if verification_status == "verified":
+            message = "Votre profil a été vérifié."
+            if note:
+                message += f" Note de l'administration : {note}"
+        else:
+            message = "Votre demande de vérification a été refusée."
+            if note:
+                message += f" Motif : {note}"
+        events.append({
+            "at": verification_decided_at,
+            "kind": "verification",
+            "message": message,
+            "job_id": None,
+        })
+
     seen_at = getattr(user, "notifications_seen_at", None)
     events.sort(key=lambda e: _naive_utc(e["at"]), reverse=True)
     for i, event in enumerate(events[:20], start=1):

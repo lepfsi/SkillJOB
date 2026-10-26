@@ -138,6 +138,10 @@ def seed_database(db: Session) -> None:
         password_hash=security.hash_password("demo1234"),
         role="candidate",
         gender="homme",
+        region="Littoral",
+        department="Wouri",
+        arrondissement="Douala I",
+        city="Douala",
     )
     db.add(demo)
     db.flush()
@@ -353,6 +357,7 @@ def _ensure_columns() -> None:
             ("verification_note", "TEXT"),
             ("identity_doc_path", "TEXT"),
             ("verified_at", "DATETIME"),
+            ("verification_decided_at", "DATETIME"),
             ("photo_path", "TEXT"),
             ("cv_visible_to_recruiters", "BOOLEAN DEFAULT 0"),
             ("shared_cv_id", "INTEGER"),
@@ -405,6 +410,9 @@ def _ensure_columns() -> None:
             ("last_duration_ms", "INTEGER DEFAULT 0"),
             ("etag", "VARCHAR(255)"),
             ("last_modified", "VARCHAR(255)"),
+        ],
+        "assistant_messages": [
+            ("conversation_id", "INTEGER"),
         ],
     }
     with engine.begin() as conn:

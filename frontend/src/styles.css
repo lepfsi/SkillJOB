@@ -907,6 +907,91 @@ table.skills {
 }
 .suggestion:hover { background: #e9f2ed; }
 
+/* Conversations empilées avec l'agent (style SMS, design OrientSkill) */
+.chat-panel { display: flex; flex-direction: column; gap: 0.4rem; }
+
+.chat-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid var(--border);
+}
+.chat-header-main { display: flex; align-items: center; gap: 0.7rem; min-width: 0; }
+.chat-header-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  background: var(--green-soft);
+  color: var(--green-dark);
+  flex: none;
+}
+.chat-header h2 { margin: 0; font-size: 1rem; color: var(--slate); }
+.chat-header p { margin: 0.15rem 0 0; font-size: 0.8rem; color: var(--muted); }
+.chat-header-actions { display: flex; gap: 0.45rem; flex: none; }
+
+.chat-conversations { display: flex; flex-direction: column; gap: 0.65rem; }
+.chat-conversations-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+.chat-conversations-head h3 { margin: 0; font-size: 0.94rem; color: var(--slate); }
+.chat-conversation-stack { display: flex; flex-direction: column; gap: 0.55rem; }
+
+.chat-conversation-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.6rem;
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0.65rem 0.8rem;
+}
+.chat-conversation-row.is-active {
+  border-color: var(--green);
+  background: #f7fbf9;
+}
+.chat-conversation-main {
+  border: 0;
+  background: transparent;
+  text-align: left;
+  padding: 0;
+  min-width: 0;
+  cursor: pointer;
+}
+.chat-conversation-title {
+  display: block;
+  font-weight: 700;
+  color: var(--slate);
+  font-size: 0.9rem;
+  margin-bottom: 0.15rem;
+}
+.chat-conversation-last {
+  display: block;
+  color: var(--muted);
+  font-size: 0.8rem;
+  margin-bottom: 0.15rem;
+}
+.chat-conversation-meta {
+  display: block;
+  color: var(--muted);
+  font-size: 0.74rem;
+}
+.chat-conversation-actions { display: flex; flex-direction: column; gap: 0.35rem; }
+
+@media (max-width: 760px) {
+  .chat-header { align-items: flex-start; flex-direction: column; }
+  .chat-conversation-row { grid-template-columns: 1fr; }
+  .chat-conversation-actions { flex-direction: row; }
+}
+
 /* ---------------- Documents ---------------- */
 
 .doc-toolbar {
@@ -3041,11 +3126,11 @@ table.skills {
 .ag-mode-link:hover { text-decoration: underline; }
 
 .ag-history {
-  margin-top: 0.8rem;
-  border: 1px solid rgba(127, 240, 196, 0.35);
+  margin-top: 0.6rem;
+  border: 1px solid var(--border);
   border-radius: 14px;
   padding: 0.75rem;
-  background: rgba(9, 40, 30, 0.45);
+  background: #f7fbf9;
 }
 .ag-history-head { display: flex; gap: 0.6rem; align-items: flex-start; }
 .ag-history-icon {
@@ -3055,15 +3140,13 @@ table.skills {
   width: 32px;
   height: 32px;
   border-radius: 10px;
-  background: rgba(127, 240, 196, 0.18);
-  color: #7ff0c4;
+  background: var(--green-soft);
+  color: var(--green-dark);
   flex: none;
 }
-.ag-history h3 { margin: 0; font-size: 0.86rem; color: #fff; }
-.ag-history p { margin: 0.15rem 0 0; font-size: 0.76rem; color: rgba(242, 248, 245, 0.72); }
+.ag-history h3 { margin: 0; font-size: 0.86rem; color: var(--slate); }
+.ag-history p { margin: 0.15rem 0 0; font-size: 0.76rem; color: var(--muted); }
 .ag-history-actions { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-top: 0.6rem; }
-.ag-history .btn { border-color: rgba(127, 240, 196, 0.45); color: #eafff6; }
-.ag-history .btn-remove { border-color: rgba(255, 119, 119, 0.55); color: #ffd7d7; }
 
 /* Résumé de la semaine */
 .ag-week h2 { display: flex; align-items: center; gap: 0.45rem; margin: 0 0 0.5rem; font-size: 0.98rem; font-family: var(--font-head); }

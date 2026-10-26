@@ -87,9 +87,13 @@ def test_public_job_card_and_quick_application(client):
 
 def test_public_apply_refuses_external_and_closed_jobs(client):
     with SessionLocal() as db:
+        now = models.utcnow()
         external = (
             db.query(models.Job)
-            .filter(models.Job.company_id.is_(None))
+            .filter(
+                models.Job.company_id.is_(None),
+                (models.Job.deadline.is_(None)) | (models.Job.deadline >= now),
+            )
             .first()
         )
     if external is not None:

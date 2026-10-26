@@ -64,6 +64,12 @@ const KIND_META = {
     tone: "admin",
     category: "admin",
   },
+  verification: {
+    label: "Vérification",
+    icon: "shield",
+    tone: "admin",
+    category: "admin",
+  },
 };
 
 const CATEGORIES = [
@@ -122,6 +128,13 @@ function Actions({ event }) {
     actions.push(
       <Link className="notif-action" to="/" key="trend">
         Voir mon tableau de bord <Icon d={I.arrow} size={14} />
+      </Link>
+    );
+  }
+  if (event.kind === "verification") {
+    actions.push(
+      <Link className="notif-action" to="/profil" key="verification">
+        Voir mon profil <Icon d={I.arrow} size={14} />
       </Link>
     );
   }

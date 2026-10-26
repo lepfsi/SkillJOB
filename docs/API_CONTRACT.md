@@ -492,8 +492,12 @@ motif et la note) ; la fiche de l'offre, elle, n'affiche plus que
 ## 9. Assistant conversationnel
 
 ### POST /api/assistant
-Body : `{ "message": string, "history": [{ "role": "user"|"assistant", "content": string }] }`
+Body : `{ "message": string, "history": [{ "role": "user"|"assistant", "content": string }],
+"conversation_id"?: number }`
 → `{ "reply": string, "suggestions": string[], "links": [{ label, href }] }`
+
+Sans `conversation_id`, la conversation la plus récente est reprise. Chaque
+conversation garde son propre mode d'historique et ses propres messages.
 
 Moteur hybride : réponses par règles ancrées sur les données réelles, suggestions DYNAMIQUES calculées depuis l'état du profil et du marché ; bascule vers un LLM si configuré via l'admin (sinon fallback règles). Jamais de données inventées.
 
@@ -506,17 +510,27 @@ recommandés et prochaine action prioritaire. Les liens `href` sont des
 chemins internes backend (`/jobs/3`, `/learning/{key}`, `/documents`,
 `/applications`) traduits par `mapInternalPath()` côté frontend.
 
-### Historique de conversation
+### Conversations et historique
 
-- `GET /api/assistant/history` → `{ messages: [{ role, content, created_at }],
-  mode: "persist"|"ephemeral", retention_days: 30 }`
-- `PUT /api/assistant/history/settings` `{ "mode": "persist"|"ephemeral" }`
-  → même réponse que `GET /history`
-- `DELETE /api/assistant/history` → `{ ok: true }`
+- `GET /api/assistant/conversations` → pile des conversations de l'utilisateur
+  (`id`, `title`, `history_mode`, `retention_days`, dates, `message_count`,
+  `last_message`), de la plus récente à la plus ancienne.
+- `POST /api/assistant/conversations` `{ "title"?: string }` → crée une
+  nouvelle conversation (201).
+- `GET /api/assistant/conversations/{id}` → `{ conversation, messages }`
+  pour une conversation précise.
+- `PUT /api/assistant/conversations/{id}` `{ "title"?, "history_mode"?,
+  "retention_days"? }` → met à jour ses réglages.
+- `DELETE /api/assistant/conversations/{id}` → `{ ok: true }` (messages
+  compris).
+- `GET /api/assistant/history` → historique global (compatibilité) ;
+  `PUT /api/assistant/history/settings` change le mode par défaut et
+  l'applique aux conversations existantes ; `DELETE /api/assistant/history`
+  efface tout l'historique.
 
 Par défaut, l'historique est conservé **30 jours** puis purgé automatiquement.
 Le mode **éphémère** stoppe l'écriture des nouveaux messages ; l'utilisateur
-peut effacer l'existant à tout moment.
+peut effacer une conversation ou tout l'historique à tout moment.
 
 ### Mode de travail de l'agent
 
@@ -898,8 +912,9 @@ l'administration. Les calendriers restent ceux annoncés par le MINESUP.
 - `GET /api/profile/notifications` → préférences de l'utilisateur :
   canaux (`email_enabled`, `email`, `telegram_*`, `whatsapp_*`) et
   `events` : opt-in e-mail **par événement** (`new_match`, `expiring`,
-  `agent`, `message`, `application` ; `false` = l'événement reste dans
-  l'application). `event_types` fournit les libellés pour l'interface.
+  `agent`, `message`, `application`, `verification_decision` ;
+  `false` = l'événement reste dans l'application). `event_types` fournit
+  les libellés pour l'interface.
 - `PUT /api/profile/notifications { ...canaux, events?: {clé: bool} }` :
   fusion (mise à jour partielle possible).
 - Événements déclencheurs : message d'un recruteur (messagerie), mise à
@@ -926,6 +941,10 @@ les exceptions neutres sont la messagerie interne et les **Paramètres**
 - `POST /api/admin/verifications/{id}/approve {note?}` et
   `POST /api/admin/verifications/{id}/reject {note}` : **le motif du rejet
   est OBLIGATOIRE (≥ 5 caractères)** et communiqué au candidat.
+- Chaque décision crée une notification in-app `verification` (validée ou
+  refusée, avec le motif). Un e-mail part uniquement si le candidat a
+  activé `verification_decision` dans ses préférences ; l'envoi éventuel
+  est journalisé dans `notification_log`.
 
 ## 18. V3 : Intelligence (admin)
 

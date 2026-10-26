@@ -855,7 +855,7 @@ class InboxEvent(BaseModel):
     at: datetime
     kind: Literal[
         "new_job", "strong_match", "trend", "learning", "application",
-        "expiring", "report", "appeal", "interview",
+        "expiring", "report", "appeal", "interview", "verification",
     ]
     message: str
     job_id: Optional[int] = None
@@ -993,6 +993,8 @@ class ChatMessage(BaseModel):
 class AssistantIn(BaseModel):
     message: str
     history: list[ChatMessage] = Field(default_factory=list)
+    # Conversation ciblée : si absente, la plus récente est reprise.
+    conversation_id: Optional[int] = None
     # Page depuis laquelle l'assistant est ouvert (libellé court en
     # français, ex. « Entrepreneuriat ») : l'agent y ancre ses conseils.
     context: Optional[str] = Field(default=None, max_length=120)
@@ -1023,6 +1025,32 @@ class AssistantHistoryOut(BaseModel):
 
 class AssistantHistorySettingsIn(BaseModel):
     mode: Literal["persist", "ephemeral"]
+
+
+class AssistantConversationOut(BaseModel):
+    id: int
+    title: str
+    history_mode: Literal["persist", "ephemeral"]
+    retention_days: int
+    created_at: datetime
+    updated_at: datetime
+    message_count: int = 0
+    last_message: Optional[str] = None
+
+
+class AssistantConversationCreateIn(BaseModel):
+    title: str = Field(default="Nouvelle conversation", max_length=160)
+
+
+class AssistantConversationUpdateIn(BaseModel):
+    title: Optional[str] = Field(default=None, max_length=160)
+    history_mode: Optional[Literal["persist", "ephemeral"]] = None
+    retention_days: Optional[int] = Field(default=None, ge=1, le=365)
+
+
+class AssistantConversationHistoryOut(BaseModel):
+    conversation: AssistantConversationOut
+    messages: list[AssistantHistoryItem]
 
 
 # ---------------------------------------------- Vérification de profil

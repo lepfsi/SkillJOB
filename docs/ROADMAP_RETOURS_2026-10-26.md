@@ -4,6 +4,10 @@ Date de revue : lundi 26 octobre 2026
 Source : retours utilisateurs et tests terrain du 25 octobre 2026.
 Statut : document de travail. Aucune de ces remarques n'est encore considérée comme validée avant la revue.
 
+Avancement au 26 octobre 2026 : le point 1 (notification de décision de
+vérification) et le point 5 (conversations empilées et réglages dans la
+conversation) sont implémentés et vérifiés. Les autres points restent à traiter.
+
 ## Objectif
 
 Corriger les irritants de confiance, de compréhension et de pilotage avant d'élargir la plateforme. Les points ci-dessous sont classés par priorité produit, avec pour chacun :
@@ -15,23 +19,24 @@ Corriger les irritants de confiance, de compréhension et de pilotage avant d'é
 
 ## Priorité 0 : confiance et cohérence du parcours
 
-### 1. Validation de la vérification de profil sans notification
+### 1. Décision de vérification de profil non notifiée
 
 **Constat**
-La vérification d'un profil peut être validée par l'administration sans que le candidat soit notifié.
+Quand l'administration valide ou refuse une demande de vérification, le candidat n'est pas informé du résultat ni du motif.
 
 **Objectif**
-Le candidat doit savoir, sans rafraichir la page, que son profil est devenu vérifié.
+Le candidat doit recevoir une notification claire indiquant si sa demande a été validée ou refusée, avec le motif quand il y en a un.
 
 **Actions**
-- Ajouter un événement de notification `profile_verified`.
-- Brancher la validation côté admin sur ce même événement.
-- Afficher la notification dans la rubrique Notifications et dans le badge du menu.
+- Ajouter un événement de notification `verification_decision`.
+- Enregistrer la date de décision et le motif côté utilisateur.
+- Afficher la décision dans la rubrique Notifications avec le statut et le motif.
 - Envoyer un e-mail uniquement si l'utilisateur a activé ce type d'alerte.
 
 **Critères d'acceptation**
-- Toute validation génère une notification visible côté candidat.
-- Le badge « profil vérifié » apparaît sans rechargement manuel.
+- Toute validation génère une notification de succès.
+- Tout refus génère une notification avec le motif obligatoire.
+- Le candidat voit la décision sans recharger la page.
 - Le journal `notification_log` conserve une trace de l'envoi éventuel.
 
 ### 2. Notifications visibles avant la création du compte
@@ -91,24 +96,26 @@ Obtenir un badge de vérification lisible, sobre et identifiable.
 - Il reste lisible sur fond clair et sombre.
 - Le design final est validé par la direction produit.
 
-### 5. Paramètres de conversation mal placés
+### 5. Conversations empilées et réglages au bon endroit
 
 **Constat**
-Les réglages d'historique sont accessibles depuis une zone de défilement, loin de la conversation visible.
+Les réglages d'historique sont loin du fil visible et l'utilisateur ne peut gérer qu'une seule conversation. Il faut aussi pouvoir ouvrir plusieurs conversations séparées et les empiler.
 
 **Objectif**
-Le contrôle de l'historique doit être dans la conversation elle-meme.
+Avoir une pile de conversations à la manière des messages SMS, mais avec le design OrientSkill, et placer les réglages de chaque conversation directement dans son entete.
 
 **Actions**
 - Déplacer les boutons « éphémère » et « effacer » dans l'entete du fil de discussion.
-- Ajouter un bouton « Fermer la conversation ».
-- Ouvrir la conversation uniquement sur action explicite du candidat.
-- Afficher une liste des conversations précédentes avec date et dernier message.
+- Ajouter un bouton « Nouvelle conversation ».
+- Afficher les conversations précédentes empilées avec titre, date et dernier message.
+- Permettre de fermer une conversation sans la supprimer.
+- Permettre de rouvrir une conversation depuis la pile.
 
 **Critères d'acceptation**
-- Aucun réglage d'historique n'est accessible hors du fil de conversation.
+- Chaque conversation dispose de ses propres réglages.
+- L'utilisateur peut créer autant de conversations qu'il veut.
+- Les conversations s'empilent et restent distinguables.
 - Une conversation fermée n'est pas rouverte automatiquement au rechargement.
-- L'utilisateur peut reprendre une conversation précédente depuis une liste claire.
 
 ### 6. Assistant de publication d'offre inopérant
 

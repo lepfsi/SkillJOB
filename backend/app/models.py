@@ -47,6 +47,9 @@ class User(Base):
     verification_note: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     identity_doc_path: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     verified_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    verification_decided_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, nullable=True
+    )
 
     # Photo de profil (chemin relatif sous backend/uploads/)
     photo_path: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
@@ -81,6 +84,26 @@ class User(Base):
     ban_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
 
 
+class AgentConversation(Base):
+    """Conversation distincte avec l'agent.
+
+    L'utilisateur peut en ouvrir plusieurs, les empiler et les reprendre
+    plus tard. Chaque conversation garde ses propres réglages d'historique.
+    """
+
+    __tablename__ = "agent_conversations"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    title: Mapped[str] = mapped_column(String(160), default="Nouvelle conversation")
+    history_mode: Mapped[str] = mapped_column(String(12), default="persist")
+    retention_days: Mapped[int] = mapped_column(Integer, default=30)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, index=True)
+
+
 class AssistantMessage(Base):
     """Message de conversation avec l'agent, conservé par utilisateur.
 
@@ -93,6 +116,9 @@ class AssistantMessage(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id", ondelete="CASCADE"), index=True
+    )
+    conversation_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("agent_conversations.id", ondelete="CASCADE"), index=True
     )
     role: Mapped[str] = mapped_column(String(12))      # user | assistant
     content: Mapped[str] = mapped_column(Text)
@@ -255,7 +281,8 @@ class NotificationLog(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
-    # Type d'événement (expiring, agent, new_match, message, application)
+    # Type d'événement (expiring, agent, new_match, message, application,
+    # verification_decision)
     event: Mapped[str] = mapped_column(String(40), index=True)
     # Offre concernée ; null pour les alertes sans offre (bilan agent).
     job_id: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)

@@ -160,6 +160,113 @@ def test_assistant_history_retention_purges_old_messages(client):
     assert all(m["content"] != "Message ancien" for m in history["messages"])
 
 
+def test_assistant_conversations_stack_and_settings(client):
+    headers = _demo_headers(client)
+
+    listed = client.get("/api/assistant/conversations", headers=headers)
+    assert listed.status_code == 200, listed.text
+    rows = listed.json()
+    assert len(rows) >= 1
+    assert rows[0]["title"]
+    assert rows[0]["history_mode"] in ("persist", "ephemeral")
+
+    created = client.post(
+        "/api/assistant/conversations",
+        json={"title": "Préparer mon entretien"},
+        headers=headers,
+    )
+    assert created.status_code == 201, created.text
+    conversation = created.json()
+    assert conversation["title"] == "Préparer mon entretien"
+
+    # Les tests précédents ont pu laisser le compte en mode éphémère :
+    # cette conversation doit conserver ses messages pour vérifier la pile.
+    persisted = client.put(
+        f"/api/assistant/conversations/{conversation['id']}",
+        json={"history_mode": "persist"},
+        headers=headers,
+    )
+    assert persisted.status_code == 200, persisted.text
+
+    sent = client.post("/api/assistant", json={
+        "message": "Prépare mon entretien pour demain.",
+        "conversation_id": conversation["id"],
+        "history": [],
+    }, headers=headers)
+    assert sent.status_code == 200, sent.text
+
+    detail = client.get(
+        f"/api/assistant/conversations/{conversation['id']}",
+        headers=headers,
+    )
+    assert detail.status_code == 200, detail.text
+    body = detail.json()
+    assert body["conversation"]["message_count"] == 2
+    assert any("entretien" in m["content"].lower() for m in body["messages"])
+
+    updated = client.put(
+        f"/api/assistant/conversations/{conversation['id']}",
+        json={"history_mode": "ephemeral", "retention_days": 7},
+        headers=headers,
+    )
+    assert updated.status_code == 200, updated.text
+    assert updated.json()["history_mode"] == "ephemeral"
+    assert updated.json()["retention_days"] == 7
+
+    deleted = client.delete(
+        f"/api/assistant/conversations/{conversation['id']}",
+        headers=headers,
+    )
+    assert deleted.status_code == 200, deleted.text
+    listed2 = client.get("/api/assistant/conversations", headers=headers).json()
+    assert all(row["id"] != conversation["id"] for row in listed2)
+
+
+def test_assistant_conversation_retention_is_per_conversation(client):
+    from datetime import timedelta
+
+    from app import models
+    from app.database import SessionLocal
+
+    headers = _demo_headers(client)
+    created = client.post(
+        "/api/assistant/conversations",
+        json={"title": "Conversation à rétention courte"},
+        headers=headers,
+    ).json()
+    client.put(
+        f"/api/assistant/conversations/{created['id']}",
+        json={"retention_days": 1, "history_mode": "persist"},
+        headers=headers,
+    )
+
+    db = SessionLocal()
+    try:
+        user = db.query(models.User).filter_by(email="demo@orientskill.cm").first()
+        db.add(models.AssistantMessage(
+            user_id=user.id,
+            conversation_id=created["id"],
+            role="assistant",
+            content="Message expiré de cette conversation",
+            created_at=models.utcnow() - timedelta(days=5),
+        ))
+        db.commit()
+    finally:
+        db.close()
+
+    detail = client.get(
+        f"/api/assistant/conversations/{created['id']}",
+        headers=headers,
+    ).json()
+    assert all(
+        "expiré" not in message["content"]
+        for message in detail["messages"]
+    )
+    client.delete(
+        f"/api/assistant/conversations/{created['id']}", headers=headers
+    )
+
+
 def test_assistant_fetches_user_provided_url(client, monkeypatch):
     """Accès internet BORNÉ : l'utilisateur colle une URL, l'agent lit
     la page (une seule, timeout court) et en fait un résumé honnête."""

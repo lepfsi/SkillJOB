@@ -5,6 +5,7 @@ globale sur les utilisateurs (MFA, vérifications).
 Accès réservé au rôle ``admin`` (§55 : la gestion opérationnelle reste
 dans le périmètre administrateur, pas candidat).
 """
+import logging
 import smtplib
 from datetime import datetime, timedelta
 from typing import Any, Optional
@@ -16,8 +17,11 @@ from sqlalchemy.orm import Session
 from app import config, models, schemas, security
 from app.database import get_db
 from app.services import (
-    email_routing, inbound_email, job_media, llm_client, settings_store, uploads,
+    email_routing, inbound_email, job_media, llm_client, notifications,
+    settings_store, uploads,
 )
+
+logger = logging.getLogger("orientskill.admin")
 
 router = APIRouter(prefix="/api/admin", tags=["admin"],
                    dependencies=[Depends(security.require_admin)])
@@ -647,6 +651,45 @@ def admin_verification_doc(
     return FileResponse(full)
 
 
+def _notify_verification_decision(
+    db: Session, target: models.User, status: str, note: str
+) -> None:
+    """E-mail optionnel : uniquement si le candidat l'a activé.
+
+    La notification in-app est calculée depuis la décision elle-même ;
+    ce dispatch ne concerne que les canaux externes choisis par le compte.
+    """
+    if status == "verified":
+        subject = "OrientSkill AI : votre profil est vérifié"
+        body = (
+            "Bonjour,\n\n"
+            "Votre demande de vérification de profil a été validée.\n"
+            f"Note de l'administration : {note}\n\n"
+            "Votre badge vérifié est désormais visible sur votre profil.\n\n"
+            "L'équipe OrientSkill AI"
+        )
+    else:
+        subject = "OrientSkill AI : votre demande de vérification a été refusée"
+        body = (
+            "Bonjour,\n\n"
+            "Votre demande de vérification de profil a été refusée.\n"
+            f"Motif : {note}\n\n"
+            "Vous pouvez corriger votre pièce ou vos informations, puis "
+            "envoyer une nouvelle demande depuis votre profil.\n\n"
+            "L'équipe OrientSkill AI"
+        )
+    try:
+        results = notifications.dispatch(
+            db, target, subject, body, event="verification_decision"
+        )
+        if results:
+            db.add(models.NotificationLog(
+                user_id=target.id, event="verification_decision",
+            ))
+    except Exception as exc:  # best effort : jamais bloquer la décision
+        logger.warning("Notification vérification user %s : %s", target.id, exc)
+
+
 @router.post("/verifications/{user_id}/approve")
 def admin_approve_verification(
     user_id: int,
@@ -662,6 +705,9 @@ def admin_approve_verification(
     target.verification_status = "verified"
     target.verification_note = note or "Identité confirmée par un administrateur."
     target.verified_at = utcnow()
+    target.verification_decided_at = utcnow()
+    db.commit()
+    _notify_verification_decision(db, target, "verified", target.verification_note)
     db.commit()
     return {"ok": True}
 
@@ -686,6 +732,9 @@ def admin_reject_verification(
         raise HTTPException(status_code=404, detail="Utilisateur introuvable")
     target.verification_status = "rejected"
     target.verification_note = note
+    target.verification_decided_at = models.utcnow()
+    db.commit()
+    _notify_verification_decision(db, target, "rejected", note)
     db.commit()
     return {"ok": True}
 

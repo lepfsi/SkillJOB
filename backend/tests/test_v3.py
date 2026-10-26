@@ -63,6 +63,12 @@ def test_verification_reject_requires_reason(client):
     assert status["status"] == "rejected"
     assert status["note"] == reason
 
+    notifications = client.get("/api/notifications", headers=dheaders).json()
+    verification = [n for n in notifications if n["kind"] == "verification"]
+    assert verification, notifications
+    assert "refusée" in verification[0]["message"]
+    assert reason in verification[0]["message"]
+
 
 def test_verification_review_shows_profile_for_comparison(client):
     """Le bordereau d'exposition inclut le profil pour la comparaison."""
@@ -90,6 +96,12 @@ def test_verification_review_shows_profile_for_comparison(client):
     assert approve.status_code == 200
     assert client.get("/api/profile/verification", headers=dheaders).json()[
         "status"] == "verified"
+
+    notifications = client.get("/api/notifications", headers=dheaders).json()
+    verification = [n for n in notifications if n["kind"] == "verification"]
+    assert verification, notifications
+    assert "vérifié" in verification[0]["message"].lower()
+    assert "Pièce conforme au profil." in verification[0]["message"]
 
 
 # ---------------------------------------- Dashboard institutionnel (§39)

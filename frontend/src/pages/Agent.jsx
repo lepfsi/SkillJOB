@@ -5,7 +5,6 @@ import { Icon, I, ArrowIcon } from "../components/icons.jsx";
 import { Loader, ErrorNote } from "../components/ui.jsx";
 import Ring from "../components/Ring.jsx";
 import AssistantChat from "../components/AssistantChat.jsx";
-import AgentHistoryControls from "../components/AgentHistoryControls.jsx";
 import { initialsOf, mapInternalPath, plural, relTime, scoreLevel, LEVEL_LABELS } from "../lib.js";
 
 // Page « Mon agent » (maquette) : poste de pilotage où l'agent travaille
@@ -618,7 +617,6 @@ export default function Agent() {
             <p className="ag-mode-note">
               Votre validation reste requise : l'agent prépare, vous décidez.
             </p>
-            <AgentHistoryControls />
             {modeFlash && <div className="alert alert-success small">{modeFlash}</div>}
             <ErrorNote error={modeError} />
             <Link className="ag-mode-link" to="/parametres-compte">
