@@ -152,7 +152,13 @@ function SmtpForm({ value, onSaved }) {
     setError("");
     setTest(null);
     try {
-      const res = await api("/admin/test-smtp", { method: "POST" });
+      // Tester les valeurs du formulaire, même non enregistrées.
+      const data = { ...form };
+      if (!form.password) delete data.password;
+      const res = await api("/admin/test-smtp", {
+        method: "POST",
+        body: { data },
+      });
       setTest(res);
     } catch (err) {
       setTest({ ok: false, detail: err.detail });
@@ -190,6 +196,12 @@ function SmtpForm({ value, onSaved }) {
           <input value={form.from_email} onChange={(e) => set("from_email", e.target.value)} placeholder="no-reply@orientskill.cm" />
         </label>
       </div>
+      <p className="small muted">
+        Hébergement Render : les ports SMTP 25, 465 et 587 sont bloqués en
+        sortie. Si le test expire, utilisez le port 2525 proposé par certains
+        fournisseurs, ou une API e-mail. La relève IMAP (port 993) n'est pas
+        concernée.
+      </p>
       <div className="inline-fields">
         <label className="check">
           <input type="checkbox" checked={form.use_tls} onChange={(e) => set("use_tls", e.target.checked)} />
@@ -309,7 +321,8 @@ function InboundForm({ value, onSaved }) {
             placeholder="candidatures@orientskill.cm"
           />
           <span className="field-hint">
-            Obligatoire pour générer le visuel public.
+            Facultative : sans adresse, le visuel public renvoie vers la
+            candidature en ligne.
           </span>
         </label>
         <label className="field">

@@ -1,11 +1,11 @@
 """Job Intelligence + Matching explicable (§10-12)."""
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
-from app import models, schemas, security
+from app import config, models, schemas, security
 from app.database import get_db
 from app.services import admin_alerts, email_routing, job_media, job_parser, job_writer
 from app.services.matching import compute_match
@@ -275,8 +275,25 @@ def report_job(
 
 @router.get("/{job_id}/photo")
 def get_job_photo(job_id: int, db: Session = Depends(get_db)):
-    """Photo d'illustration de l'offre (facultative, servie sans compte)."""
+    """Photo d'illustration de l'offre (facultative, servie sans compte).
+
+    Si le fichier déposé a disparu du disque (stockage local éphémère après
+    un redéploiement), on renvoie un visuel par défaut inspiré du domaine
+    plutôt qu'une image cassée. Aucune donnée n'est inventée.
+    """
     job = db.get(models.Job, job_id)
     if job is None or not job.photo_path:
         raise HTTPException(status_code=404, detail="Photo introuvable")
-    return FileResponse(job_media.path_for(job))
+    try:
+        return FileResponse(job_media.path_for(job))
+    except HTTPException:
+        domain = db.get(models.Domain, job.domain_id) if job.domain_id else None
+        public_url = f"{config.PUBLIC_BASE_URL.rstrip('/')}/postuler/{job.id}"
+        svg = job_media.default_svg(
+            job, domain.name if domain else "", public_url
+        )
+        return Response(
+            content=svg,
+            media_type="image/svg+xml; charset=utf-8",
+            headers={"Cache-Control": "public, max-age=300"},
+        )

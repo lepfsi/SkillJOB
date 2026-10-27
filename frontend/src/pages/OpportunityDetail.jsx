@@ -10,6 +10,7 @@ import TemplateThumb from "../components/TemplateThumb.jsx";
 import AccentRow from "../components/AccentRow.jsx";
 import PreviewImage from "../components/PreviewImage.jsx";
 import AgentSideCard from "../components/AgentSideCard.jsx";
+import JobVisual from "../components/JobVisual.jsx";
 import { templateAccentHex, fmtDate, initialsOf, plural, scoreLevel, LEVEL_LABELS } from "../lib.js";
 import { Loader, ErrorNote } from "../components/ui.jsx";
 
@@ -323,14 +324,8 @@ export default function OpportunityDetail() {
       {reportFlash && <div className="alert alert-success">{reportFlash}</div>}
       {submitFlash && <div className="alert alert-success">{submitFlash}</div>}
 
-      {/* Photo FACULTATIVE de l'offre : affichée telle que fournie. */}
-      {job.photo_url && (
-        <img
-          className="opp-detail-photo"
-          src={job.photo_url}
-          alt={`Illustration de l'offre : ${job.title}`}
-        />
-      )}
+      {/* Photo facultative, sinon visuel par défaut inspiré du domaine. */}
+      <JobVisual job={job} variant="banner" className="opp-detail-visual" />
 
       {/* ---------- Bandeau de l'offre ---------- */}
       <section className="offre-hero">
@@ -715,7 +710,7 @@ export default function OpportunityDetail() {
               <div className="offre-sim">
                 {sameSector.map((j) => (
                   <Link className="opps-row" to={`/opportunites/${j.id}`} key={j.id}>
-                    <span className="opps-row-logo">{initialsOf(j.company)}</span>
+                    <JobVisual job={j} variant="row" />
                     <span className="opps-row-main">
                       <span className="opps-row-top">
                         <strong>{j.title}</strong>

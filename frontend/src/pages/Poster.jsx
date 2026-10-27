@@ -3,9 +3,9 @@ import { Link, useParams } from "react-router-dom";
 import { api, apiHref } from "../api/client.js";
 import { Loader, ErrorNote } from "../components/ui.jsx";
 
-// Visuel public de candidature par e-mail, prêt pour LinkedIn. Le SVG est
-// généré par le backend (adresse interne + référence de l'offre) puis
-// converti en PNG dans le navigateur : aucune ressource externe.
+// Visuel public de candidature, prêt pour LinkedIn. Le SVG est généré par
+// le backend (adresse interne si elle existe, sinon candidature en ligne)
+// puis converti en PNG dans le navigateur : aucune ressource externe.
 
 function downloadBlob(blob, filename) {
   const url = URL.createObjectURL(blob);
@@ -77,20 +77,33 @@ export default function Poster() {
     [jobId]
   );
 
+  const hasEmail = Boolean(job?.email_apply_address);
   const suggestedText = useMemo(() => {
     if (!job) return "";
-    return [
+    const intro = [
       `Nous recrutons : ${job.title}`,
       `${job.company} · ${job.location || "Cameroun"} · ${job.contract_type}`,
       "",
-      "Envoyez votre CV et votre lettre à :",
-      job.email_apply_address,
+    ];
+    if (hasEmail) {
+      return [
+        ...intro,
+        "Envoyez votre CV et votre lettre à :",
+        job.email_apply_address,
+        "",
+        `Objet : CANDIDATURE ${job.email_reference} - ${job.title}`,
+        "",
+        `Détails et candidature : ${publicUrl}`,
+      ].join("\n");
+    }
+    return [
+      ...intro,
+      "Postulez en ligne :",
+      publicUrl,
       "",
-      `Objet : CANDIDATURE ${job.email_reference} - ${job.title}`,
-      "",
-      `Détails et candidature : ${publicUrl}`,
+      "La candidature se fait directement depuis la fiche de l'offre, sans adresse e-mail.",
     ].join("\n");
-  }, [job, publicUrl]);
+  }, [job, hasEmail, publicUrl]);
 
   async function copy(value, label) {
     setActionError("");
@@ -152,8 +165,8 @@ export default function Poster() {
         <main className="poster-error">
           <ErrorNote error={error} />
           <p className="small muted">
-            L'adresse de réception e-mail se configure dans la console
-            d'administration, rubrique Réception des candidatures.
+            Le visuel est généré à partir de la fiche de l'offre. Vérifiez
+            qu'elle est toujours publiée, puis réessayez.
           </p>
           <Link className="btn btn-outline" to={`/postuler/${jobId}`}>
             Retour à la fiche de l'offre
@@ -187,23 +200,46 @@ export default function Poster() {
         </section>
 
         <aside className="poster-side">
-          <span className="poster-kicker">Candidature par e-mail</span>
+          <span className="poster-kicker">
+            {hasEmail ? "Candidature par e-mail" : "Candidature en ligne"}
+          </span>
           <h1>{job.title}</h1>
           <p className="small muted">
             {job.company} · {job.location || "Cameroun"} · {job.contract_type}
           </p>
           <p className="poster-lead">
-            Publiez ce visuel sur LinkedIn ou WhatsApp. Les candidats envoient
-            leur CV et leur lettre à l'adresse interne avec la référence de
-            l'offre : la candidature est transmise automatiquement à
-            l'entreprise.
+            {hasEmail ? (
+              <>
+                Publiez ce visuel sur LinkedIn ou WhatsApp. Les candidats envoient
+                leur CV et leur lettre à l'adresse interne avec la référence de
+                l'offre : la candidature est transmise automatiquement à
+                l'entreprise.
+              </>
+            ) : (
+              <>
+                Publiez ce visuel sur LinkedIn ou WhatsApp. Le lien mène
+                directement à la fiche de l'offre et au formulaire de
+                candidature en ligne : aucune adresse e-mail n'est nécessaire.
+              </>
+            )}
           </p>
 
           <div className="poster-recap">
-            <span>Adresse de réception</span>
-            <strong>{job.email_apply_address}</strong>
-            <span>Référence à mettre dans l'objet</span>
-            <strong>{job.email_reference}</strong>
+            {hasEmail ? (
+              <>
+                <span>Adresse de réception</span>
+                <strong>{job.email_apply_address}</strong>
+                <span>Référence à mettre dans l'objet</span>
+                <strong>{job.email_reference}</strong>
+              </>
+            ) : (
+              <>
+                <span>Candidature</span>
+                <strong>En ligne, depuis la fiche de l'offre</strong>
+                <span>Lien public</span>
+                <strong className="poster-recap-url">{publicUrl}</strong>
+              </>
+            )}
           </div>
 
           <ErrorNote error={actionError} />

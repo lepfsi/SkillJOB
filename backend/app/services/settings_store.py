@@ -118,6 +118,18 @@ def get_raw_group(db: Session, group: str) -> dict[str, Any]:
     return _load_group(db, group)
 
 
+def preview_group(
+    db: Session, group: str, payload: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Configuration fusionnée pour un test, sans écriture en base.
+
+    Les secrets vides ou masqués conservent la valeur enregistrée, comme
+    lors d'un enregistrement normal. Permet de tester un formulaire avant
+    de le sauvegarder.
+    """
+    return _merge(_load_group(db, group), payload or {})
+
+
 def update_group(db: Session, group: str, payload: dict[str, Any]) -> dict[str, Any]:
     """Fusionne puis enregistre un groupe ; retourne la version masquée."""
     if group not in DEFAULTS:

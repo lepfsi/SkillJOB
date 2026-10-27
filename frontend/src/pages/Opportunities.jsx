@@ -7,6 +7,7 @@ import {
 import { Icon, I, ArrowIcon } from "../components/icons.jsx";
 import Ring from "../components/Ring.jsx";
 import AgentSideCard from "../components/AgentSideCard.jsx";
+import JobVisual from "../components/JobVisual.jsx";
 import { Loader, ErrorNote } from "../components/ui.jsx";
 import { useDomains } from "../components/DomainPicker.jsx";
 
@@ -62,16 +63,10 @@ function MatchMarks({ covered = [], partial = [], missing = [] }) {
 
 // Contenu d'une ligne d'offre : partagé entre le mode normal (ligne
 // cliquable) et le mode « choisir une offre » (action d'adaptation).
-function OppRowMain({ j }) {
+function OppRowMain({ j, domains }) {
   return (
     <>
-      {j.photo_url ? (
-        <span className="opps-row-logo opps-row-photo">
-          <img src={j.photo_url} alt="" />
-        </span>
-      ) : (
-        <span className="opps-row-logo">{initialsOf(j.company)}</span>
-      )}
+      <JobVisual job={j} domains={domains} variant="row" />
       <span className="opps-row-main">
         <span className="opps-row-top">
           <strong>{j.title}</strong>
@@ -537,7 +532,7 @@ export default function Opportunities() {
                 {pageItems.map((j) => chooseMode ? (
                   <div className="opps-row opps-row-choose" key={j.id}>
                     <Link className="opps-row-grow" to={`/opportunites/${j.id}`}>
-                      <OppRowMain j={j} />
+                      <OppRowMain j={j} domains={domains} />
                     </Link>
                     <Link
                       className="btn btn-primary btn-small opps-row-btn"
@@ -549,7 +544,7 @@ export default function Opportunities() {
                   </div>
                 ) : (
                   <Link className="opps-row" to={`/opportunites/${j.id}`} key={j.id}>
-                    <OppRowMain j={j} />
+                    <OppRowMain j={j} domains={domains} />
                     <span className="btn btn-primary btn-small opps-row-btn">
                       Voir l'offre <ArrowIcon direction="right" size={12} />
                     </span>

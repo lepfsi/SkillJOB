@@ -1,4 +1,5 @@
 import { fmtDate } from "../lib.js";
+import JobVisual from "./JobVisual.jsx";
 
 // Fiche publique d'une offre, partagée entre la page de candidature et
 // l'aperçu du recruteur. Une seule source de vérité pour le rendu final :
@@ -35,9 +36,7 @@ export default function JobPublicView({ job, preview = false, titleTag = "h1" })
           <span className="chip">Réf. attribuée après publication</span>
         ) : null}
       </div>
-      {job.photo_url && (
-        <img className="public-job-photo" src={job.photo_url} alt="" />
-      )}
+      <JobVisual job={job} variant="banner" className="public-job-visual" />
       {job.description ? (
         <p className="public-job-desc">{job.description}</p>
       ) : preview ? (

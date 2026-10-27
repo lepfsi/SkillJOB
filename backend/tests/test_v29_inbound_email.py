@@ -86,12 +86,17 @@ def _login(client, email, password):
     })
 
 
-def test_poster_requires_configured_address(client, admin_headers):
+def test_poster_falls_back_to_online_application(client, admin_headers):
     job = _create_job(client, admin_headers)
     _set_inbound(client, admin_headers, address="")
     res = client.get(f"/api/public/jobs/{job['id']}/poster.svg")
-    assert res.status_code == 503
-    assert "adresse" in res.json()["detail"].lower()
+    assert res.status_code == 200, res.text
+    assert res.headers["content-type"].startswith("image/svg+xml")
+    svg = res.text
+    assert "CANDIDATURE EN LIGNE" in svg
+    assert "Postulez directement depuis la fiche de l'offre" in svg
+    assert f"/postuler/{job['id']}" in svg
+    assert "candidatures@orientskill.test" not in svg
 
 
 def test_poster_is_escaped_and_uses_the_offer(client, admin_headers):

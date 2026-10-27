@@ -7283,24 +7283,155 @@ table.skills {
 }
 .job-preview-body .public-job-title { font-size: 1.55rem; }
 
-/* Photo sur les cartes / le détail d'offre */
-.opps-row-photo {
+/* Visuel d'offre : photo déposée ou tuile illustrée par domaine. Le repli
+   couvre aussi les photos perdues après un redéploiement. */
+.job-visual {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+  color: #ffffff;
+  background: linear-gradient(135deg, #071f15, #0a6b4c 60%, #0c3927);
+  isolation: isolate;
+}
+.job-visual-row {
   width: 74px;
   height: 54px;
-  border-radius: 10px;
-  padding: 0;
-  overflow: hidden;
-  background: #eef2f0;
+  border-radius: 12px;
+  border: 1px solid rgba(10, 107, 76, 0.16);
 }
-.opps-row-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
-.opp-detail-photo {
+.job-visual-thumb {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  border: 1px solid rgba(10, 107, 76, 0.16);
+}
+.job-visual-banner {
   width: 100%;
-  max-height: 260px;
-  object-fit: cover;
+  aspect-ratio: 16 / 9;
+  min-height: 170px;
+  max-height: 300px;
   border-radius: var(--radius);
   border: 1px solid var(--border);
-  display: block;
   margin: 0 0 0.9rem;
+  justify-content: flex-start;
+}
+.job-visual-photo {
+  background: #eef2f0;
+  border-color: var(--border);
+}
+.job-visual-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.job-visual-glow {
+  position: absolute;
+  inset: -35%;
+  z-index: -1;
+  background:
+    radial-gradient(circle at 18% 16%, rgba(127, 240, 196, 0.34), transparent 52%),
+    radial-gradient(circle at 82% 86%, rgba(245, 194, 107, 0.24), transparent 55%);
+}
+.job-visual-icon {
+  position: absolute;
+  top: 8px;
+  left: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 9px;
+  background: rgba(255, 255, 255, 0.14);
+  color: #eafff6;
+}
+.job-visual-initials {
+  position: absolute;
+  right: 8px;
+  bottom: 6px;
+  font-family: var(--font-head);
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: rgba(255, 255, 255, 0.86);
+}
+.job-visual-banner .job-visual-icon {
+  top: 1.1rem;
+  left: 1.2rem;
+  width: 42px;
+  height: 42px;
+  border-radius: 14px;
+}
+.job-visual-banner .job-visual-initials {
+  right: 1.4rem;
+  bottom: 1.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 74px;
+  height: 74px;
+  border-radius: 50%;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.1);
+  font-size: 1.35rem;
+  color: #f3fff9;
+}
+.job-visual-copy {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  max-width: 100%;
+  padding: 1.4rem 7rem 1.4rem 5.2rem;
+}
+.job-visual-domain {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(214, 255, 238, 0.78);
+}
+.job-visual-title {
+  display: -webkit-box;
+  overflow: hidden;
+  font-family: var(--font-head);
+  font-size: clamp(1.05rem, 2.2vw, 1.6rem);
+  font-weight: 800;
+  line-height: 1.15;
+  color: #ffffff;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.job-visual-meta {
+  overflow: hidden;
+  font-size: 0.8rem;
+  color: rgba(214, 255, 238, 0.78);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.job-visual-tech { background: linear-gradient(135deg, #071f15, #0a6b4c 60%, #0c3927); }
+.job-visual-health { background: linear-gradient(135deg, #062a2a, #0f766e 60%, #083f3a); }
+.job-visual-finance { background: linear-gradient(135deg, #1f1a07, #8a6d1f 60%, #2d2408); }
+.job-visual-education { background: linear-gradient(135deg, #0b1e3a, #1d4ed8 65%, #102a5c); }
+.job-visual-industry { background: linear-gradient(135deg, #1c1917, #9a3412 60%, #2b160c); }
+.job-visual-commerce { background: linear-gradient(135deg, #2a0a2e, #a21caf 60%, #3b0d3f); }
+.job-visual-social { background: linear-gradient(135deg, #06281f, #0f766e 60%, #0a3b2c); }
+.job-visual-logistics { background: linear-gradient(135deg, #0c1a2b, #0369a1 60%, #0d2a44); }
+.job-visual-agri { background: linear-gradient(135deg, #14200a, #4d7c0f 60%, #1e2f0d); }
+.job-visual-public { background: linear-gradient(135deg, #1a1a2e, #4338ca 65%, #23234a); }
+.job-visual-default { background: linear-gradient(135deg, #071f15, #0a6b4c 60%, #0c3927); }
+
+@media (max-width: 640px) {
+  .job-visual-banner { min-height: 150px; aspect-ratio: 16 / 10; }
+  .job-visual-copy { padding: 1rem 4.6rem 1rem 3.4rem; }
+  .job-visual-banner .job-visual-icon { top: 0.8rem; left: 0.8rem; width: 34px; height: 34px; }
+  .job-visual-banner .job-visual-initials { right: 0.9rem; bottom: 0.8rem; width: 52px; height: 52px; font-size: 1rem; }
+  .job-visual-title { font-size: 1rem; }
 }
 
 @media (max-width: 900px) {
@@ -8781,13 +8912,8 @@ table.skills {
 }
 .public-job-title { font-size: 1.85rem; line-height: 1.2; margin: 0.35rem 0 0.65rem; }
 .public-job-tags { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.7rem; }
-.public-job-photo {
-  width: 100%;
-  max-height: 300px;
-  object-fit: cover;
-  border-radius: 12px;
-  margin: 0.4rem 0 0.8rem;
-  display: block;
+.public-job-visual {
+  margin-top: 0.4rem;
 }
 .public-job-desc { white-space: pre-line; line-height: 1.62; font-size: 0.92rem; }
 .public-job h2 { font-size: 1.02rem; margin: 1.15rem 0 0.35rem; }

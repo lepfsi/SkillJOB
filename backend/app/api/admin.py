@@ -290,9 +290,17 @@ def test_llm(db: Session = Depends(get_db)):
 
 
 @router.post("/test-smtp", response_model=schemas.TestResult)
-def test_smtp(db: Session = Depends(get_db)):
-    """Vérifie la poignée de main SMTP (connexion + STARTTLS + LOGIN)."""
-    conf = settings_store.get_raw_group(db, "smtp")
+def test_smtp(
+    payload: schemas.AdminSettingsUpdate | None = None,
+    db: Session = Depends(get_db),
+):
+    """Vérifie la poignée de main SMTP (connexion + STARTTLS + LOGIN).
+
+    Les valeurs du formulaire sont testées même si elles ne sont pas encore
+    enregistrées : le mot de passe vide réutilise le secret stocké.
+    """
+    overrides = payload.data if payload else None
+    conf = settings_store.preview_group(db, "smtp", overrides)
     if not conf.get("enabled"):
         return {"ok": False, "detail": "SMTP désactivé dans les paramètres."}
     if not conf.get("host"):
@@ -305,7 +313,14 @@ def test_smtp(db: Session = Depends(get_db)):
                 server.login(conf["username"], conf["password"])
         return {"ok": True, "detail": "Connexion SMTP réussie."}
     except Exception as exc:  # smtplib lève des erreurs variées
-        return {"ok": False, "detail": f"Échec SMTP : {exc}"}
+        detail = f"Échec SMTP : {exc}"
+        if "timed out" in str(exc).lower() or "timeout" in str(exc).lower():
+            detail += (
+                " Vérifiez le port : Render bloque les ports 25, 465 et 587 "
+                "sortants. Utilisez le port 2525 si votre fournisseur le "
+                "propose, ou une API e-mail."
+            )
+        return {"ok": False, "detail": detail}
 
 
 @router.post("/test-imap", response_model=schemas.TestResult)

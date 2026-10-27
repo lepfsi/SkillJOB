@@ -78,21 +78,15 @@ def public_job_poster(job_id: int, db: Session = Depends(get_db)):
     """Visuel autonome 1200 x 1500 pour LinkedIn, WhatsApp ou e-mail.
 
     L'adresse interne et la référence de l'offre sont les seules données
-    nécessaires : aucune information personnelle n'est exposée.
+    nécessaires : aucune information personnelle n'est exposée. Sans adresse
+    configurée, le visuel renvoie vers la candidature en ligne : il reste
+    publiable et n'invente aucune coordonnée.
     """
     job = db.get(models.Job, job_id)
     if job is None:
         raise HTTPException(status_code=404, detail="Offre introuvable")
     conf = settings_store.get_raw_group(db, "inbound")
     address = str(conf.get("address") or "").strip()
-    if not address:
-        raise HTTPException(
-            status_code=503,
-            detail=(
-                "Adresse de réception e-mail non configurée : "
-                "voir Paramètres, Réception des candidatures."
-            ),
-        )
     reference = email_routing.reference_for(job)
     public_url = f"{config.PUBLIC_BASE_URL.rstrip('/')}/postuler/{job.id}"
     svg = poster.build_svg(job, address, reference, public_url)

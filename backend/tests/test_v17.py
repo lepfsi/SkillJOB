@@ -7,6 +7,7 @@ Chaque point correspond à un retour utilisateur précis :
 - la lettre généraliste (sans offre) a été ajoutée ;
 - chaque couleur d'accent doit changer visiblement le PDF.
 """
+from app.services import job_media
 
 
 def _job_id(client, headers):
@@ -219,6 +220,30 @@ def test_job_photo_is_optional_then_uploadable(client, admin_headers):
     assert client.delete(f"/api/admin/jobs/{job['id']}/photo",
                          headers=admin_headers).status_code == 200
     assert client.get(f"/api/jobs/{job['id']}/photo").status_code == 404
+
+    client.delete(f"/api/admin/jobs/{job['id']}", headers=admin_headers)
+
+
+def test_missing_job_photo_falls_back_to_domain_visual(client, admin_headers):
+    """Un fichier perdu après redéploiement ne casse pas la fiche d'offre."""
+    job = _new_admin_job(client, admin_headers)
+    upload = client.post(
+        f"/api/admin/jobs/{job['id']}/photo",
+        files={"file": ("photo.png", PNG_1PX, "image/png")},
+        headers=admin_headers,
+    )
+    assert upload.status_code == 200, upload.text
+
+    # Simule le stockage local éphémère : la base garde photo_path, le
+    # fichier n'existe plus sur le disque.
+    for path in job_media.JOBS_DIR.glob(f"offre-{job['id']}.*"):
+        path.unlink()
+
+    res = client.get(f"/api/jobs/{job['id']}/photo")
+    assert res.status_code == 200, res.text
+    assert res.headers["content-type"].startswith("image/svg+xml")
+    assert "Informatique" in res.text
+    assert job["title"] in res.text
 
     client.delete(f"/api/admin/jobs/{job['id']}", headers=admin_headers)
 

@@ -668,6 +668,10 @@ la relève IMAP sans redémarrer le serveur.
 
 ### POST /api/admin/test-llm → `{ ok, detail }` (ping réel du LLM configuré)
 ### POST /api/admin/test-smtp → `{ ok, detail }` (poignée de main SMTP + STARTTLS + LOGIN)
+Body optionnel : `{ "data": { host, port, username, password, from_email,
+use_tls, enabled } }`. Le test utilise ces valeurs même avant enregistrement ;
+un `password` vide réutilise le secret stocké. Sans body, la configuration
+enregistrée est utilisée.
 ### POST /api/admin/test-imap → `{ ok, detail }` (connexion et dossier IMAP en lecture)
 Body optionnel : `{ "data": { imap_host, imap_port, imap_username,
 imap_password, imap_use_ssl, imap_mailbox } }`. Le test utilise ces valeurs
