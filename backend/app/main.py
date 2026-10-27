@@ -356,13 +356,13 @@ def _ensure_columns() -> None:
             ("verification_status", "VARCHAR(20) DEFAULT 'none'"),
             ("verification_note", "TEXT"),
             ("identity_doc_path", "TEXT"),
-            ("verified_at", "DATETIME"),
-            ("verification_decided_at", "DATETIME"),
+            ("verified_at", "TIMESTAMP"),
+            ("verification_decided_at", "TIMESTAMP"),
             ("photo_path", "TEXT"),
             ("cv_visible_to_recruiters", "BOOLEAN DEFAULT 0"),
             ("shared_cv_id", "INTEGER"),
             ("notification_prefs", "JSON"),
-            ("notifications_seen_at", "DATETIME"),
+            ("notifications_seen_at", "TIMESTAMP"),
             ("agent_mode", "VARCHAR(20) DEFAULT 'preparation'"),
             ("agent_history_mode", "VARCHAR(12) DEFAULT 'persist'"),
             ("agent_history_retention_days", "INTEGER DEFAULT 30"),
@@ -390,7 +390,7 @@ def _ensure_columns() -> None:
         ],
         "applications": [
             ("apply_channel", "VARCHAR(20) DEFAULT ''"),
-            ("submitted_at", "DATETIME"),
+            ("submitted_at", "TIMESTAMP"),
             ("submitted_documents", "JSON"),
             ("cover_note", "TEXT"),
         ],
@@ -417,7 +417,7 @@ def _ensure_columns() -> None:
         "interview_invites": [
             ("requested_slots", "JSON"),
             ("history", "JSON"),
-            ("recruiter_responded_at", "DATETIME"),
+            ("recruiter_responded_at", "TIMESTAMP"),
         ],
     }
     with engine.begin() as conn:
@@ -441,6 +441,7 @@ def purge_long_dashes() -> None:
     from sqlalchemy import inspect, text
 
     inspector = inspect(engine)
+    dialect_name = engine.dialect.name
     replacements = [
         ("\u2013", "-"),
         ("\u2014", "-"),
@@ -470,7 +471,14 @@ def purge_long_dashes() -> None:
                 params = {}
                 for index, (old, new) in enumerate(replacements):
                     expression = f"replace({expression}, :old{index}, :new{index})"
-                    conditions.append(f'instr("{name}", :old{index}) > 0')
+                    if dialect_name == "postgresql":
+                        conditions.append(
+                            f'position(:old{index} IN "{name}") > 0'
+                        )
+                    else:
+                        conditions.append(
+                            f'instr("{name}", :old{index}) > 0'
+                        )
                     params[f"old{index}"] = old
                     params[f"new{index}"] = new
                 conn.execute(
