@@ -13,6 +13,10 @@ cette feuille de route. Ils sont classés dans la priorité correspondante et
 restent à traiter. La numérotation continue à la suite pour ne pas modifier les
 points déjà suivis.
 
+Nouveaux retours intégrés le 27 octobre 2026 : les points 24 à 34 sont ajoutés
+en fin de document. Ils complètent les irritants produits observés après la
+première série de correctifs.
+
 ## Objectif
 
 Corriger les irritants de confiance, de compréhension et de pilotage avant d'élargir la plateforme. Les points ci-dessous sont classés par priorité produit, avec pour chacun :
@@ -597,10 +601,238 @@ charte OrientSkill.
 - Le rendu est cohérent sur desktop et mobile.
 - Aucune régression d'accessibilité n'est introduite.
 
+## Priorité 0 : retours complémentaires du 27 octobre 2026
+
+### 24. Le design fait partie du livrable
+
+**Constat**
+Le design est encore traité comme un habillage final, alors qu'il conditionne
+la crédibilité et la compréhension du produit.
+
+**Objectif**
+Intégrer le design dès la conception de chaque fonctionnalité, sans le
+revenir à plus tard.
+
+**Actions**
+- Ajouter une revue design à chaque ticket.
+- Définir une charte de composants et l'appliquer dès le début.
+- Interdire les mises en page « provisoires » non validées.
+- Vérifier la cohérence visuelle à chaque livraison.
+
+**Critères d'acceptation**
+- Aucune fonctionnalité n'est livrée sans validation design.
+- Les composants respectent la charte dès la première version.
+
+### 25. Photo de profil pour l'entreprise ou le recruteur
+
+**Constat**
+Les entreprises et les recruteurs n'ont pas de photo de profil visible.
+
+**Objectif**
+Permettre à une entreprise ou à un recruteur de disposer d'une photo
+représentative, comme les candidats.
+
+**Actions**
+- Ajouter un champ photo sur le compte entreprise et le compte recruteur.
+- Permettre le dépôt depuis l'espace recruteur.
+- Afficher la photo dans le profil, les offres et la messagerie.
+- Prévoir un visuel neutre si aucune photo n'est fournie.
+
+**Critères d'acceptation**
+- Le recruteur peut ajouter et changer sa photo.
+- La photo apparaît partout où l'identité est visible.
+- Une entreprise sans photo conserve un rendu propre.
+
+### 26. Parcours de suivi clair des actions
+
+**Constat**
+Le cycle de vie des candidatures et des entretiens n'est pas assez lisible.
+Les deux parties ne savent pas toujours qui peut accepter, refuser ou inviter.
+
+**Objectif**
+Rendre chaque étape visible, compréhensible et liée aux droits réels de
+chaque rôle.
+
+**Actions**
+- Définir une machine à états unique pour candidature et entretien.
+- Afficher un fil chronologique clair côté candidat et côté recruteur.
+- Préciser, pour chaque étape, qui peut agir et ce qui est conservé ou
+  supprimé.
+- Notifier les deux parties à chaque changement d'état.
+- Empêcher toute action non autorisée par le rôle.
+
+**Critères d'acceptation**
+- Chaque action est visible, datée et attribuée au bon rôle.
+- Le candidat et le recruteur voient le même état.
+- Aucune action hors périmètre n'est possible.
+
+### 27. Fichier iCalendar toujours à jour
+
+**Constat**
+Le fichier .ics téléchargeable reste valable pour la première proposition de
+créneau. Les modifications suivantes ne sont pas correctement reflétées.
+
+**Objectif**
+Le fichier .ics doit refléter l'état courant de l'entretien, même après un
+changement de créneau.
+
+**Actions**
+- Régénérer le fichier .ics à chaque modification.
+- Incrémenter la séquence et le statut à chaque mise à jour.
+- Invalider proprement les anciens liens sans casser les nouvelles invitations.
+- Vérifier le comportement dans Google Calendar, Outlook et Apple Calendar.
+
+**Critères d'acceptation**
+- Chaque modification de créneau produit un fichier à jour.
+- L'ancien fichier n'affiche plus un créneau obsolète.
+- Le statut de l'événement suit la décision réelle.
+
+### 28. Visuel d'offre par défaut selon le domaine
+
+**Constat**
+Certaines offres restent uniquement textuelles ou avec de simples initiales.
+
+**Objectif**
+Chaque offre doit avoir un visuel, fourni par l'entreprise ou issu d'une
+banque d'images par domaine.
+
+**Actions**
+- Constituer une banque de visuels par domaine.
+- Choisir automatiquement un visuel de repli selon le domaine.
+- Permettre à l'entreprise de remplacer ce visuel par le sien.
+- Afficher ce visuel sur la carte, la fiche et les partages.
+
+**Critères d'acceptation**
+- Aucune offre n'est publiée sans visuel.
+- Le visuel de repli correspond au domaine de l'offre.
+- L'entreprise peut toujours fournir son propre visuel.
+
+### 29. Publication d'une offre depuis un visuel seul
+
+**Constat**
+Certains responsables RH arrivent uniquement avec l'affiche de l'offre et ne
+veulent pas remplir un formulaire complet.
+
+**Objectif**
+Permettre de publier une offre à partir du visuel, avec un minimum de saisie.
+
+**Actions**
+- Ajouter un mode « publier depuis un visuel ».
+- Extraire ou demander uniquement les champs indispensables.
+- Générer un brouillon à partir du visuel.
+- Laisser l'entreprise compléter les détails plus tard.
+- Conserver la traçabilité et les règles anti-invention.
+
+**Critères d'acceptation**
+- Une offre peut être publiée avec un visuel et quelques champs.
+- Aucune donnée n'est inventée.
+- L'offre reste modifiable après publication.
+
+### 30. Nouvelle iconographie du profil vérifié
+
+**Constat**
+L'icône actuelle ressemble à une icône de sécurité, pas à un badge de
+vérification de profil.
+
+**Objectif**
+Obtenir un badge distinct, sobre et immédiatement compréhensible.
+
+**Actions**
+- Proposer de nouvelles variantes graphiques.
+- Tester la lisibilité en 16 px.
+- Vérifier la distinction avec les icônes de sécurité.
+- Harmoniser le rendu sur fond clair et sombre.
+
+**Critères d'acceptation**
+- Le badge est distinct des icônes de sécurité.
+- Il reste lisible en petite taille.
+- Le design est validé par la direction produit.
+
+### 31. Page agent : « toutes » par défaut
+
+**Constat**
+La page agent n'ouvre pas par défaut sur l'ensemble des opportunités.
+
+**Objectif**
+Afficher par défaut toutes les opportunités et laisser le candidat cliquer
+sur « recommandé » pour voir la sélection de l'agent.
+
+**Actions**
+- Changer l'onglet par défaut de la page agent.
+- Conserver l'accès direct aux recommandations.
+- Garder les filtres et la recherche actifs.
+
+**Critères d'acceptation**
+- L'ouverture de la page montre toutes les opportunités.
+- Le candidat peut basculer vers les recommandations en un clic.
+- Aucune recommandation n'est perdue.
+
+### 32. Paramètres approfondis du compte
+
+**Constat**
+Les paramètres du compte restent sommaires : sécurité, suppression et
+données personnelles ne sont pas traités.
+
+**Objectif**
+Offrir un espace de gestion de compte complet et clair.
+
+**Actions**
+- Ajouter une section sécurité : mot de passe, MFA, sessions actives.
+- Permettre la suppression du compte et des données.
+- Permettre l'export des données personnelles.
+- Clarifier la conservation et la suppression.
+- Séparer les réglages par rôle.
+
+**Critères d'acceptation**
+- L'utilisateur peut sécuriser, exporter ou supprimer son compte.
+- La suppression est explicite et réversible pendant un délai défini.
+- Chaque réglage est appliqué immédiatement.
+
+### 33. Iconographie des statuts « actif » et « disponible »
+
+**Constat**
+Les statuts « actif » et « disponible » manquent d'une représentation
+graphique claire et classique.
+
+**Objectif**
+Obtenir une iconographie sobre et immédiatement lisible.
+
+**Actions**
+- Définir une famille d'icônes pour les statuts.
+- Harmoniser la couleur, la forme et la taille.
+- Vérifier la lisibilité et le contraste.
+- Documenter l'usage de chaque statut.
+
+**Critères d'acceptation**
+- Chaque statut a une icône unique et reconnaissable.
+- Le rendu reste sobre et institutionnel.
+- Aucune ambiguïté ne subsiste entre deux statuts.
+
+### 34. Sortir les ONG des programmes publics
+
+**Constat**
+Les opportunités liées aux ONG sont mélangées avec les programmes publics.
+
+**Objectif**
+Créer une page dédiée sous Opportunités, distincte des programmes publics.
+
+**Actions**
+- Créer une page « ONG et international » dans Opportunités.
+- Y regrouper : opportunités dans les ONG, appels à projets et concours
+  internationaux, bourses d'études internationales.
+- Déplacer les contenus concernés.
+- Mettre à jour la navigation et les filtres.
+
+**Critères d'acceptation**
+- Les ONG ne figurent plus dans Programmes publics.
+- La page dédiée affiche les trois catégories.
+- La navigation reste claire pour le candidat.
+
 ## Prochaines étapes
 
 1. Valider cette roadmap avec la direction produit.
 2. Chiffrer chaque lot de travail.
-3. Commencer par les lots de priorité 0, notamment les points 13 à 16 et 23.
+3. Commencer par les lots de priorité 0, notamment les points 13 à 16, 23
+   et 24 à 34.
 4. Traiter ensuite les points 17 à 20 de priorité 1.
 5. Revoir l'ensemble dans une semaine après les premiers correctifs.
