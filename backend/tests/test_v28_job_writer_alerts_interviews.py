@@ -83,7 +83,7 @@ def test_job_writer_rules_mode_is_useful_and_persists_nothing(
     assert after == before
 
     short = client.post("/api/jobs/write", json={
-        "description": "Trop court",
+        "description": "Trop",
     }, headers=admin_headers)
     assert short.status_code == 422
 

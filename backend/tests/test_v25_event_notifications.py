@@ -15,7 +15,7 @@ from app.services.eventlog import build_inbox
 
 EVENT_KEYS = {
     "new_match", "expiring", "agent", "message", "application",
-    "verification_decision",
+    "verification_decision", "interview",
 }
 
 

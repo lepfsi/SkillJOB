@@ -288,7 +288,28 @@ def test_applications_flow(client):
     assert doublon.status_code == 400
 
 
-def test_dashboard_and_inbox(demo_headers, client):
+def test_dashboard_and_inbox(demo_headers, admin_headers, client):
+    # Une offre publiée APRÈS la création du compte démo garantit une
+    # notification « nouvelle offre » sans violer la règle du point 2.
+    fresh = client.post("/api/admin/jobs", json={
+        "title": "Technicien notifications fraîches",
+        "company": "Entreprise Test Notifications",
+        "location": "Douala",
+        "sector": "Informatique / IT",
+        "contract_type": "CDI",
+        "description": "Offre créée pour vérifier les notifications récentes.",
+        "requirements": "Aucune.",
+        "required_skills": [{"name": "Windows Server", "importance": "core"}],
+        "source_name": "Saisie manuelle",
+        "source_url": "",
+    }, headers=admin_headers)
+    assert fresh.status_code == 201, fresh.text
+
+    applied = client.post("/api/applications", json={
+        "job_id": fresh.json()["id"],
+    }, headers=demo_headers)
+    assert applied.status_code == 201, applied.text
+
     response = client.get("/api/dashboard", headers=demo_headers)
     assert response.status_code == 200
     body = response.json()

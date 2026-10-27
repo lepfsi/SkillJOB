@@ -4,9 +4,9 @@ Date de revue : lundi 26 octobre 2026
 Source : retours utilisateurs et tests terrain du 25 octobre 2026.
 Statut : document de travail. Aucune de ces remarques n'est encore considérée comme validée avant la revue.
 
-Avancement au 26 octobre 2026 : le point 1 (notification de décision de
-vérification) et le point 5 (conversations empilées et réglages dans la
-conversation) sont implémentés et vérifiés. Les autres points restent à traiter.
+Avancement au 27 octobre 2026 : les points 1, 2, 3, 4, 5, 6, 7, 8, 9 et 10
+sont implémentés et vérifiés. Les points 11, 12, 13 à 22 et 23 restent à
+traiter. Le point 23 a été ajouté en priorité 0.
 
 Nouveaux retours intégrés le 26 octobre 2026 : les points 13 à 23 complètent
 cette feuille de route. Ils sont classés dans la priorité correspondante et
@@ -46,6 +46,9 @@ Le candidat doit recevoir une notification claire indiquant si sa demande a ét�
 
 ### 2. Notifications visibles avant la création du compte
 
+Statut : implémenté et vérifié le 27 octobre 2026 (filtrage par date de
+création du compte, côté offres et événements persistés).
+
 **Constat**
 Un nouvel utilisateur peut voir des notifications antérieures à la création de son compte.
 
@@ -63,6 +66,9 @@ Aucun utilisateur ne doit recevoir des événements calculés avant son inscript
 - Les notifications du compte de démonstration ne fuient pas vers les nouveaux comptes.
 
 ### 3. Recommandations « Excel » non explicables
+
+Statut : implémenté et vérifié le 27 octobre 2026 (raison et source
+affichées pour chaque écart de compétence).
 
 **Constat**
 Tous les profils semblent recevoir des recommandations liées à Excel. Il faut déterminer si c'est une vraie tendance de marché ou un artefact de seed.
@@ -195,6 +201,8 @@ et décisions motivées.
 
 ### 23. Moteur d'alertes e-mail trop volumineux et redondant
 
+Statut : à traiter (priorité 0 ajoutée le 27 octobre 2026).
+
 **Constat**
 Le moteur d'alertes envoie plusieurs fois la même offre par e-mail. Un
 utilisateur a reçu 24 e-mails en 3 heures pour une seule offre correspondant à
@@ -239,6 +247,9 @@ Notifications de l'application.
 
 ### 4. Iconographie du profil vérifié
 
+Statut : implémenté et vérifié le 27 octobre 2026 (badge `VerifiedBadge`
+harmonisé sur profil, dashboard et fiches candidat).
+
 **Constat**
 L'icône actuelle est trop ronde et manque de caractère.
 
@@ -278,6 +289,9 @@ Avoir une pile de conversations à la manière des messages SMS, mais avec le de
 
 ### 6. Assistant de publication d'offre inopérant
 
+Statut : implémenté et vérifié le 27 octobre 2026 (rédaction assistée avec
+LLM et repli local, validation explicite avant application).
+
 **Constat**
 L'assistant de publication ne propose pas de mots ni de phrases pour préremplir les champs.
 
@@ -296,6 +310,9 @@ Obtenir un vrai assistant de rédaction d'offre, utile dès la première phrase.
 - Aucune suggestion n'est enregistrée sans validation explicite.
 
 ### 7. Parcours d'entretien non ficelé
+
+Statut : implémenté et vérifié le 27 octobre 2026 (parcours en trois étapes,
+calendrier de créneaux, confirmation immédiate).
 
 **Constat**
 Les sous-pages Entretiens ne forment pas un parcours fluide, surtout pour répondre à une invitation.
@@ -316,6 +333,9 @@ Créer un parcours unique et guidé pour accepter, refuser ou demander un autre 
 
 ### 8. Demande de changement de créneau coté recruteur
 
+Statut : implémenté et vérifié le 27 octobre 2026 (file dédiée, historique
+des propositions, notification du candidat à chaque décision).
+
 **Constat**
 Les demandes de créneau tombent dans la messagerie générale du recruteur, sans traitement dédié.
 
@@ -334,6 +354,9 @@ Créer une file d'attente de négociation d'entretien.
 - Le candidat reçoit la décision dans ses notifications et par e-mail si activé.
 
 ### 9. Prévisualisation d'une offre avant publication
+
+Statut : implémenté et vérifié le 27 octobre 2026 (aperçu modal de la fiche
+publique, publication bloquée sans aperçu).
 
 **Constat**
 Le bouton « Aperçu » coté recruteur n'ouvre pas un aperçu de l'offre en cours de rédaction.
@@ -466,6 +489,9 @@ candidatures empilées.
 ## Priorité 2 : administration et identité visuelle
 
 ### 10. Notifications administrateur paramétrables
+
+Statut : implémenté et vérifié le 27 octobre 2026 (équipe, catégories,
+journal des alertes, test de routage sans envoi réel).
 
 **Constat**
 L'admin ne peut pas définir qui reçoit les alertes liées au panneau d'administration.
