@@ -336,6 +336,14 @@ def seed_database(db: Session) -> None:
     db.commit()
 
 
+def _portable_ddl(ddl: str, dialect: str) -> str:
+    """Adapte les DDL minimalistes au dialecte SQL cible."""
+    if dialect == "postgresql":
+        ddl = ddl.replace("BOOLEAN DEFAULT 0", "BOOLEAN DEFAULT FALSE")
+        ddl = ddl.replace("BOOLEAN DEFAULT 1", "BOOLEAN DEFAULT TRUE")
+    return ddl
+
+
 def _ensure_columns() -> None:
     """Migration légère : ajoute les colonnes apparues après la création
     initiale d'une base existante (SQLite ne gère pas ça via create_all)."""
@@ -420,6 +428,7 @@ def _ensure_columns() -> None:
             ("recruiter_responded_at", "TIMESTAMP"),
         ],
     }
+    dialect = engine.dialect.name
     with engine.begin() as conn:
         for table, columns in additions.items():
             if table not in inspector.get_table_names():
@@ -427,6 +436,9 @@ def _ensure_columns() -> None:
             existing = {c["name"] for c in inspector.get_columns(table)}
             for name, ddl in columns:
                 if name not in existing:
+                    # PostgreSQL refuse un entier comme valeur par défaut
+                    # d'une colonne booléenne ; SQLite accepte les deux.
+                    ddl = _portable_ddl(ddl, dialect)
                     conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {name} {ddl}"))
 
 
@@ -463,17 +475,27 @@ def purge_long_dashes() -> None:
             if table.startswith("sqlite_"):
                 continue
             for column in inspector.get_columns(table):
-                if not any(marker in str(column["type"]).upper() for marker in text_markers):
+                type_name = str(column["type"]).upper()
+                if not any(marker in type_name for marker in text_markers):
                     continue
                 name = column["name"]
-                expression = f'"{name}"'
+                is_json = "JSON" in type_name
+                # PostgreSQL refuse replace() et position() sur un JSON :
+                # on convertit en texte puis on caste le résultat.
+                json_cast = ""
+                if dialect_name == "postgresql" and is_json:
+                    json_cast = "jsonb" if "JSONB" in type_name else "json"
+                    expression = f'"{name}"::text'
+                else:
+                    expression = f'"{name}"'
                 conditions = []
                 params = {}
                 for index, (old, new) in enumerate(replacements):
                     expression = f"replace({expression}, :old{index}, :new{index})"
                     if dialect_name == "postgresql":
+                        source = f'"{name}"::text' if is_json else f'"{name}"'
                         conditions.append(
-                            f'position(:old{index} IN "{name}") > 0'
+                            f'position(:old{index} IN {source}) > 0'
                         )
                     else:
                         conditions.append(
@@ -481,6 +503,8 @@ def purge_long_dashes() -> None:
                         )
                     params[f"old{index}"] = old
                     params[f"new{index}"] = new
+                if json_cast:
+                    expression = f"({expression})::{json_cast}"
                 conn.execute(
                     text(
                         f'UPDATE "{table}" SET "{name}" = {expression} '
