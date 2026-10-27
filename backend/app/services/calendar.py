@@ -89,7 +89,7 @@ def build(
     if current == "accepted":
         method, event_status, sequence = "REQUEST", "CONFIRMED", 1
         summary = f"Entretien : {job.title if job else 'Poste'}"
-    elif current == "declined":
+    elif current in ("declined", "refused"):
         method, event_status, sequence = "CANCEL", "CANCELLED", 2
         summary = f"Annulé - Entretien : {job.title if job else 'Poste'}"
     else:
@@ -112,7 +112,7 @@ def build(
         f"Durée : {invite.duration_min} minutes",
         f"Recruteur : {recruiter_name}",
     ]
-    if current == "declined" and invite.candidate_note:
+    if current in ("declined", "refused") and invite.candidate_note:
         description_parts.append(f"Message du candidat : {invite.candidate_note}")
     description_parts.append(f"Invitation : {invite_url}")
     description = "\n".join(part for part in description_parts if part)

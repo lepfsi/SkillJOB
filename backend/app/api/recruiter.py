@@ -698,6 +698,117 @@ def my_interview_invites(
     return [interview_service.invite_dict(db, row) for row in rows]
 
 
+@router.get("/interviews/requests",
+            response_model=list[schemas.InterviewInviteOut])
+def interview_requests(
+    user: models.User = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """File dédiée des demandes d'autre créneau, avec l'historique."""
+    _require_recruiter(user)
+    rows = (
+        db.query(models.InterviewInvite)
+        .filter(
+            models.InterviewInvite.recruiter_id == user.id,
+            models.InterviewInvite.status == "declined",
+        )
+        .order_by(models.InterviewInvite.responded_at.desc())
+        .all()
+    )
+    return [interview_service.invite_dict(db, row) for row in rows]
+
+
+@router.post("/interviews/{invite_id}/respond",
+             response_model=schemas.InterviewInviteOut)
+def respond_to_interview_request(
+    invite_id: int,
+    payload: schemas.InterviewRecruiterRespondIn,
+    user: models.User = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Accepte un créneau proposé, propose un autre créneau ou refuse.
+
+    La décision est tracée dans l'historique et le candidat est notifié
+    dans sa rubrique Notifications (e-mail si son canal est activé).
+    """
+    _require_recruiter(user)
+    invite = db.get(models.InterviewInvite, invite_id)
+    if invite is None or invite.recruiter_id != user.id:
+        raise HTTPException(status_code=404, detail="Demande introuvable")
+    if invite.status != "declined":
+        raise HTTPException(
+            status_code=400,
+            detail="Cette demande de créneau n'est plus en attente.",
+        )
+    note = (payload.note or "").strip()[:1000]
+    job = db.get(models.Job, invite.job_id)
+    candidate = db.get(models.User, invite.candidate_id)
+    chosen_slot = None
+
+    if payload.action == "accept_requested":
+        if payload.slot_at is None:
+            raise HTTPException(
+                status_code=422,
+                detail="Choisissez un des créneaux proposés par le candidat.",
+            )
+        requested = interview_service.requested_slot_values(invite)
+        chosen_slot = next(
+            (slot for slot in requested if slot == payload.slot_at), None
+        )
+        if chosen_slot is None:
+            raise HTTPException(
+                status_code=422,
+                detail="Ce créneau ne figure pas dans la proposition du candidat.",
+            )
+        invite.slot_at = chosen_slot
+        invite.status = "accepted"
+        invite.recruiter_responded_at = models.utcnow()
+        interview_service.append_history(
+            invite, "recruiter", "request_accepted",
+            slot_at=chosen_slot, note=note,
+        )
+    elif payload.action == "propose":
+        if payload.slot_at is None:
+            raise HTTPException(
+                status_code=422,
+                detail="Choisissez une date et une heure pour le nouveau créneau.",
+            )
+        if payload.slot_at < models.utcnow() - timedelta(hours=1):
+            raise HTTPException(
+                status_code=422,
+                detail="Le nouveau créneau est déjà passé.",
+            )
+        invite.slot_at = payload.slot_at
+        invite.status = "pending"
+        invite.responded_at = None
+        invite.recruiter_responded_at = models.utcnow()
+        invite.requested_slots = []
+        invite.candidate_note = None
+        interview_service.append_history(
+            invite, "recruiter", "slot_proposed",
+            slot_at=payload.slot_at, note=note,
+        )
+    else:
+        invite.status = "refused"
+        invite.recruiter_responded_at = models.utcnow()
+        interview_service.append_history(
+            invite, "recruiter", "request_refused", note=note,
+        )
+
+    db.commit()
+    db.refresh(invite)
+
+    if job and candidate:
+        subject, body = interview_service.compose_candidate_decision_body(
+            invite, job, payload.action, slot_at=chosen_slot or payload.slot_at,
+            note=note,
+        )
+        notifications.dispatch(
+            db, candidate, subject, body, event="interview"
+        )
+    return interview_service.invite_dict(db, invite)
+
+
 @router.post("/interviews", status_code=201,
              response_model=schemas.InterviewInviteOut)
 def invite_to_interview(
@@ -755,8 +866,17 @@ def invite_to_interview(
         subject=payload.subject.strip(),
         message=payload.message.strip(),
         status="pending",
+        requested_slots=[],
+        history=[],
     )
     db.add(invite)
+    interview_service.append_history(
+        invite,
+        actor="recruiter",
+        action="invited",
+        slot_at=payload.slot_at,
+        note=payload.message.strip(),
+    )
     db.commit()
     db.refresh(invite)
 

@@ -4,7 +4,7 @@ Sources d'événements : nouvelles offres compatibles, matches forts,
 candidatures suivies, tendances de marché, recommandations d'apprentissage.
 Rétention in-app : 30 jours, puis les événements disparaissent.
 """
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 
 from app.models import utcnow
@@ -19,6 +19,14 @@ def _as_dt(value: Any) -> datetime:
     return datetime.fromisoformat(str(value))
 
 
+def _naive_utc(value: Any) -> datetime:
+    """Ramène un horodatage à un UTC naïf comparable (SQLite)."""
+    dt = _as_dt(value)
+    if dt.tzinfo is not None:
+        return dt.astimezone(timezone.utc).replace(tzinfo=None)
+    return dt
+
+
 def _reference_now(jobs: list[Any]) -> datetime:
     """Horloge déterministe : date de publication la plus récente."""
     return max((_as_dt(j.published_at) for j in jobs), default=utcnow())
@@ -29,13 +37,23 @@ def build_inbox(
     jobs: list[Any],
     applications: list[Any],
     taxonomy=None,
+    since: Optional[datetime] = None,
 ) -> list[dict[str, Any]]:
     now = _reference_now(jobs)
+    now_naive = _naive_utc(now)
+    since_naive = _naive_utc(since) if since else None
     events: list[dict[str, Any]] = []
 
-    # Nouvelles offres récentes (fenêtre de 21 jours avant l'offre la plus fraîche)
+    def before_account(value: Any) -> bool:
+        return since_naive is not None and _naive_utc(value) < since_naive
+
+    # Nouvelles offres récentes (fenêtre de 21 jours avant l'offre la plus fraîche).
+    # Une offre publiée avant la création du compte n'est pas une « nouveauté »
+    # pour ce candidat : elle ne doit pas apparaître dans ses notifications.
     for job in sorted(jobs, key=lambda j: j.published_at, reverse=True):
-        if (now - job.published_at).days <= 21:
+        if before_account(job.published_at):
+            continue
+        if (now_naive - _naive_utc(job.published_at)).days <= 21:
             events.append({
                 "at": job.published_at,
                 "kind": "new_job",
@@ -47,6 +65,8 @@ def build_inbox(
     if profile:
         profile_skills = profile.get("skills", [])
         for job in jobs:
+            if before_account(job.published_at):
+                continue
             match = compute_match(profile_skills, job.required_skills, taxonomy)
             if match["score"] >= LEVEL_STRONG:
                 events.append({
@@ -64,10 +84,12 @@ def build_inbox(
         from app.services.alerts import expiring_matches
 
         for job, _match in expiring_matches(
-            profile_skills, jobs, applications, taxonomy, now=now
+            profile_skills, jobs, applications, taxonomy, now=now_naive
         ):
+            if before_account(job.published_at):
+                continue
             events.append({
-                "at": now,
+                "at": now_naive,
                 "kind": "expiring",
                 "message": (
                     f"Date limite proche : « {job.title} » chez {job.company} "
@@ -84,7 +106,7 @@ def build_inbox(
                     missing.append(name)
         if missing:
             events.append({
-                "at": now,
+                "at": now_naive,
                 "kind": "learning",
                 "message": (
                     f"Compétence à développer en priorité : « {missing[0]} » "
@@ -113,6 +135,14 @@ def build_inbox(
         })
 
     events += market_trend_events(jobs)
+
+    # Horodatages normalisés : les événements calculés restent naïfs,
+    # comme les colonnes SQLite, et comparables entre eux.
+    events = [{**event, "at": _naive_utc(event["at"])} for event in events]
+
+    # Aucun événement antérieur à la création du compte.
+    if since_naive is not None:
+        events = [event for event in events if event["at"] >= since_naive]
 
     # Rétention : au-delà de 30 jours réels, l'événement disparaît.
     horizon = utcnow() - timedelta(days=RETENTION_DAYS)

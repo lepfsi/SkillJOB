@@ -2,9 +2,9 @@
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, setSession } from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
-import { fmtDate } from "../lib.js";
 import { Icon, I, ArrowIcon } from "../components/icons.jsx";
 import { Loader, ErrorNote } from "../components/ui.jsx";
+import JobPublicView from "../components/JobPublicView.jsx";
 
 // Candidature publique depuis le lien d'une offre. Un candidat non inscrit
 // saisit nom, e-mail et téléphone : le compte est créé, la candidature
@@ -65,56 +65,7 @@ export default function PublicApply() {
       </header>
 
       <main className="public-apply-main">
-        {job && (
-          <section className="public-job">
-            <p className="public-job-company">{job.company} · {job.location}</p>
-            <h1>{job.title}</h1>
-            <div className="public-job-tags">
-              <span className="chip">{job.contract_type}</span>
-              <span className="chip">{job.sector}</span>
-              {job.deadline && (
-                <span className="chip">Candidature jusqu'au {fmtDate(job.deadline)}</span>
-              )}
-            </div>
-            {job.photo_url && (
-              <img className="public-job-photo" src={job.photo_url} alt="" />
-            )}
-            <p className="public-job-desc">{job.description}</p>
-            {job.requirements && (
-              <>
-                <h2>Profil recherché</h2>
-                <p className="public-job-desc">{job.requirements}</p>
-              </>
-            )}
-            {job.required_skills?.length > 0 && (
-              <>
-                <h2>Compétences demandées</h2>
-                <div className="chip-row">
-                  {job.required_skills.map((skill) => (
-                    <span className="chip" key={skill.name}>
-                      {skill.name}
-                      {skill.importance === "core" ? " · essentielle" : ""}
-                    </span>
-                  ))}
-                </div>
-              </>
-            )}
-            {job.company_branding?.description && (
-              <>
-                <h2>L'entreprise</h2>
-                <p className="public-job-desc">{job.company_branding.description}</p>
-              </>
-            )}
-            {job.source?.url && (
-              <p className="small muted">
-                Source : {job.source.name || "lien d'origine"} ·{" "}
-                <a href={job.source.url} target="_blank" rel="noreferrer">
-                  consulter l'annonce d'origine
-                </a>
-              </p>
-            )}
-          </section>
-        )}
+        {job && <JobPublicView job={job} />}
 
         <section className="public-form-card">
           <ErrorNote error={error} />

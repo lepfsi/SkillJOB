@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { api, setSession } from "../api/client.js";
 
@@ -60,6 +60,7 @@ function Quote() {
 
 export default function Login() {
   const { login } = useAuth();
+  const [params] = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -79,6 +80,14 @@ export default function Login() {
 
   async function finishLogin(token, user) {
     setSession(token, user);
+    // Retour au lien profond (invitation à un entretien, par exemple),
+    // uniquement pour un candidat et vers un chemin interne.
+    const next = params.get("next") || "";
+    const safeNext = next.startsWith("/") && !next.startsWith("//") ? next : "";
+    if (user.role === "candidate" && safeNext) {
+      window.location.href = safeNext;
+      return;
+    }
     // Cloisonnement des rôles : chacun rejoint SON espace
     window.location.href =
       user.role === "admin" ? "/admin"

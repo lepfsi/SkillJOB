@@ -52,6 +52,7 @@ const RECRUITER_NAV = [
   { to: "/recruteur/offres", label: "Mes offres", icon: "briefcase" },
   { to: "/recruteur/candidats", label: "Talents", icon: "users" },
   { to: "/recruteur/shortlists", label: "Shortlists", icon: "clipboard" },
+  { to: "/recruteur/demandes", label: "Demandes de créneau", icon: "clock" },
   { to: "/messages", label: "Messages", icon: "chat", messages: true },
   { to: "/assistant", label: "Assistant", icon: "spark" },
   { to: "/parametres-compte", label: "Paramètres", icon: "settings" },
@@ -84,6 +85,7 @@ const ADMIN_NAV_GROUPS = [
     items: [
       { to: "/admin/utilisateurs", label: "Utilisateurs", icon: "users" },
       { to: "/admin/parametres", label: "Paramètres plateforme", icon: "settings" },
+      { to: "/admin/equipe-alertes", label: "Équipe & alertes", icon: "bell" },
       { to: "/admin/connecteurs", label: "Connecteurs", icon: "link" },
       { to: "/messages", label: "Messages", icon: "chat", messages: true },
       { to: "/parametres-compte", label: "Mon compte", icon: "user" },

@@ -4,6 +4,7 @@ import { api, resourceHref } from "../../api/client.js";
 import { fmtDate, fmtDateTime } from "../../lib.js";
 import ContactDialog from "../../components/ContactDialog.jsx";
 import InterviewInviteDialog from "../../components/InterviewInviteDialog.jsx";
+import VerifiedBadge from "../../components/VerifiedBadge.jsx";
 import { Loader, ErrorNote, Empty } from "../../components/ui.jsx";
 
 // Shortlists (§20, V2) : listes de candidats présélectionnés par le
@@ -76,7 +77,7 @@ function ShortlistCard({ sl, onChanged, invites, onInvitesChanged }) {
                 <div>
                   <strong>{item.name}</strong>
                   {item.verified && (
-                    <span className="verified-chip" style={{ marginLeft: "0.5rem" }}>Vérifié</span>
+                    <VerifiedBadge label="Vérifié" size={13} className="verified-inline" />
                   )}
                   <p className="small muted" style={{ margin: 0 }}>
                     Ajouté le {fmtDate(item.added_at)}

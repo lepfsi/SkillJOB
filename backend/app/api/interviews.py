@@ -4,6 +4,8 @@ La vue par jeton est publique (elle ne révèle que le poste, l'entreprise
 et le créneau) : le lien reçu par e-mail fonctionne même avant connexion.
 La réponse, elle, exige le compte du candidat invité.
 """
+from datetime import timedelta
+
 from fastapi import APIRouter, Depends, HTTPException, Response
 from sqlalchemy.orm import Session
 
@@ -75,48 +77,62 @@ def respond(
     user: models.User = Depends(security.get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Accepte le créneau ou demande un autre créneau.
+    """Accepte le créneau, demande un autre créneau ou refuse l'entretien.
 
-    La réponse part aussi en message interne au recruteur : il voit la
-    décision dans sa messagerie, sans attendre un e-mail."""
+    Une demande d'autre créneau doit porter au moins une disponibilité
+    explicite : le recruteur reçoit ainsi une proposition concrète dans sa
+    file dédiée, et non un simple message dans la messagerie générale.
+    """
     invite = _by_token(db, token)
     if invite.candidate_id != user.id:
         raise HTTPException(status_code=403, detail="Cette invitation ne vous appartient pas")
     if invite.status != "pending":
         raise HTTPException(status_code=400, detail="Cette invitation a déjà reçu une réponse")
     note = (payload.note or "").strip()[:1000]
+    requested = list(payload.requested_slots or [])
+    if payload.decision == "declined" and not requested:
+        raise HTTPException(
+            status_code=422,
+            detail=(
+                "Pour demander un autre créneau, proposez au moins une "
+                "date et une heure."
+            ),
+        )
+    if len(requested) > 5:
+        raise HTTPException(
+            status_code=422,
+            detail="Proposez au maximum 5 créneaux.",
+        )
+    limit = models.utcnow() - timedelta(hours=1)
+    for slot in requested:
+        if slot < limit:
+            raise HTTPException(
+                status_code=422,
+                detail="Un des créneaux proposés est déjà passé.",
+            )
+
     invite.status = payload.decision
     invite.responded_at = models.utcnow()
     invite.candidate_note = note or None
-
-    job = db.get(models.Job, invite.job_id)
-    title = job.title if job else f"offre #{invite.job_id}"
-    decision = (
-        "a accepté le créneau"
-        if payload.decision == "accepted"
-        else "demande un autre créneau"
+    invite.requested_slots = (
+        [slot.isoformat(timespec="minutes") for slot in requested]
+        if payload.decision == "declined"
+        else []
     )
-    body = (
-        f"Réponse à votre invitation pour « {title} » : le candidat "
-        f"{decision} ({interview_service.slot_label(invite.slot_at)})."
+    interview_service.append_history(
+        invite,
+        actor="candidate",
+        action=payload.decision,
+        note=note,
     )
-    if note:
-        body += f"\nMessage du candidat : {note}"
-    db.add(models.Message(
-        sender_id=user.id,
-        recipient_id=invite.recruiter_id,
-        body=body,
-        job_id=invite.job_id,
-    ))
     db.commit()
     db.refresh(invite)
 
-    # La réponse part aussi par e-mail au recruteur, avec le calendrier
-    # au bon statut : les personnes qui suivent leurs entretiens par mail
-    # peuvent ajouter ou annuler le créneau en un clic. Best effort : un
-    # SMTP indisponible ne remet jamais la réponse en cause.
+    # Le recruteur reçoit un e-mail avec le calendrier au bon statut.
+    # Best effort : un SMTP indisponible ne remet jamais la réponse en cause.
     recruiter = db.get(models.User, invite.recruiter_id)
     candidate = db.get(models.User, invite.candidate_id)
+    job = db.get(models.Job, invite.job_id)
     if job and recruiter:
         subject, mail_body = interview_service.compose_response_body(
             invite, job, candidate or user
@@ -128,21 +144,15 @@ def respond(
             db, recruiter.email, subject, mail_body,
             attachments=[ics], reply_to=user.email,
         )
-    if invite.status == "accepted" and job and candidate:
+    # Confirmation immédiate au candidat, quel que soit son choix.
+    if job and candidate:
+        subject, mail_body = interview_service.compose_candidate_response_body(
+            invite, job
+        )
         ics = calendar_service.attachment(
-            invite, job, candidate, recruiter, status="accepted"
+            invite, job, candidate, recruiter, status=invite.status
         )
         notifications.send_email(
-            db, candidate.email,
-            f"Entretien confirmé : {job.title}",
-            (
-                f"Bonjour {candidate.full_name},\n\n"
-                f"Votre entretien pour « {job.title} » chez {job.company} "
-                f"est confirmé le {interview_service.slot_label(invite.slot_at)} "
-                f"({invite.duration_min} minutes).\n\n"
-                "Le calendrier au format .ics est joint à cet e-mail.\n\n"
-                "OrientSkill AI\n"
-            ),
-            attachments=[ics],
+            db, candidate.email, subject, mail_body, attachments=[ics]
         )
     return interview_service.invite_dict(db, invite)

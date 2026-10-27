@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { apiRaw } from "../api/client.js";
 import Avatar from "./Avatar.jsx";
+import VerifiedBadge from "./VerifiedBadge.jsx";
 import {
   EXPERIENCE_TYPE_LABELS,
   PROFICIENCY_LABELS,
@@ -127,11 +128,7 @@ export default function TalentProfile({
           <div className="pf-id">
             <div className="pf-name-row">
               <h1>{candidate.full_name}</h1>
-              {candidate.verified && (
-                <span className="pf-verified" title="Profil vérifié">
-                  <Icon d={I.check} size={13} />
-                </span>
-              )}
+              {candidate.verified && <VerifiedBadge size={20} />}
             </div>
             <p className="pf-title">
               {candidate.title || "Titre professionnel non renseigné"}

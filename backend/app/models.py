@@ -419,6 +419,27 @@ class Setting(Base):
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, onupdate=utcnow)
 
 
+class AdminNotificationLog(Base):
+    """Journal des alertes envoyées à l'équipe d'administration.
+
+    Chaque alerte conserve sa catégorie, ses destinataires et le résultat
+    des envois. Le journal est consultable dans la console admin, même
+    lorsque le service e-mail est désactivé.
+    """
+
+    __tablename__ = "admin_notification_log"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    category: Mapped[str] = mapped_column(String(40), index=True)
+    subject: Mapped[str] = mapped_column(String(255))
+    body: Mapped[str] = mapped_column(Text, default="")
+    recipients: Mapped[list[str]] = mapped_column(JSON, default=list)
+    sent_count: Mapped[int] = mapped_column(Integer, default=0)
+    failed_count: Mapped[int] = mapped_column(Integer, default=0)
+    detail: Mapped[str] = mapped_column(Text, default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, index=True)
+
+
 class Message(Base):
     """Messagerie interne recruteur ↔ talent (contact direct, plateforme)."""
 
@@ -606,10 +627,19 @@ class InterviewInvite(Base):
     duration_min: Mapped[int] = mapped_column(Integer, default=45)
     subject: Mapped[str] = mapped_column(String(200))
     message: Mapped[str] = mapped_column(Text)
-    status: Mapped[str] = mapped_column(String(20), default="pending")  # pending|accepted|declined
+    # pending | accepted | declined (autre créneau demandé) | refused
+    status: Mapped[str] = mapped_column(String(20), default="pending")
     candidate_note: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # Créneaux proposés par le candidat (dates ISO, heure du Cameroun).
+    requested_slots: Mapped[list[str]] = mapped_column(JSON, default=list)
+    # Historique lisible des propositions et réponses.
+    history: Mapped[list[dict[str, Any]]] = mapped_column(JSON, default=list)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
     responded_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    # Dernière décision du recruteur sur une demande de créneau.
+    recruiter_responded_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime, nullable=True
+    )
 
 
 class InboundEmail(Base):

@@ -414,6 +414,11 @@ def _ensure_columns() -> None:
         "assistant_messages": [
             ("conversation_id", "INTEGER"),
         ],
+        "interview_invites": [
+            ("requested_slots", "JSON"),
+            ("history", "JSON"),
+            ("recruiter_responded_at", "DATETIME"),
+        ],
     }
     with engine.begin() as conn:
         for table, columns in additions.items():

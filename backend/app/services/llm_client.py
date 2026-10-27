@@ -81,19 +81,17 @@ def _notify_admin_failure(db, conf: dict, error: str) -> None:
         return
     _last_failure_notified = now
     try:
-        from app import models as _models
-        from app.services.notifications import dispatch
+        from app.services import admin_alerts
 
-        admins = db.query(_models.User).filter(_models.User.role == "admin").all()
-        for admin in admins:
-            dispatch(
-                db, admin,
-                "OrientSkill AI : défaillance du modèle IA",
-                f"L'appel au modèle ({conf.get('model') or 'non précisé'}, "
-                f"{conf.get('base_url')}) a échoué : {error}. L'assistant "
-                "passe en mode local. Vérifiez la clé API dans "
-                "Paramètres > LLM. (La clé n'apparaît jamais dans ce message.)",
-            )
+        admin_alerts.notify_admins(
+            db,
+            "critical",
+            "OrientSkill AI : défaillance du modèle IA",
+            f"L'appel au modèle ({conf.get('model') or 'non précisé'}, "
+            f"{conf.get('base_url')}) a échoué : {error}. L'assistant "
+            "passe en mode local. Vérifiez la clé API dans "
+            "Paramètres > LLM. (La clé n'apparaît jamais dans ce message.)",
+        )
     except Exception:
         pass  # notifier ne doit jamais casser l'assistant
 

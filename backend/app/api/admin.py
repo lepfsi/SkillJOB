@@ -17,8 +17,8 @@ from sqlalchemy.orm import Session
 from app import config, models, schemas, security
 from app.database import get_db
 from app.services import (
-    email_routing, inbound_email, job_media, llm_client, notifications,
-    settings_store, uploads,
+    admin_alerts, email_routing, inbound_email, job_media, llm_client,
+    notifications, settings_store, uploads,
 )
 
 logger = logging.getLogger("orientskill.admin")
@@ -236,6 +236,51 @@ def update_settings(group: str, payload: schemas.AdminSettingsUpdate,
         # La relève IMAP démarre ou s'arrête sans redémarrage du serveur.
         inbound_email.inbound_service.restart_if_configured()
     return {group: updated}
+
+
+# --------------------------------------- Équipe d'administration et alertes
+
+@router.get("/alert-settings", response_model=dict)
+def get_alert_settings(db: Session = Depends(get_db)):
+    """Catégories, destinataires et journal des alertes administratives."""
+    return {
+        "categories": admin_alerts.categories_catalog(),
+        "config": admin_alerts.get_config(db),
+        "journal": admin_alerts.journal(db, limit=50),
+    }
+
+
+@router.put("/alert-settings", response_model=dict)
+def update_alert_settings(
+    payload: schemas.AdminAlertSettingsIn,
+    db: Session = Depends(get_db),
+):
+    try:
+        config = admin_alerts.save_config(db, payload.model_dump())
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    return {
+        "categories": admin_alerts.categories_catalog(),
+        "config": config,
+        "journal": admin_alerts.journal(db, limit=50),
+    }
+
+
+@router.post("/alert-settings/test", response_model=dict)
+def test_alert_settings(
+    payload: schemas.AdminAlertTestIn,
+    db: Session = Depends(get_db),
+):
+    """Vérifie le routage d'une catégorie SANS envoyer d'e-mail."""
+    return admin_alerts.test_config(db, payload.category)
+
+
+@router.get("/alert-journal", response_model=list[dict])
+def get_alert_journal(
+    limit: int = Query(default=50, ge=1, le=200),
+    db: Session = Depends(get_db),
+):
+    return admin_alerts.journal(db, limit=limit)
 
 
 @router.post("/test-llm", response_model=schemas.TestResult)

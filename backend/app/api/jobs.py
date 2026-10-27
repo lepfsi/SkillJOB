@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app import models, schemas, security
 from app.database import get_db
-from app.services import email_routing, job_media, job_parser
+from app.services import admin_alerts, email_routing, job_media, job_parser, job_writer
 from app.services.matching import compute_match
 from app.services.profile_store import get_profile_row, profile_to_dict
 from app.services.skills_taxonomy import load_taxonomy
@@ -151,6 +151,28 @@ def parse_job(
     return job_parser.parse_job_description(payload.description)
 
 
+@router.post("/write", response_model=dict)
+def write_job(
+    payload: schemas.JobParseIn,
+    user: models.User = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Rédaction assistée : propose intitulé, description et profil.
+
+    La proposition n'est jamais enregistrée. Le recruteur l'applique au
+    formulaire, la relit et la corrige avant publication.
+    """
+    if user.role not in ("recruiter", "admin"):
+        raise HTTPException(
+            status_code=403,
+            detail="Réservé aux recruteurs et administrateurs",
+        )
+    draft = job_writer.write_job_draft(db, payload.description)
+    if draft.get("error"):
+        raise HTTPException(status_code=422, detail=draft["error"])
+    return draft
+
+
 @router.get("/{job_id}", response_model=schemas.JobDetailResponse)
 def get_job(
     job_id: int,
@@ -236,6 +258,18 @@ def report_job(
     db.add(report)
     db.commit()
     db.refresh(report)
+    admin_alerts.notify_admins(
+        db,
+        "report",
+        f"Signalement d'offre : {job.title}",
+        (
+            f"L'offre « {job.title} » ({job.company}) a été signalée par "
+            f"{user.full_name} ({user.email}).\n"
+            f"Motif : {payload.reason}\n"
+            f"Précisions : {details or '(aucune)'}\n"
+            "Le signalement attend un traitement dans la console."
+        ),
+    )
     return report_to_dict(report)
 
 

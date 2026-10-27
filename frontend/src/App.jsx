@@ -41,11 +41,13 @@ import AdminSources from "./pages/admin/AdminSources.jsx";
 import AdminPublicContent from "./pages/admin/AdminPublicContent.jsx";
 import AdminInstitutional from "./pages/admin/AdminInstitutional.jsx";
 import AdminSkillGraph from "./pages/admin/AdminSkillGraph.jsx";
+import AdminAlerts from "./pages/admin/AdminAlerts.jsx";
 
 import RecruiterHome from "./pages/recruiter/RecruiterHome.jsx";
 import RecruiterJobs from "./pages/recruiter/RecruiterJobs.jsx";
 import RecruiterCandidates from "./pages/recruiter/RecruiterCandidates.jsx";
 import RecruiterShortlists from "./pages/recruiter/RecruiterShortlists.jsx";
+import RecruiterInterviewRequests from "./pages/recruiter/RecruiterInterviewRequests.jsx";
 
 // Cloisonnement des rôles : chaque rôle voit UNIQUEMENT ses pages.
 // - candidat : parcours talent complet ;
@@ -124,6 +126,7 @@ export default function App() {
       <Route path="/recruteur/candidats" element={<RequireRecruiter><RecruiterCandidates /></RequireRecruiter>} />
       <Route path="/recruteur/candidats/:candidateId" element={<RequireRecruiter><RecruiterCandidates /></RequireRecruiter>} />
       <Route path="/recruteur/shortlists" element={<RequireRecruiter><RecruiterShortlists /></RequireRecruiter>} />
+      <Route path="/recruteur/demandes" element={<RequireRecruiter><RecruiterInterviewRequests /></RequireRecruiter>} />
 
       {/* -------------------- Console admin -------------------- */}
       <Route path="/admin" element={<RequireAdmin><AdminHome /></RequireAdmin>} />
@@ -135,6 +138,7 @@ export default function App() {
       <Route path="/admin/signalements" element={<RequireAdmin><AdminReports /></RequireAdmin>} />
       <Route path="/admin/candidatures" element={<RequireAdmin><AdminApplications /></RequireAdmin>} />
       <Route path="/admin/sources" element={<RequireAdmin><AdminSources /></RequireAdmin>} />
+      <Route path="/admin/equipe-alertes" element={<RequireAdmin><AdminAlerts /></RequireAdmin>} />
       <Route path="/admin/contenus" element={<RequireAdmin><AdminPublicContent /></RequireAdmin>} />
       <Route path="/admin/institutionnel" element={<RequireAdmin><AdminInstitutional /></RequireAdmin>} />
       <Route path="/admin/skill-graph" element={<RequireAdmin><AdminSkillGraph /></RequireAdmin>} />

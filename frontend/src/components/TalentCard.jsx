@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import Avatar from "./Avatar.jsx";
 import MatchBadge from "./MatchBadge.jsx";
 import SkillTag from "./SkillTag.jsx";
+import VerifiedBadge from "./VerifiedBadge.jsx";
 import { ArrowIcon, Icon, I } from "./icons.jsx";
 import { plural } from "../lib.js";
 
@@ -36,10 +37,7 @@ export default function TalentCard({
           <div className="talent-card-titleline">
             <h2>{candidate.full_name}</h2>
             {candidate.verified ? (
-              <span className="verified-chip">
-                <Icon d={I.shield} size={11} />
-                Profil vérifié
-              </span>
+              <VerifiedBadge label="Profil vérifié" size={14} />
             ) : (
               <span className="badge badge-none">Non vérifié</span>
             )}

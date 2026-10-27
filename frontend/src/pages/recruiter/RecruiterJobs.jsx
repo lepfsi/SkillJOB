@@ -4,6 +4,7 @@ import { api } from "../../api/client.js";
 import { CONTRACT_TYPES, fmtDate } from "../../lib.js";
 import { Loader, ErrorNote, Empty } from "../../components/ui.jsx";
 import { DomainPicker } from "../../components/DomainPicker.jsx";
+import JobPublicView from "../../components/JobPublicView.jsx";
 
 // Publication et gestion des offres de l'entreprise (branding automatique).
 const EMPTY_FORM = {
@@ -24,10 +25,167 @@ const EMPTY_FORM = {
   skills: [{ name: "", importance: "core" }],
 };
 
-function JobForm({ initial, onCancel, onSaved }) {
+function JobWritingAssistant({ onApply }) {
+  const [open, setOpen] = useState(false);
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [proposal, setProposal] = useState(null);
+  const [applied, setApplied] = useState(false);
+
+  async function generate() {
+    if (text.trim().length < 10) {
+      setError("Décrivez l'offre en une phrase au moins (10 caractères).");
+      return;
+    }
+    setBusy(true);
+    setError("");
+    setApplied(false);
+    try {
+      const draft = await api("/jobs/write", {
+        method: "POST",
+        body: { description: text.trim() },
+      });
+      setProposal(draft);
+    } catch (err) {
+      setError(err.detail || "Proposition impossible");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function apply() {
+    onApply(proposal);
+    setProposal(null);
+    setApplied(true);
+  }
+
+  function ignore() {
+    setProposal(null);
+    setApplied(false);
+  }
+
+  return (
+    <div className={`job-writer${open ? " is-open" : ""}`}>
+      <div className="job-writer-head">
+        <div>
+          <h3>Rédaction assistée</h3>
+          <p className="small muted">
+            Décrivez votre besoin en quelques phrases : l'assistant propose
+            un intitulé, une description et un profil recherché. Rien n'est
+            appliqué ni publié sans votre validation.
+          </p>
+        </div>
+        <button
+          type="button"
+          className="btn btn-outline btn-small"
+          onClick={() => setOpen((value) => !value)}
+        >
+          {open ? "Masquer" : "Ouvrir l'assistant"}
+        </button>
+      </div>
+      {open && (
+        <div className="job-writer-form">
+          <label className="field">
+            <span>Décrivez le poste et le besoin</span>
+            <textarea
+              rows="4"
+              value={text}
+              onChange={(e) => setText(e.target.value)}
+              maxLength={4000}
+              placeholder="Ex. Nous recherchons un technicien support informatique à Douala pour accompagner nos équipes. CDI. Windows Server, TCP/IP et sens du service."
+            />
+          </label>
+          <div className="actions-row">
+            <button
+              type="button"
+              className="btn btn-primary btn-small"
+              disabled={busy || text.trim().length < 10}
+              onClick={generate}
+            >
+              {busy ? "Rédaction…" : "Proposer une rédaction"}
+            </button>
+            <span className="small muted">
+              La proposition reste un brouillon : relisez chaque champ.
+            </span>
+          </div>
+          <ErrorNote error={error} />
+          {applied && (
+            <div className="alert alert-success">
+              Suggestions appliquées au formulaire. Corrigez librement avant
+              de publier.
+            </div>
+          )}
+          {proposal && (
+            <div className="job-writer-proposal">
+              <div className="job-writer-proposal-head">
+                <h4>Proposition à relire</h4>
+                <span className="chip">
+                  {proposal.mode === "llm" ? "Modèle IA" : "Règles locales"}
+                </span>
+              </div>
+              <p className="small muted">{proposal.warning}</p>
+              <dl className="job-writer-fields">
+                <div>
+                  <dt>Intitulé</dt>
+                  <dd>{proposal.title || "À compléter"}</dd>
+                </div>
+                <div>
+                  <dt>Lieu et contrat</dt>
+                  <dd>
+                    {[proposal.location, proposal.contract_type]
+                      .filter(Boolean)
+                      .join(" · ") || "À compléter"}
+                  </dd>
+                </div>
+                <div>
+                  <dt>Description</dt>
+                  <dd className="job-writer-text">{proposal.description}</dd>
+                </div>
+                <div>
+                  <dt>Profil recherché</dt>
+                  <dd className="job-writer-text">{proposal.requirements}</dd>
+                </div>
+              </dl>
+              {proposal.required_skills?.length > 0 && (
+                <div className="chip-row">
+                  {proposal.required_skills.map((skill) => (
+                    <span className="chip" key={skill.name}>
+                      {skill.name}
+                      {skill.importance === "core" ? " · essentielle" : ""}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <div className="actions-row">
+                <button
+                  type="button"
+                  className="btn btn-primary btn-small"
+                  onClick={apply}
+                >
+                  Appliquer les suggestions
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-small"
+                  onClick={ignore}
+                >
+                  Ignorer
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function JobForm({ initial, company, onCancel, onSaved, onPreview }) {
   const [form, setForm] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [previewSeen, setPreviewSeen] = useState(Boolean(initial.id));
   const [keywordsText, setKeywordsText] = useState(
     (initial.apply_keywords || []).join(", ")
   );
@@ -53,6 +211,59 @@ function JobForm({ initial, onCancel, onSaved }) {
       ...f,
       skills: f.skills.map((s, j) => (j === i ? { ...s, [k]: v } : s)),
     }));
+
+  function applyProposal(draft) {
+    setForm((f) => ({
+      ...f,
+      title: draft.title || f.title,
+      location: draft.location || f.location,
+      sector: draft.sector || f.sector,
+      contract_type: draft.contract_type || f.contract_type,
+      description: draft.description || f.description,
+      requirements: draft.requirements || f.requirements,
+      skills: draft.required_skills?.length
+        ? draft.required_skills.map((skill) => ({
+            name: skill.name,
+            importance: skill.importance || "core",
+          }))
+        : f.skills,
+    }));
+    // Une proposition appliquée après un premier aperçu doit être relue
+    // dans la fiche publique avant publication.
+    setPreviewSeen(false);
+  }
+
+  function openPreview() {
+    const skills = form.skills
+      .filter((skill) => skill.name.trim())
+      .map((skill) => ({
+        name: skill.name.trim(),
+        importance: skill.importance,
+      }));
+    onPreview({
+      ...form,
+      company: company?.name || form.company,
+      company_branding: company
+        ? {
+            name: company.name,
+            sector: company.sector,
+            description: company.description,
+          }
+        : null,
+      required_skills: skills,
+      photo_url: photoPreview,
+      email_reference: form.email_reference || "",
+      source: {
+        name: form.source_url ? "Lien externe" : "Espace recruteur",
+        url: form.source_url || "",
+      },
+      apply_channel: form.apply_channel || "platform",
+      deadline: form.deadline
+        ? `${String(form.deadline).slice(0, 10)}T23:59:00`
+        : null,
+    });
+    setPreviewSeen(true);
+  }
 
   async function submit(e) {
     e.preventDefault();
@@ -106,12 +317,17 @@ function JobForm({ initial, onCancel, onSaved }) {
 
   return (
     <form className="panel" onSubmit={submit}>
-      <h2>{form.id ? "Modifier l'offre" : "Publier une offre"}</h2>
+      <div className="job-form-head">
+        <h2>{form.id ? "Modifier l'offre" : "Publier une offre"}</h2>
+        {!form.id && <span className="chip">Brouillon non publié</span>}
+      </div>
       <p className="small muted">
         Votre entreprise et son branding sont attachés automatiquement à
-        l'offre (traçabilité §51 conservée).
+        l'offre (traçabilité §51 conservée). Tant que vous n'avez pas cliqué
+        sur « Publier l'offre », rien n'est enregistré.
       </p>
       <ErrorNote error={error} />
+      <JobWritingAssistant onApply={applyProposal} />
       <div className="grid-2">
         <label className="field">
           <span>Intitulé du poste *</span>
@@ -298,61 +514,25 @@ function JobForm({ initial, onCancel, onSaved }) {
         Ajouter une compétence
       </button>
       <div className="actions-row">
-        <button className="btn btn-primary" disabled={busy}>
+        <button
+          className="btn btn-primary"
+          disabled={busy || (!form.id && !previewSeen)}
+        >
           {busy ? "Enregistrement…" : form.id ? "Mettre à jour" : "Publier l'offre"}
+        </button>
+        <button type="button" className="btn btn-outline" onClick={openPreview}>
+          Aperçu de la fiche publique
         </button>
         <button type="button" className="btn btn-ghost" onClick={onCancel}>
           Annuler
         </button>
       </div>
-    </form>
-  );
-}
-
-function ParseHelper({ onParsed }) {
-  const [text, setText] = useState("");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState("");
-
-  async function parse(e) {
-    e.preventDefault();
-    if (text.trim().length < 10) {
-      setError("Décrivez l'offre en une phrase au moins (10 caractères).");
-      return;
-    }
-    setBusy(true);
-    setError("");
-    try {
-      const draft = await api("/jobs/parse", { method: "POST", body: { description: text } });
-      onParsed(draft);
-      setText("");
-    } catch (err) {
-      setError(err.detail);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <form className="panel" onSubmit={parse}>
-      <h2>Générer depuis une description (assistant IA)</h2>
-      <p className="small muted">
-        Décrivez l'offre en une phrase : l'assistant pré-remplit le
-        formulaire (poste, localisation, contrat, compétences reconnues).
-        Vous vérifiez et complétez avant publication : rien n'est inventé.
-      </p>
-      {error && <ErrorNote error={error} />}
-      <textarea
-        rows="3"
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-        placeholder="Ex. Nous recrutons un technicien support informatique chez Numérik Services à Douala. CDI. Compétences : Windows Server, TCP/IP."
-      />
-      <div className="actions-row">
-        <button className="btn btn-primary" disabled={busy}>
-          {busy ? "Analyse…" : "Pré-remplir le formulaire"}
-        </button>
-      </div>
+      {!form.id && !previewSeen && (
+        <p className="small muted">
+          Ouvrez l'aperçu de la fiche publique avant de publier : vous
+          vérifiez ainsi le rendu final, le branding et la référence.
+        </p>
+      )}
     </form>
   );
 }
@@ -360,7 +540,9 @@ function ParseHelper({ onParsed }) {
 export default function RecruiterJobs() {
   const [jobs, setJobs] = useState(null);
   const [applications, setApplications] = useState(null);
+  const [company, setCompany] = useState(null);
   const [form, setForm] = useState(null);
+  const [previewJob, setPreviewJob] = useState(null);
   const [copiedId, setCopiedId] = useState(null);
   const [error, setError] = useState("");
 
@@ -369,10 +551,12 @@ export default function RecruiterJobs() {
     Promise.all([
       api("/recruiter/jobs"),
       api("/recruiter/applications").catch(() => []),
+      api("/recruiter/company").catch(() => null),
     ])
-      .then(([jobRows, applicationRows]) => {
+      .then(([jobRows, applicationRows, companyRow]) => {
         setJobs(jobRows);
         setApplications(applicationRows);
+        setCompany(companyRow);
       })
       .catch((e) => setError(e.detail));
   };
@@ -416,26 +600,19 @@ export default function RecruiterJobs() {
     }
   }
 
-  function fromParsed(draft) {
-    setForm({
-      title: draft.title || "",
-      company: draft.company || "",
-      location: draft.location || "",
-      sector: draft.sector || "",
-      contract_type: draft.contract_type || "CDI",
-      description: draft.description || "",
-      requirements: draft.requirements || "",
-      salary: draft.salary || "",
-      deadline: String(draft.deadline || "").slice(0, 10),
-      source_url: draft.source_url || "",
-      apply_email: "",
-      apply_keywords: [],
-      email_reference: "",
-      skills: (draft.required_skills || []).length > 0
-        ? draft.required_skills.map((s) => ({ name: s.name, importance: s.importance }))
-        : [{ name: "", importance: "core" }],
+  function previewExisting(job) {
+    setPreviewJob({
+      ...job,
+      company: company?.name || job.company,
+      company_branding: company
+        ? {
+            name: company.name,
+            sector: company.sector,
+            description: company.description,
+          }
+        : null,
+      source: { name: job.source_name, url: job.source_url },
     });
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   return (
@@ -457,9 +634,15 @@ export default function RecruiterJobs() {
         </button>
       </div>
 
-      {!form && <ParseHelper onParsed={fromParsed} />}
-
-      {form && <JobForm initial={form} onCancel={() => setForm(null)} onSaved={reload} />}
+      {form && (
+        <JobForm
+          initial={form}
+          company={company}
+          onCancel={() => setForm(null)}
+          onSaved={reload}
+          onPreview={setPreviewJob}
+        />
+      )}
 
       {jobs.length === 0 && !form && (
         <Empty title="Aucune offre publiée">
@@ -493,9 +676,12 @@ export default function RecruiterJobs() {
               <button className="btn btn-remove btn-small" onClick={() => remove(j)}>
                 Supprimer
               </button>
-              <Link className="btn btn-ghost btn-small" to={`/opportunites/${j.id}`}>
+              <button
+                className="btn btn-ghost btn-small"
+                onClick={() => previewExisting(j)}
+              >
                 Aperçu
-              </Link>
+              </button>
               <button
                 className="btn btn-outline btn-small"
                 onClick={() => copyPublicLink(j)}
@@ -522,6 +708,51 @@ export default function RecruiterJobs() {
           </div>
         </div>
       ))}
+
+      {previewJob && (
+        <div
+          className="modal-backdrop"
+          role="presentation"
+          onClick={() => setPreviewJob(null)}
+        >
+          <div
+            className="modal modal-wide job-preview-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="job-preview-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="modal-head job-preview-head">
+              <div>
+                <h2 id="job-preview-title">Aperçu de la fiche publique</h2>
+                <p className="small muted">
+                  Rendu final tel que les candidats le verront. Le formulaire
+                  de candidature n'est pas inclus dans cet aperçu.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn btn-ghost btn-small"
+                onClick={() => setPreviewJob(null)}
+              >
+                Fermer
+              </button>
+            </div>
+            <div className="job-preview-body">
+              <JobPublicView job={previewJob} preview titleTag="h2" />
+            </div>
+            <div className="modal-actions">
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => setPreviewJob(null)}
+              >
+                Retour à la rédaction
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

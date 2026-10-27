@@ -708,17 +708,30 @@ class InterviewInviteOut(BaseModel):
     duration_min: int = 45
     subject: str
     message: str
-    status: Literal["pending", "accepted", "declined"]
+    status: Literal["pending", "accepted", "declined", "refused"]
     candidate_note: Optional[str] = None
+    requested_slots: list[datetime] = Field(default_factory=list)
+    history: list[dict[str, Any]] = Field(default_factory=list)
+    awaiting_recruiter: bool = False
     created_at: datetime
     responded_at: Optional[datetime] = None
+    recruiter_responded_at: Optional[datetime] = None
     email_sent: bool = False
     # Téléchargement .ics public (le jeton fait office de secret).
     calendar_url: str = ""
 
 
 class InterviewRespondIn(BaseModel):
-    decision: Literal["accepted", "declined"]
+    decision: Literal["accepted", "declined", "refused"]
+    note: str = Field(default="", max_length=1000)
+    # Obligatoire pour « declined » : une demande d'autre créneau doit
+    # toujours porter une proposition explicite.
+    requested_slots: list[datetime] = Field(default_factory=list)
+
+
+class InterviewRecruiterRespondIn(BaseModel):
+    action: Literal["accept_requested", "propose", "refuse"]
+    slot_at: Optional[datetime] = None
     note: str = Field(default="", max_length=1000)
 
 
@@ -828,11 +841,23 @@ class TopMatchEntry(BaseModel):
     score: int
 
 
+class SkillGapEntry(BaseModel):
+    """Écart de compétence expliqué et rattaché à sa source réelle."""
+
+    skill: str
+    reason: str
+    source: Literal["career", "job"]
+    source_label: str
+    score: int
+
+
 class DashboardOut(BaseModel):
     name: str
+    verified: bool = False
     new_opportunities: int
     strong_matches: int
     skills_to_improve: list[str]
+    skill_gaps: list[SkillGapEntry] = Field(default_factory=list)
     ongoing_applications: int
     interviews_to_prepare: int
     market_trends: list[MarketTrendEntry]
@@ -1332,6 +1357,22 @@ class AdminSettingsUpdate(BaseModel):
     """Mise à jour d'un groupe (fusion) ; secrets vides = inchangés."""
 
     data: dict[str, Any]
+
+
+class AdminAlertRecipientIn(BaseModel):
+    name: str = ""
+    email: str = Field(min_length=3, max_length=255)
+    categories: list[str] = Field(default_factory=list)
+
+
+class AdminAlertSettingsIn(BaseModel):
+    enabled: bool = True
+    categories: dict[str, bool] = Field(default_factory=dict)
+    recipients: list[AdminAlertRecipientIn] = Field(default_factory=list)
+
+
+class AdminAlertTestIn(BaseModel):
+    category: str = "critical"
 
 
 class TestResult(BaseModel):

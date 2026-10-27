@@ -61,6 +61,18 @@ DEFAULTS: dict[str, dict[str, Any]] = {
         "digest_enabled": False,
         "digest_hour": 8,
     },
+    "admin_alerts": {
+        # Équipe d'administration : catégories activables et destinataires.
+        "enabled": True,
+        "categories": {
+            "verification": True,
+            "appeal": True,
+            "report": True,
+            "ingestion": True,
+            "critical": True,
+        },
+        "recipients": [],
+    },
 }
 
 

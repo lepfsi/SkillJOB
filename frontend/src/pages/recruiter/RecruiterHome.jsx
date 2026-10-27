@@ -5,6 +5,7 @@ import { STATUS_LABELS } from "../../lib.js";
 import Avatar from "../../components/Avatar.jsx";
 import ContactDialog from "../../components/ContactDialog.jsx";
 import TalentCard from "../../components/TalentCard.jsx";
+import VerifiedBadge from "../../components/VerifiedBadge.jsx";
 import { Loader, ErrorNote } from "../../components/ui.jsx";
 
 // Dashboard recruteur (§37) : entreprise, offres publiées, profils
@@ -276,7 +277,9 @@ export default function RecruiterHome() {
                   />
                   <div>
                     <strong>{a.candidate_name}</strong>
-                    {a.candidate_verified && <span className="verified-chip" style={{ marginLeft: "0.5rem" }}>Profil vérifié</span>}
+                    {a.candidate_verified && (
+                      <VerifiedBadge label="Profil vérifié" size={13} className="verified-inline" />
+                    )}
                     <p className="job-meta" style={{ margin: "0.15rem 0" }}>
                       Postule à : {a.job_title} · statut : {STATUS_LABELS[a.status] || a.status}
                     </p>

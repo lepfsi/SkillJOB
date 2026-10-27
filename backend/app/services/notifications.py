@@ -31,6 +31,7 @@ EVENT_TYPES: dict[str, str] = {
     "message": "Message d'un recruteur",
     "application": "Mise à jour d'une candidature",
     "verification_decision": "Décision sur la vérification de votre profil",
+    "interview": "Invitation ou décision d'entretien",
 }
 
 DEFAULT_PREFS: dict[str, Any] = {

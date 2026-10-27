@@ -5,6 +5,7 @@ import ProfileEditor from "../components/ProfileEditor.jsx";
 import CvImportDialog from "../components/CvImportDialog.jsx";
 import PhotoCropDialog from "../components/PhotoCropDialog.jsx";
 import Ring from "../components/Ring.jsx";
+import VerifiedBadge from "../components/VerifiedBadge.jsx";
 import { Icon, I, ArrowIcon } from "../components/icons.jsx";
 import {
   sanitizeProfile,
@@ -427,6 +428,9 @@ export default function Profile() {
   const verified = verifStatus === "verified";
   const completeness = dash?.profile_completeness || { score: 0, checked: [], missing: [] };
   const skillsToImprove = dash?.skills_to_improve || [];
+  const skillGaps = dash?.skill_gaps?.length
+    ? dash.skill_gaps
+    : skillsToImprove.map((skill) => ({ skill, reason: "", source_label: "" }));
   const location = profile?.location || [user?.city, user?.region].filter(Boolean).join(", ");
   const availability = AVAILABILITY_LABELS[profile?.availability] || (profile?.availability ? `Disponibilité : ${profile.availability}` : "");
 
@@ -818,11 +822,7 @@ export default function Profile() {
           <div className="pf-id">
             <div className="pf-name-row">
               <h1>{user?.full_name}</h1>
-              {verified && (
-                <span className="pf-verified" title="Profil vérifié">
-                  <Icon d={I.check} size={13} />
-                </span>
-              )}
+              {verified && <VerifiedBadge size={20} />}
             </div>
             <p className="pf-title">{profile?.title || "Titre professionnel à renseigner"}</p>
             <div className="pf-meta">
@@ -970,12 +970,17 @@ export default function Profile() {
                 <span className="pf-trio-icon pf-tone-blue"><Icon d={I.zap} size={15} /></span>
                 <h3>Prochaines actions</h3>
               </div>
-              {skillsToImprove.length > 0 ? (
+              {skillGaps.length > 0 ? (
                 <>
                   <p className="pf-trio-sub">En renforçant vos compétences sur :</p>
                   <ul className="pf-action-list">
-                    {skillsToImprove.slice(0, 4).map((s) => (
-                      <li key={s}><Icon d={I.check} size={13} /> {s}</li>
+                    {skillGaps.slice(0, 4).map((gap) => (
+                      <li key={gap.skill} title={gap.reason || ""}>
+                        <Icon d={I.check} size={13} /> {gap.skill}
+                        {gap.source_label && (
+                          <span className="small muted"> · {gap.source_label}</span>
+                        )}
+                      </li>
                     ))}
                   </ul>
                 </>

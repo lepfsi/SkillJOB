@@ -218,6 +218,51 @@ def test_inbox_lists_expiring_event(client, admin_headers):
     ]
 
 
+def test_inbox_ignores_jobs_published_before_account():
+    """Un compte neuf ne voit pas les offres publiées avant sa création."""
+    since = datetime.utcnow() - timedelta(hours=1)
+    old_job = SimpleNamespace(
+        id=1001,
+        title="Offre antérieure",
+        company="Ancienne SARL",
+        location="Douala",
+        published_at=since - timedelta(days=2),
+        required_skills=[],
+        deadline=None,
+    )
+    new_job = SimpleNamespace(
+        id=1002,
+        title="Offre du jour",
+        company="Nouvelle SARL",
+        location="Douala",
+        published_at=since + timedelta(minutes=10),
+        required_skills=[],
+        deadline=None,
+    )
+    inbox = build_inbox(None, [old_job, new_job], [], since=since)
+    assert any(event["job_id"] == new_job.id for event in inbox)
+    assert not any(event["job_id"] == old_job.id for event in inbox)
+    assert all(event["at"] >= since for event in inbox)
+
+
+def test_new_account_inbox_starts_at_account_creation(client):
+    """L'API applique le même filtre pour un compte fraîchement créé."""
+    reg = client.post("/api/auth/register", json={
+        "email": "compte.neuf.notifs@orientskill.cm",
+        "password": "pass1234",
+        "full_name": "Compte Neuf",
+    })
+    assert reg.status_code == 201, reg.text
+    headers = {"Authorization": f"Bearer {reg.json()['token']}"}
+    me = client.get("/api/auth/me", headers=headers).json()
+    created_at = datetime.fromisoformat(me["created_at"].replace("Z", ""))
+    inbox = client.get("/api/inbox", headers=headers).json()
+    assert all(
+        datetime.fromisoformat(event["at"].replace("Z", "")) >= created_at
+        for event in inbox
+    )
+
+
 def test_inbox_drops_events_older_than_30_days():
     """Rétention in-app : un événement de plus de 30 jours disparaît."""
     old_job = SimpleNamespace(

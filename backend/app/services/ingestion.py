@@ -416,6 +416,7 @@ def _collect_source(snapshot: dict[str, Any]) -> dict[str, Any]:
 
 
 def _record_failure(db, source, error: str, duration_ms: int) -> dict[str, Any]:
+    previous_error = source.last_error or ""
     source.runs += 1
     source.failures += 1
     source.last_run_at = datetime.utcnow()
@@ -424,6 +425,21 @@ def _record_failure(db, source, error: str, duration_ms: int) -> dict[str, Any]:
     source.last_error = str(error)[:1000]
     source.last_status = f"Échec : {str(error)[:80]}"
     db.commit()
+    if not previous_error:
+        # Alerte uniquement à la première panne : une source qui échoue
+        # plusieurs fois de suite ne spamme pas l'équipe.
+        from app.services import admin_alerts
+
+        admin_alerts.notify_admins(
+            db,
+            "ingestion",
+            f"Échec de collecte : {source.name}",
+            (
+                f"La source « {source.name} » ({source.url}) n'a pas pu être "
+                f"lue.\nErreur : {str(error)[:1000]}\n"
+                "La collecte reprendra automatiquement au prochain passage."
+            ),
+        )
     return {
         "source": source.name,
         "imported": 0,

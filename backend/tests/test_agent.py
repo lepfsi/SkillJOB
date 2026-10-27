@@ -30,6 +30,19 @@ def test_assistant_gaps_are_career_oriented(client):
     assert "excel" not in reply.split("\n")[0].lower()
 
 
+def test_dashboard_skill_gaps_are_explained_and_career_oriented(client, demo_headers):
+    """Les écarts du tableau de bord suivent les métiers, avec une raison."""
+    data = client.get("/api/dashboard", headers=demo_headers).json()
+    assert data["skills_to_improve"], data
+    assert data["skill_gaps"], data
+    first = data["skill_gaps"][0]
+    assert first["reason"]
+    assert first["source"] in ("career", "job")
+    assert first["source_label"]
+    assert first["score"] >= 45
+    assert "excel" not in " ".join(data["skills_to_improve"]).lower()
+
+
 def test_assistant_formations_include_real_links(client):
     """« Quelles formations ? » renvoie les LIENS réels (markdown + links).
 

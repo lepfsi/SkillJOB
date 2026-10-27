@@ -4,6 +4,7 @@ import { api } from "../api/client.js";
 import { Icon, I, ArrowIcon } from "../components/icons.jsx";
 import { Loader, ErrorNote } from "../components/ui.jsx";
 import Ring from "../components/Ring.jsx";
+import VerifiedBadge from "../components/VerifiedBadge.jsx";
 import { initialsOf, mapInternalPath, plural } from "../lib.js";
 
 // Accueil (maquette) : l'agent travaille POUR le jeune. Toutes les
@@ -70,12 +71,17 @@ export default function Dashboard() {
   // Compétences réellement en hausse cette semaine (pct_change positif).
   const rising = data.market_trends.filter((t) => t.pct_change > 0).slice(0, 4);
 
+  // Écarts expliqués : chaque compétence prioritaire vient d'un métier
+  // recommandé ou d'une offre réelle, avec sa raison affichable.
+  const gapDetails = data.skill_gaps || [];
+  const gapBySkill = Object.fromEntries(gapDetails.map((g) => [g.skill, g]));
+
   // ---- Profil absent : inviter à démarrer ----
   if (profile === null) {
     return (
       <div className="page">
         <section className="home-hero">
-          <h1>Bonjour {firstName}</h1>
+          <h1>Bonjour {firstName} {data.verified && <VerifiedBadge size={20} />}</h1>
           <p>Chaque grande carrière commence par une bonne orientation.</p>
           <p>OrientSkill AI transforme votre potentiel en opportunités.</p>
         </section>
@@ -136,15 +142,16 @@ export default function Dashboard() {
   // 2) Formation réelle pour le principal écart, avec la demande chiffrée.
   if (data.skills_to_improve[0]) {
     const skill = data.skills_to_improve[0];
+    const gap = gapBySkill[skill];
     const demand = demandOf(skill);
+    const reason = gap?.reason
+      || (data.learning_focus
+        ? `Ressource réelle : ${data.learning_focus.title} · ${data.learning_focus.provider}`
+        : "Pour combler votre principal écart face aux offres.");
     plan.push({
       title: `Suivre une formation en ${skill}`,
-      note: data.learning_focus
-        ? `Ressource réelle : ${data.learning_focus.title} · ${data.learning_focus.provider}`
-          + (demand ? ` · demandée par ${demand} des ${activeOffers} offres actives.` : "")
-        : demand
-          ? `Compétence manquante dans ${demand} des ${activeOffers} offres actives.`
-          : "Pour combler votre principal écart face aux offres.",
+      note: reason
+        + (demand ? ` Demandée par ${demand} des ${activeOffers} offres actives.` : ""),
       to: data.learning_focus?.href
         ? mapInternalPath(data.learning_focus.href)
         : "/learning",
@@ -154,12 +161,12 @@ export default function Dashboard() {
   // 3) Renforcer la deuxième compétence, avec sa vraie demande.
   if (data.skills_to_improve[1]) {
     const skill = data.skills_to_improve[1];
+    const gap = gapBySkill[skill];
     const demand = demandOf(skill);
     plan.push({
       title: `Renforcer ${skill}`,
-      note: demand
-        ? `Demandée par ${demand} des ${activeOffers} offres actives : la remonter augmente vos correspondances.`
-        : "Compétence émergente dans les offres de votre domaine.",
+      note: (gap?.reason || "Compétence émergente dans les offres de votre domaine.")
+        + (demand ? ` Demandée par ${demand} des ${activeOffers} offres actives.` : ""),
       to: "/learning",
       cta: "Voir les formations",
     });
@@ -200,7 +207,7 @@ export default function Dashboard() {
     <div className="page">
       {/* ---------- Bandeau : message d'accueil de l'agent ---------- */}
       <section className="home-hero">
-        <h1>Bonjour {firstName}</h1>
+        <h1>Bonjour {firstName} {data.verified && <VerifiedBadge size={20} />}</h1>
         <p className="hero-agent-label">
           <Icon d={I.bot} size={14} /> {data.ai_label || "Le point de votre agent"}
         </p>
@@ -267,9 +274,20 @@ export default function Dashboard() {
                     <span className="small muted">Vos priorités pour progresser</span>
                     <div className="naa-chips">
                       {data.skills_to_improve.slice(0, 3).map((s) => (
-                        <span key={s} className="chip-soft"><Icon d={I.zap} size={13} /> {s}</span>
+                        <span
+                          key={s}
+                          className="chip-soft"
+                          title={gapBySkill[s]?.reason || ""}
+                        >
+                          <Icon d={I.zap} size={13} /> {s}
+                        </span>
                       ))}
                     </div>
+                    {gapDetails[0] && (
+                      <p className="small muted" style={{ margin: "0.45rem 0 0" }}>
+                        {gapDetails[0].reason}
+                      </p>
+                    )}
                   </div>
                 )}
                 <div className="naa-actions">

@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app import config, models, schemas, security
 from app.database import get_db
-from app.services import mfa as mfa_service
+from app.services import admin_alerts, mfa as mfa_service
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -167,11 +167,29 @@ def submit_appeal(payload: schemas.AppealIn, db: Session = Depends(get_db)):
         pending.message = message
         db.commit()
         db.refresh(pending)
+        admin_alerts.notify_admins(
+            db,
+            "appeal",
+            f"Recours mis à jour : {user.full_name}",
+            (
+                f"{user.full_name} ({user.email}) a actualisé son recours.\n"
+                f"Message : {message}"
+            ),
+        )
         return pending
     row = models.BanAppeal(user_id=user.id, message=message, status="pending")
     db.add(row)
     db.commit()
     db.refresh(row)
+    admin_alerts.notify_admins(
+        db,
+        "appeal",
+        f"Nouveau recours : {user.full_name}",
+        (
+            f"{user.full_name} ({user.email}) conteste la suspension de "
+            f"son compte.\nMessage : {message}"
+        ),
+    )
     return row
 
 

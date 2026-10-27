@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 from app import config, models, schemas, security
 from app.database import get_db
-from app.services import uploads
+from app.services import admin_alerts, uploads
 from app.services import cv_extractor, profile_store, questionnaire
 
 router = APIRouter(prefix="/api/profile", tags=["profile"])
@@ -82,6 +82,15 @@ async def request_verification(
     user.identity_doc_path = uploads.store(path)
     user.verification_status = "pending"
     db.commit()
+    admin_alerts.notify_admins(
+        db,
+        "verification",
+        f"Nouvelle demande de vérification : {user.full_name}",
+        (
+            f"{user.full_name} ({user.email}) a déposé une pièce d'identité. "
+            "La demande attend un examen dans la console d'administration."
+        ),
+    )
     return {
         "status": user.verification_status,
         "requested_at": None,

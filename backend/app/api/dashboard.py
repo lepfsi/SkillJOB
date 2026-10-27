@@ -14,6 +14,7 @@ from app.services.eventlog import _reference_now, build_inbox
 from app.services import interviews as interview_service
 from app.services.market import weekly_indicators
 from app.services.matching import LEVEL_STRONG, compute_match
+from app.services.orientation import prioritized_skill_gaps
 from app.services.profile_store import get_profile_row, profile_to_dict
 from app.services.skills_taxonomy import load_taxonomy
 
@@ -41,7 +42,6 @@ def dashboard(
     new_opportunities = sum(1 for j in jobs if (now - j.published_at).days <= 14)
 
     strong_matches: list[tuple[models.Job, dict]] = []
-    gap_counter: Counter[str] = Counter()
     matches: dict[int, dict] = {}
     for job in jobs:
         if not profile:
@@ -51,13 +51,16 @@ def dashboard(
         matches[job.id] = match
         if match["score"] >= LEVEL_STRONG:
             strong_matches.append((job, match))
-        for name in match.get("missing", []):
-            core_names = {
-                r["name"] for r in job.required_skills if r.get("importance") == "core"
-            }
-            if name in core_names:
-                gap_counter[name] += 1
-    skills_to_improve = [name for name, _ in gap_counter.most_common(5)]
+
+    # Écarts priorisés par les métiers qui correspondent au profil, puis par
+    # les meilleures offres. Fini l'agrégation de toutes les offres, qui
+    # faisait remonter « Excel » à un technicien réseau.
+    careers = db.query(models.Career).all() if profile else []
+    skill_gaps = (
+        prioritized_skill_gaps(skills, jobs, careers, taxonomy, limit=5)
+        if profile else []
+    )
+    skills_to_improve = [gap["skill"] for gap in skill_gaps]
 
     # Ressource exacte pour le premier écart : le tableau de bord et l'agent
     # peuvent ainsi ouvrir la fiche de formation précise, pas la page générique.
@@ -191,9 +194,11 @@ def dashboard(
 
     return {
         "name": user.full_name,
+        "verified": user.verification_status == "verified",
         "new_opportunities": new_opportunities,
         "strong_matches": len(strong_matches),
         "skills_to_improve": skills_to_improve,
+        "skill_gaps": skill_gaps,
         "ongoing_applications": len(ongoing),
         "interviews_to_prepare": len(interviews),
         "market_trends": market_trends,
@@ -648,7 +653,10 @@ def _notification_events(db: Session, user: models.User) -> list[dict]:
         .filter(models.Application.user_id == user.id)
         .all()
     )
-    events = build_inbox(profile, jobs, applications, load_taxonomy())
+    events = build_inbox(
+        profile, jobs, applications, load_taxonomy(),
+        since=getattr(user, "created_at", None),
+    )
 
     # Signalements du candidat TRAITÉS par l'administration : la réponse
     # vit dans les notifications, pas sur la fiche de l'offre.
@@ -727,6 +735,7 @@ def _notification_events(db: Session, user: models.User) -> list[dict]:
         .filter(
             models.InterviewInvite.candidate_id == user.id,
             models.InterviewInvite.status == "pending",
+            models.InterviewInvite.recruiter_responded_at.is_(None),
         )
         .order_by(models.InterviewInvite.created_at.desc())
         .limit(10)
@@ -744,6 +753,46 @@ def _notification_events(db: Session, user: models.User) -> list[dict]:
                 f"{interview_service.slot_label(invite.slot_at)}. "
                 "Répondez depuis la rubrique Entretiens."
             ),
+            "job_id": invite.job_id,
+        })
+
+    # Décisions du recruteur sur une demande d'autre créneau : le candidat
+    # les retrouve dans ses notifications, sans passer par la messagerie.
+    decisions = (
+        db.query(models.InterviewInvite)
+        .filter(
+            models.InterviewInvite.candidate_id == user.id,
+            models.InterviewInvite.recruiter_responded_at.isnot(None),
+        )
+        .order_by(models.InterviewInvite.recruiter_responded_at.desc())
+        .limit(10)
+        .all()
+    )
+    for invite in decisions:
+        job = db.get(models.Job, invite.job_id)
+        title = job.title if job else f"offre #{invite.job_id}"
+        company = f" chez {job.company}" if job and job.company else ""
+        slot = interview_service.slot_label(invite.slot_at)
+        if invite.status == "accepted":
+            message = (
+                f"Le recruteur a accepté votre créneau pour « {title} »"
+                f"{company} : {slot}. L'entretien est confirmé."
+            )
+        elif invite.status == "refused":
+            message = (
+                f"Le recruteur a mis fin au processus d'entretien pour "
+                f"« {title} »{company}."
+            )
+        else:
+            message = (
+                f"Le recruteur vous propose un nouveau créneau pour "
+                f"« {title} »{company} : {slot}. Répondez depuis la rubrique "
+                "Entretiens."
+            )
+        events.append({
+            "at": invite.recruiter_responded_at,
+            "kind": "interview",
+            "message": message,
             "job_id": invite.job_id,
         })
 
@@ -766,6 +815,17 @@ def _notification_events(db: Session, user: models.User) -> list[dict]:
             "message": message,
             "job_id": None,
         })
+
+    # Les sources persistées (signalements, recours, invitations,
+    # vérification) sont elles aussi filtrées : un compte neuf ne doit pas
+    # hériter d'événements antérieurs à sa création.
+    created_at = getattr(user, "created_at", None)
+    if created_at is not None:
+        created_naive = _naive_utc(created_at)
+        events = [
+            event for event in events
+            if _naive_utc(event["at"]) >= created_naive
+        ]
 
     seen_at = getattr(user, "notifications_seen_at", None)
     events.sort(key=lambda e: _naive_utc(e["at"]), reverse=True)
