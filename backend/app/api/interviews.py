@@ -113,6 +113,9 @@ def respond(
 
     invite.status = payload.decision
     invite.responded_at = models.utcnow()
+    # Le candidat a répondu au dernier créneau : la décision précédente du
+    # recruteur ne doit plus apparaître comme une notification en attente.
+    invite.recruiter_responded_at = None
     invite.candidate_note = note or None
     invite.requested_slots = (
         [slot.isoformat(timespec="minutes") for slot in requested]
