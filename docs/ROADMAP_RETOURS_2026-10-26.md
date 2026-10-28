@@ -612,6 +612,18 @@ Renforcer la lisibilité et la crédibilité visuelle de l'ensemble.
 - Les badges et cartes deviennent plus institutionnels.
 - Aucune régression d'accessibilité n'est introduite.
 
+Statut : implémenté et vérifié le 28 octobre 2026. Une échelle unique
+de six jetons remplace tous les rayons codés en dur : `xs` 4 px,
+`sm` 6 px, `md` 8 px, `lg` 10 px, `xl` 12 px et `pill` 999 px. Les
+badges, statuts et compétences sont rectangulaires ; les chips, filtres
+et onglets utilisent le rayon `sm`. Les entêtes de section ont un filet
+de séparation discret. Le vert institutionnel et l'orange brûlé ont été
+assombris pour respecter le contraste AA. Un test d'audit
+(`test_v33_visual_identity.py`) vérifie l'échelle, l'absence de rayons
+hors jetons et onze combinaisons de contraste. Vérification visuelle
+aux largeurs 1280, 768 et 375 px sur l'accueil, les opportunités, les
+notifications, les candidatures recruteur et les recours admin.
+
 ### 21. Page de notifications pour l'admin
 
 **Constat**

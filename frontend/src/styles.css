@@ -1,33 +1,38 @@
 /* ============================================================
    OrientSkill AI: feuille de style unique
    Design sobre, mobile-first, hiérarchie claire (§78).
-   Palette : vert émeraude, blanc, accent orange. Tuiles pastel pour
-   l'iconographie, ombres douces, rayons généreux.
-   Typographie : Poppins (titres) + Inter (texte), repli système.
+   Palette : vert institutionnel, blanc, accent orange brûlé. Tuiles
+   pastel pour l'iconographie, ombres discrètes, échelle unique de
+   rayons. Typographie : Poppins (titres) + Inter (texte), repli système.
    ============================================================ */
 
 :root {
-  --green: #0e8a63;
-  --green-dark: #0a6b4c;
+  --green: #0a6b4c;
+  --green-dark: #073d2b;
   --green-bright: #16b981;
   --green-soft: #e6f6ef;
   --green-ink: #0a5c42;
-  --accent: #e67e22;
+  --accent: #b45309;
   --accent-soft: #fdf3e3;
-  --bg: #f5f7f8;
+  --bg: #f4f7f5;
   --panel: #ffffff;
-  --border: #e3e8e6;
+  --border: #dbe3df;
   --text: #16211c;
   --muted: #5b6a63;
   --warn: #9a6207;
   --danger: #b23b3b;
-  --ok: #0e8a63;
+  --ok: #0a6b4c;
   --slate: #44524b;
   --sidebar-bg: #0b2a21;
   --sidebar-bg-2: #0d3226;
-  --radius: 12px;
-  --radius-sm: 8px;
-  --shadow: 0 1px 2px rgba(16, 40, 30, 0.05), 0 12px 28px -20px rgba(16, 40, 30, 0.4);
+  /* Échelle unique de rayons (point 12) : xs, sm, md, lg, xl, pill. */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius: 8px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-pill: 999px;
+  --shadow: 0 1px 2px rgba(16, 40, 30, 0.05), 0 8px 20px -16px rgba(16, 40, 30, 0.35);
   --shadow-sm: 0 1px 2px rgba(16, 40, 30, 0.06);
   --font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --font-head: "Poppins", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -74,7 +79,7 @@ a { color: var(--green-dark); }
   position: relative;
   overflow: hidden;
   background:
-    radial-gradient(900px 600px at 12% -10%, rgba(230, 126, 34, 0.22), transparent 60%),
+    radial-gradient(900px 600px at 12% -10%, rgba(180, 83, 9, 0.22), transparent 60%),
     radial-gradient(800px 700px at 95% 15%, rgba(18, 117, 76, 0.45), transparent 55%),
     linear-gradient(165deg, #071f15 0%, #0d2f21 55%, #103825 100%);
 }
@@ -114,7 +119,7 @@ a { color: var(--green-dark); }
   margin: 0;
   border: none;
   padding-left: 1.1rem;
-  border-left: 2px solid rgba(230, 126, 34, 0.65);
+  border-left: 2px solid rgba(180, 83, 9, 0.65);
 }
 .auth-quote p {
   margin: 0;
@@ -139,7 +144,7 @@ a { color: var(--green-dark); }
   z-index: 2;
   background: rgba(255, 255, 255, 0.985);
   border: 1px solid rgba(13, 47, 33, 0.1);
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   box-shadow:
     0 24px 70px rgba(0, 0, 0, 0.45),
     0 4px 14px rgba(0, 0, 0, 0.22);
@@ -200,7 +205,7 @@ a { color: var(--green-dark); }
 .brand-mark {
   width: 36px;
   height: 36px;
-  border-radius: 11px;
+  border-radius: var(--radius-lg);
   background: linear-gradient(135deg, #14a37a, #0a6b4c);
   color: #fff;
   font-weight: 800;
@@ -246,7 +251,7 @@ a { color: var(--green-dark); }
   letter-spacing: 0.11em;
   color: rgba(231, 242, 236, 0.4);
   font-family: var(--font);
-  border-radius: 8px;
+  border-radius: var(--radius);
 }
 .nav-heading:hover { color: rgba(231, 242, 236, 0.8); }
 .nav-chevron { transition: transform 0.15s ease; opacity: 0.55; }
@@ -258,7 +263,7 @@ a { color: var(--green-dark); }
   align-items: center;
   gap: 0.65rem;
   padding: 0.55rem 0.65rem;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   color: rgba(231, 242, 236, 0.74);
   text-decoration: none;
   font-size: 0.875rem;
@@ -288,7 +293,7 @@ a { color: var(--green-dark); }
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--accent);
   color: #fff;
   font-size: 0.68rem;
@@ -305,14 +310,14 @@ a { color: var(--green-dark); }
   margin-top: 0.9rem;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.09);
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   padding: 0.85rem 0.9rem;
 }
 .sidebar-agent-head { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem; }
 .sidebar-agent-icon {
   width: 30px;
   height: 30px;
-  border-radius: 9px;
+  border-radius: var(--radius);
   background: linear-gradient(135deg, #14a37a, #0a6b4c);
   color: #fff;
   display: inline-flex;
@@ -339,7 +344,7 @@ a { color: var(--green-dark); }
 .sidebar-avatar {
   width: 34px;
   height: 34px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: rgba(255, 255, 255, 0.12);
   color: #fff;
   font-size: 0.75rem;
@@ -382,13 +387,13 @@ a { color: var(--green-dark); }
   color: var(--muted);
   pointer-events: none;
 }
-.topbar-search input { padding-left: 2.3rem; border-radius: 999px; background: #fff; }
+.topbar-search input { padding-left: 2.3rem; border-radius: var(--radius-pill); background: #fff; }
 .topbar-actions { margin-left: auto; display: flex; align-items: center; gap: 0.55rem; }
 .topbar-icon {
   position: relative;
   width: 40px;
   height: 40px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -407,7 +412,7 @@ a { color: var(--green-dark); }
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--accent);
   color: #fff;
   font-size: 0.66rem;
@@ -423,7 +428,7 @@ a { color: var(--green-dark); }
   gap: 0.45rem;
   background: #fff;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.35rem 0.75rem;
   font-size: 0.82rem;
   font-weight: 600;
@@ -432,7 +437,7 @@ a { color: var(--green-dark); }
 .country-flag {
   width: 21px;
   height: 14px;
-  border-radius: 2px;
+  border-radius: var(--radius-xs);
   /* Vrai drapeau du Cameroun : vert | rouge | jaune, étoile jaune
      centrée sur la bande rouge (horizontalement ET verticalement).
      SVG inline pour un rendu net à toutes les tailles. */
@@ -442,7 +447,7 @@ a { color: var(--green-dark); }
 .topbar-avatar {
   width: 40px;
   height: 40px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: linear-gradient(135deg, #14a37a, #0a6b4c);
   color: #fff;
   font-size: 0.78rem;
@@ -495,7 +500,7 @@ a { color: var(--green-dark); }
   justify-content: center;
   gap: 0.4rem;
   border: none;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   padding: 0.6rem 1.1rem;
   font-size: 0.92rem;
   font-weight: 600;
@@ -506,7 +511,7 @@ a { color: var(--green-dark); }
   transition: background 0.14s ease, border-color 0.14s ease, color 0.14s ease, box-shadow 0.14s ease;
 }
 .btn:disabled { opacity: 0.55; cursor: default; }
-.btn-primary { background: var(--green); color: #fff; box-shadow: 0 8px 18px -12px rgba(14, 138, 99, 0.95); }
+.btn-primary { background: var(--green); color: #fff; box-shadow: 0 8px 18px -12px rgba(10, 107, 76, 0.95); }
 .btn-primary:hover { background: var(--green-dark); }
 .btn-outline { background: #fff; border: 1px solid var(--green); color: var(--green-dark); }
 .btn-outline:hover { background: var(--green-soft); }
@@ -515,7 +520,7 @@ a { color: var(--green-dark); }
 .btn-danger { background: #fff; border: 1px solid var(--danger); color: var(--danger); }
 .btn-accent { background: var(--accent); color: #fff; font-weight: 600; }
 .btn-block { width: 100%; }
-.btn-small { padding: 0.38rem 0.8rem; font-size: 0.82rem; border-radius: 9px; }
+.btn-small { padding: 0.38rem 0.8rem; font-size: 0.82rem; border-radius: var(--radius); }
 
 .actions-row { display: flex; gap: 0.7rem; flex-wrap: wrap; margin-top: 0.9rem; align-items: center; }
 
@@ -528,12 +533,12 @@ input, select, textarea {
   color: var(--text);
   background: #fff;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   padding: 0.55rem 0.7rem;
   width: 100%;
 }
 input:focus, select:focus, textarea:focus {
-  outline: 2px solid rgba(14, 138, 99, 0.25);
+  outline: 2px solid rgba(10, 107, 76, 0.25);
   border-color: var(--green);
 }
 .check { display: inline-flex; align-items: center; gap: 0.35rem; margin-right: 0.9rem; font-size: 0.88rem; }
@@ -613,7 +618,7 @@ input:focus, select:focus, textarea:focus {
 .inline-fields { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; margin-top: 0.5rem; }
 .field-label { font-size: 0.88rem; color: var(--muted); font-weight: 600; }
 
-.alert { border-radius: 8px; padding: 0.7rem 0.9rem; margin: 0.6rem 0; font-size: 0.9rem; }
+.alert { border-radius: var(--radius); padding: 0.7rem 0.9rem; margin: 0.6rem 0; font-size: 0.9rem; }
 .alert-error { background: #fbecec; color: var(--danger); border: 1px solid #e5b6b6; }
 .alert-info { background: #e9f2ed; color: var(--green-dark); border: 1px solid #b9d6c6; }
 .alert-success { background: #e9f2ed; color: var(--green-dark); border: 1px solid #b9d6c6; }
@@ -629,7 +634,25 @@ input:focus, select:focus, textarea:focus {
 .empty p { color: var(--muted); }
 
 .section { margin: 1.6rem 0; }
-.section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding-bottom: 0.55rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+.section-head h2,
+.section-head h3 {
+  margin: 0;
+  font-family: var(--font-head);
+  font-size: 1.06rem;
+  line-height: 1.35;
+  color: var(--text);
+}
+.section-head .small,
+.section-head .muted { margin: 0; }
 
 /* ---------------- Badges, chips, tags (couleurs franches) -------- */
 
@@ -638,7 +661,7 @@ input:focus, select:focus, textarea:focus {
   align-items: center;
   justify-content: center;
   padding: 0.2rem 0.6rem;
-  border-radius: 8px;
+  border-radius: var(--radius);
   font-size: 0.76rem;
   font-weight: 700;
   line-height: 1.2;
@@ -654,7 +677,7 @@ input:focus, select:focus, textarea:focus {
 .chip {
   display: inline-block;
   padding: 0.3rem 0.75rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-size: 0.82rem;
   background: #fff;
   color: var(--text);
@@ -671,7 +694,7 @@ a.chip-warn:hover { background: #f8e8cb; color: var(--warn); }
   align-items: center;
   gap: 0.3rem;
   padding: 0.26rem 0.7rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-size: 0.85rem;
   margin: 0.15rem 0.15rem 0.15rem 0;
 }
@@ -702,7 +725,7 @@ a.chip-warn:hover { background: #f8e8cb; color: var(--warn); }
 .scorebar-track {
   display: flex;
   height: 10px;
-  border-radius: 3px;
+  border-radius: var(--radius-xs);
   overflow: hidden;
   background: #e8ece8;
 }
@@ -839,7 +862,7 @@ a.chip-warn:hover { background: #f8e8cb; color: var(--warn); }
 .app-avatar {
   width: 44px;
   height: 44px;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: linear-gradient(145deg, var(--green-dark), var(--green));
   color: #fff;
   font-weight: 700;
@@ -948,7 +971,7 @@ table.skills {
   display: inline-block;
   font-size: 0.76rem;
   padding: 0.15rem 0.55rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: #e9f2ed;
   color: var(--green-dark);
   margin: 0.2rem 0.2rem 0 0;
@@ -959,7 +982,7 @@ table.skills {
 /* ---------------- Assistant ---------------- */
 
 .chat-box { display: flex; flex-direction: column; gap: 0.7rem; padding: 1rem 0; }
-.chat-msg { max-width: 78%; border-radius: 12px; padding: 0.65rem 0.9rem; white-space: pre-wrap; }
+.chat-msg { max-width: 78%; border-radius: var(--radius-xl); padding: 0.65rem 0.9rem; white-space: pre-wrap; }
 .chat-user { align-self: flex-end; background: var(--green); color: #fff; }
 .chat-bot { align-self: flex-start; background: #fff; border: 1px solid var(--border); }
 .chat-form { display: flex; gap: 0.6rem; margin-top: 0.6rem; }
@@ -968,7 +991,7 @@ table.skills {
   background: #fff;
   color: var(--green-dark);
   border: 1px solid var(--green);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.3rem 0.75rem;
   font-size: 0.82rem;
   cursor: pointer;
@@ -994,7 +1017,7 @@ table.skills {
   justify-content: center;
   width: 38px;
   height: 38px;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: var(--green-soft);
   color: var(--green-dark);
   flex: none;
@@ -1020,7 +1043,7 @@ table.skills {
   gap: 0.6rem;
   background: #fff;
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   padding: 0.65rem 0.8rem;
 }
 .chat-conversation-row.is-active {
@@ -1075,7 +1098,7 @@ table.skills {
 .doc-filter {
   border: 1px solid var(--border);
   background: #fff;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.3rem 0.85rem;
   font-size: 0.84rem;
   cursor: pointer;
@@ -1088,7 +1111,7 @@ table.skills {
 .doc-item {
   background: #fff;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   font-family: var(--font);
   font-size: 0.87rem;
   overflow: hidden;
@@ -1122,7 +1145,7 @@ table.skills {
   border: 1px solid var(--border);
   background: #fff;
   color: var(--slate);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.22rem 0.6rem;
   font-size: 0.72rem;
   cursor: pointer;
@@ -1163,11 +1186,11 @@ table.skills {
 .progress {
   height: 6px;
   background: var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   overflow: hidden;
   margin: 1rem 0;
 }
-.progress span { display: block; height: 100%; background: var(--green); border-radius: 999px; }
+.progress span { display: block; height: 100%; background: var(--green); border-radius: var(--radius-pill); }
 .report-chips { display: flex; flex-wrap: wrap; gap: 0.45rem; margin: 0.6rem 0; }
 .report-chips .chip strong { color: var(--green-dark); }
 
@@ -1191,7 +1214,7 @@ table.skills {
 .tab {
   border: 1px solid var(--border);
   background: #fff;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.35rem 0.95rem;
   font-size: 0.86rem;
   cursor: pointer;
@@ -1226,7 +1249,7 @@ table.skills {
   outline-offset: 2px;
 }
 
-.connector-status { font-size: 0.76rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 999px; }
+.connector-status { font-size: 0.76rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: var(--radius-pill); }
 .connector-operationnel { background: var(--green); color: #fff; }
 .connector-configure { background: var(--accent); color: #fff; }
 .connector-roadmap { background: #e8ece8; color: var(--slate); }
@@ -1238,7 +1261,7 @@ table.skills {
   flex-direction: column;
   gap: 0.15rem;
   margin-top: 0.55rem;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   padding: 0.55rem 0.65rem;
   font-size: 0.78rem;
   line-height: 1.45;
@@ -1340,7 +1363,7 @@ table.skills {
 .profile-card-photo {
   width: 96px;
   height: 96px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   object-fit: cover;
   border: 1px solid var(--border);
   background: #eef2ee;
@@ -1349,7 +1372,7 @@ table.skills {
 .profile-card-photo-placeholder {
   width: 96px;
   height: 96px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: #e9f2ed;
   color: var(--green-dark);
@@ -1375,7 +1398,7 @@ table.skills {
   background: var(--green-soft);
   color: var(--green-dark);
   padding: 0.18rem 0.5rem 0.18rem 0.28rem;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-size: 0.72rem;
   font-weight: 700;
 }
@@ -1402,7 +1425,7 @@ table.skills {
   align-items: center;
   gap: 0.4rem;
   padding: 0.32rem 0.7rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   border: 1px solid var(--border);
   background: #fff;
   box-shadow: var(--shadow-sm);
@@ -1411,7 +1434,7 @@ table.skills {
   color: var(--slate);
 }
 .msg-stat-alert { border-color: #f2d9b0; background: var(--accent-soft); color: var(--warn); }
-.msg-dot { width: 8px; height: 8px; border-radius: 999px; background: var(--accent); flex-shrink: 0; }
+.msg-dot { width: 8px; height: 8px; border-radius: var(--radius-pill); background: var(--accent); flex-shrink: 0; }
 
 /* Deux volets : conversations à gauche, fil de discussion à droite. */
 .msg-shell {
@@ -1430,7 +1453,7 @@ table.skills {
   min-height: 0;
   background: #fff;
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   box-shadow: var(--shadow);
   overflow: hidden;
 }
@@ -1471,7 +1494,7 @@ table.skills {
   width: 100%;
   text-align: left;
   border: 1px solid transparent;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: none;
   padding: 0.6rem 0.7rem;
   cursor: pointer;
@@ -1505,7 +1528,7 @@ table.skills {
   min-width: 20px;
   height: 20px;
   padding: 0 0.35rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--green);
   color: #fff;
   font-size: 0.72rem;
@@ -1518,7 +1541,7 @@ table.skills {
 
 /* Avatars colorés par rôle */
 .msg-avatar {
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -1540,7 +1563,7 @@ table.skills {
   min-width: 0;
   background: #fff;
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   box-shadow: var(--shadow);
   overflow: hidden;
 }
@@ -1559,7 +1582,7 @@ table.skills {
   display: none;
   width: 32px;
   height: 32px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   border: 1px solid var(--border);
   background: #fff;
   color: var(--green-dark);
@@ -1590,7 +1613,7 @@ table.skills {
   color: var(--muted);
   background: #fff;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.15rem 0.7rem;
 }
 .msg-row { display: flex; align-items: flex-end; gap: 0.5rem; }
@@ -1598,16 +1621,16 @@ table.skills {
 .msg-row.is-theirs { justify-content: flex-start; }
 .msg-bubble {
   max-width: min(78%, 34rem);
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   padding: 0.55rem 0.85rem;
   font-size: 0.88rem;
   box-shadow: var(--shadow-sm);
 }
-.msg-mine { background: var(--green); color: #fff; border-bottom-right-radius: 5px; }
+.msg-mine { background: var(--green); color: #fff; border-bottom-right-radius: var(--radius-sm); }
 .msg-theirs {
   background: #f1f5f2;
   border: 1px solid var(--border);
-  border-bottom-left-radius: 5px;
+  border-bottom-left-radius: var(--radius-sm);
   color: var(--text);
 }
 .msg-text { margin: 0; white-space: pre-wrap; word-break: break-word; }
@@ -1634,7 +1657,7 @@ table.skills {
   max-height: 8rem;
   resize: none;
   padding: 0.6rem 0.8rem;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   border: 1px solid var(--border);
   background: #fafcfb;
   font-family: inherit;
@@ -1654,7 +1677,7 @@ table.skills {
 .msg-pane-empty-icon {
   width: 54px;
   height: 54px;
-  border-radius: 18px;
+  border-radius: var(--radius-xl);
   background: var(--green-soft);
   color: var(--green-ink);
   display: inline-flex;
@@ -1731,7 +1754,7 @@ table.skills {
 .talent-avatar {
   width: 50px;
   height: 50px;
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   background: linear-gradient(145deg, var(--green-dark), var(--green));
   color: #fff;
   font-weight: 700;
@@ -1788,7 +1811,7 @@ table.skills {
   margin: 0.75rem 0 0;
   padding: 0.7rem 0.85rem;
   border: 1px solid #e8efeb;
-  border-radius: 9px;
+  border-radius: var(--radius);
   background: #fafcfb;
   color: var(--slate);
   font-size: 0.85rem;
@@ -1804,7 +1827,7 @@ table.skills {
   margin-top: 0.75rem;
   padding: 0.65rem 0.75rem;
   border: 1px solid #dcebe3;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: #f7fbf9;
 }
 .talent-match-head {
@@ -1878,7 +1901,7 @@ table.skills {
 .talent-card.is-full .talent-avatar {
   width: 60px;
   height: 60px;
-  border-radius: 17px;
+  border-radius: var(--radius-xl);
   font-size: 1.2rem;
 }
 .talent-card.is-full .talent-card-titleline h2 { font-size: 1.18rem; }
@@ -1914,7 +1937,7 @@ table.skills {
   gap: 0.3rem;
   background: #fff;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   padding: 0.35rem 0.7rem;
   font-size: 0.8rem;
   font-weight: 600;
@@ -1936,8 +1959,8 @@ table.skills {
 .ai-mark {
   width: 38px;
   height: 38px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #e67e22, #d35400);
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, #b45309, #d35400);
   color: #fff;
   display: inline-flex;
   align-items: center;
@@ -2044,7 +2067,7 @@ table.skills {
   .dash-col-side::-webkit-scrollbar-track { background: transparent; }
   .dash-col-side::-webkit-scrollbar-thumb {
     background: rgba(10, 107, 76, 0.25);
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
   }
   .dash-col-side::-webkit-scrollbar-thumb:hover { background: rgba(10, 107, 76, 0.45); }
 }
@@ -2056,7 +2079,7 @@ table.skills {
   flex: 0 0 auto;
   width: 36px;
   height: 36px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2128,7 +2151,7 @@ table.skills {
   align-items: center;
   gap: 0.8rem;
   padding: 0.6rem 0.5rem;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   text-decoration: none;
   color: var(--text);
   margin: 0.15rem 0;
@@ -2138,7 +2161,7 @@ table.skills {
 .match-row-meta { margin: 0.1rem 0 0; font-size: 0.82rem; color: var(--muted); }
 .match-pill {
   padding: 0.2rem 0.6rem;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   font-size: 0.8rem;
   font-weight: 700;
   flex-shrink: 0;
@@ -2173,7 +2196,7 @@ table.skills {
 .completeness-todo {
   width: 14px;
   height: 14px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   border: 1.5px solid var(--border);
   flex-shrink: 0;
 }
@@ -2228,7 +2251,7 @@ table.skills {
     radial-gradient(520px 240px at 88% -20%, rgba(22, 185, 129, 0.35), transparent 60%),
     linear-gradient(120deg, #0b2a21, #103c2c);
   color: #fff;
-  border-radius: 18px;
+  border-radius: var(--radius-xl);
   padding: 1.3rem 1.4rem;
   margin: 0.4rem 0 1rem;
   box-shadow: 0 24px 48px -30px rgba(11, 42, 33, 0.9);
@@ -2239,7 +2262,7 @@ table.skills {
 .agent-mascot {
   width: 62px;
   height: 62px;
-  border-radius: 18px;
+  border-radius: var(--radius-xl);
   background: linear-gradient(135deg, #16b981, #0a6b4c);
   display: inline-flex;
   align-items: center;
@@ -2279,7 +2302,7 @@ table.skills {
 .agent-step {
   background: #fff;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   padding: 0.75rem 0.85rem;
   display: flex;
   flex-direction: column;
@@ -2291,7 +2314,7 @@ table.skills {
   justify-content: center;
   width: 22px;
   height: 22px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--green-soft);
   color: var(--green-ink);
   font-size: 0.72rem;
@@ -2306,7 +2329,7 @@ table.skills {
 .stat-card-icon {
   width: 34px;
   height: 34px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--green-soft);
   color: var(--green-ink);
   display: inline-flex;
@@ -2339,7 +2362,7 @@ table.skills {
   background: #fff;
   border: 1px solid #c7ead9;
   color: var(--green-ink);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.2rem 0.7rem;
   font-size: 0.74rem;
   font-weight: 700;
@@ -2351,7 +2374,7 @@ table.skills {
   align-items: center;
   gap: 0.9rem;
   padding: 0.7rem 0.6rem;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   text-decoration: none;
   color: var(--text);
   border: 1px solid transparent;
@@ -2361,7 +2384,7 @@ table.skills {
 .opp-logo {
   width: 44px;
   height: 44px;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: var(--green-soft);
   color: var(--green-ink);
   display: inline-flex;
@@ -2383,7 +2406,7 @@ table.skills {
   align-items: center;
   min-width: 56px;
   padding: 0.3rem 0.5rem;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   font-weight: 700;
   flex-shrink: 0;
 }
@@ -2406,7 +2429,7 @@ table.skills {
 .activity-dot {
   width: 30px;
   height: 30px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--green-soft);
   color: var(--green-ink);
   display: inline-flex;
@@ -2446,7 +2469,7 @@ table.skills {
 .home-hero {
   position: relative;
   overflow: hidden;
-  border-radius: 18px;
+  border-radius: var(--radius-xl);
   padding: 1.7rem 1.6rem;
   margin-bottom: 1.1rem;
   color: #fff;
@@ -2504,7 +2527,7 @@ table.skills {
   bottom: -90px;
   width: 260px;
   height: 260px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   border: 1px solid rgba(255, 255, 255, 0.09);
   box-shadow: 0 0 0 60px rgba(255, 255, 255, 0.035);
   pointer-events: none;
@@ -2533,7 +2556,7 @@ table.skills {
 .naa-side {
   background: #fff;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   padding: 0.8rem 1rem;
   min-width: 230px;
   flex: 1;
@@ -2548,7 +2571,7 @@ table.skills {
   gap: 0.4rem;
   background: var(--green-soft);
   color: var(--green-ink);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.4rem 0.85rem;
   font-size: 0.84rem;
   font-weight: 600;
@@ -2559,7 +2582,7 @@ table.skills {
 .opp-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.9rem; margin-top: 0.8rem; }
 .opp-card {
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   overflow: hidden;
   background: #fff;
   display: flex;
@@ -2588,7 +2611,7 @@ table.skills {
   bottom: 8px;
   background: #fff;
   color: var(--green-ink);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.15rem 0.6rem;
   font-weight: 700;
   font-size: 0.78rem;
@@ -2605,15 +2628,15 @@ table.skills {
 .score-bar-row { margin: 0.5rem 0; }
 .score-bar-top { display: flex; justify-content: space-between; gap: 0.5rem; font-size: 0.82rem; margin-bottom: 0.25rem; }
 .score-bar-top b { font-weight: 700; color: var(--green-dark); }
-.score-bar-track { display: block; height: 8px; border-radius: 999px; background: #e6ebe7; overflow: hidden; }
-.score-bar-fill { display: block; height: 100%; border-radius: 999px; }
-.fill-green { background: linear-gradient(90deg, #16b981, #0e8a63); }
+.score-bar-track { display: block; height: 8px; border-radius: var(--radius-pill); background: #e6ebe7; overflow: hidden; }
+.score-bar-fill { display: block; height: 100%; border-radius: var(--radius-pill); }
+.fill-green { background: linear-gradient(90deg, #16b981, #0a6b4c); }
 .fill-blue { background: linear-gradient(90deg, #60a5fa, #3b82f6); }
 .fill-violet { background: linear-gradient(90deg, #a78bfa, #8b5cf6); }
 .next-step-panel {
   background: linear-gradient(120deg, #e6f6ef, #f4fbf8);
   border: 1px solid #c7ead9;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   padding: 0.9rem 1rem;
   min-width: 220px;
   flex: 1;
@@ -2625,7 +2648,7 @@ table.skills {
 .plan-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.8rem; margin-top: 0.8rem; }
 .plan-card {
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   padding: 0.9rem;
   display: flex;
   flex-direction: column;
@@ -2635,7 +2658,7 @@ table.skills {
 .plan-num {
   width: 24px;
   height: 24px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--green-soft);
   color: var(--green-ink);
   font-weight: 700;
@@ -2655,7 +2678,7 @@ table.skills {
   gap: 0.5rem;
   background: #fff;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.35rem 0.85rem;
   font-size: 0.84rem;
 }
@@ -2675,14 +2698,14 @@ table.skills {
 .journey-icon {
   width: 34px;
   height: 34px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
   color: #fff;
 }
-.journey-icon.green { background: linear-gradient(135deg, #16b981, #0e8a63); }
+.journey-icon.green { background: linear-gradient(135deg, #16b981, #0a6b4c); }
 .journey-icon.blue { background: linear-gradient(135deg, #60a5fa, #3b82f6); }
 .journey-icon.violet { background: linear-gradient(135deg, #a78bfa, #8b5cf6); }
 .journey-icon.slate { background: #94a3b8; }
@@ -2701,7 +2724,7 @@ table.skills {
   gap: 0.9rem;
   align-items: flex-start;
 }
-.assistant-cta .agent-mascot { width: 46px; height: 46px; border-radius: 14px; }
+.assistant-cta .agent-mascot { width: 46px; height: 46px; border-radius: var(--radius-xl); }
 .assistant-cta h3 { margin: 0 0 0.25rem; font-size: 0.95rem; font-family: var(--font-head); }
 .assistant-cta p { margin: 0 0 0.6rem; font-size: 0.82rem; color: var(--muted); }
 
@@ -2763,7 +2786,7 @@ table.skills {
   grid-template-columns: auto 1fr auto;
   gap: 1.1rem;
   align-items: center;
-  border-radius: 18px;
+  border-radius: var(--radius-xl);
   padding: 1.3rem 1.4rem;
   color: #fff;
   background:
@@ -2774,7 +2797,7 @@ table.skills {
 .ag-hero-mascot {
   width: 76px;
   height: 76px;
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   background: linear-gradient(135deg, #16b981, #0a6b4c);
   display: inline-flex;
   align-items: center;
@@ -2796,7 +2819,7 @@ table.skills {
   align-self: stretch;
   min-width: 230px;
   max-width: 280px;
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   padding: 0.9rem 1rem;
   color: #f2f8f5;
   background: linear-gradient(135deg, rgba(22, 185, 129, 0.16), rgba(255, 255, 255, 0.04));
@@ -2814,7 +2837,7 @@ table.skills {
   position: relative;
   background: #fff;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   padding: 0.75rem 0.85rem 0.85rem;
   display: flex;
   flex-direction: column;
@@ -2832,7 +2855,7 @@ table.skills {
 .ag-step-icon {
   width: 34px;
   height: 34px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--green-soft);
   color: var(--green-ink);
   display: inline-flex;
@@ -2846,7 +2869,7 @@ table.skills {
   right: 0.6rem;
   width: 20px;
   height: 20px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2865,13 +2888,13 @@ table.skills {
   flex-wrap: wrap;
   margin-top: 0.9rem;
   background: #f4f6f4;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   padding: 0.7rem 0.9rem;
 }
 .ag-progress-icon {
   width: 30px;
   height: 30px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--green-soft);
   color: var(--green-ink);
   display: inline-flex;
@@ -2884,11 +2907,11 @@ table.skills {
   flex: 1;
   min-width: 120px;
   height: 8px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: #e2e8e3;
   overflow: hidden;
 }
-.ag-progress-fill { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #16b981, #0e8a63); }
+.ag-progress-fill { display: block; height: 100%; border-radius: var(--radius-pill); background: linear-gradient(90deg, #16b981, #0a6b4c); }
 .ag-progress-pct { font-size: 0.85rem; font-weight: 700; color: var(--green-dark); }
 
 /* Statistiques */
@@ -2898,7 +2921,7 @@ table.skills {
 .ag-stat-icon {
   width: 30px;
   height: 30px;
-  border-radius: 9px;
+  border-radius: var(--radius);
   background: var(--green-soft);
   color: var(--green-ink);
   display: inline-flex;
@@ -2925,7 +2948,7 @@ table.skills {
 .ag-attn-tag {
   background: var(--green-soft);
   color: var(--green-ink);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.18rem 0.6rem;
   font-size: 0.72rem;
   font-weight: 700;
@@ -2939,7 +2962,7 @@ table.skills {
   justify-content: center;
   min-width: 76px;
   padding: 0.5rem 0.7rem;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: var(--green-soft);
   color: var(--green-ink);
 }
@@ -2954,7 +2977,7 @@ table.skills {
   align-self: flex-start;
   background: var(--green-soft);
   color: var(--green-ink);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.25rem 0.7rem;
   font-size: 0.78rem;
   font-weight: 600;
@@ -3003,7 +3026,7 @@ table.skills {
   align-items: center;
   min-width: 62px;
   padding: 0.3rem 0.5rem;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   font-size: 0.72rem;
 }
 .ag-row-score b { font-family: var(--font-head); font-size: 1.05rem; }
@@ -3032,7 +3055,7 @@ table.skills {
 .ag-potential-icon {
   width: 42px;
   height: 42px;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: #fff;
   color: var(--green-dark);
   display: inline-flex;
@@ -3054,13 +3077,13 @@ table.skills {
   gap: 0.7rem;
   background: #f4f6f4;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.4rem 0.5rem 0.4rem 0.9rem;
 }
 .ag-composer-icon {
   width: 34px;
   height: 34px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: linear-gradient(135deg, #0f5540, #16b981);
   color: #fff;
   display: inline-flex;
@@ -3072,7 +3095,7 @@ table.skills {
 .ag-send {
   width: 38px;
   height: 38px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   border: none;
   background: var(--green);
   color: #fff;
@@ -3108,7 +3131,7 @@ table.skills {
 .ag-activity-dot {
   width: 32px;
   height: 32px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -3116,7 +3139,7 @@ table.skills {
   color: #fff;
   z-index: 1;
 }
-.ag-activity-dot.kind-new_job { background: linear-gradient(135deg, #16b981, #0e8a63); }
+.ag-activity-dot.kind-new_job { background: linear-gradient(135deg, #16b981, #0a6b4c); }
 .ag-activity-dot.kind-strong_match { background: linear-gradient(135deg, #60a5fa, #3b82f6); }
 .ag-activity-dot.kind-trend { background: linear-gradient(135deg, #fbbf24, #f59e0b); }
 .ag-activity-dot.kind-learning { background: linear-gradient(135deg, #a78bfa, #8b5cf6); }
@@ -3153,7 +3176,7 @@ table.skills {
 
 /* Contrôle de votre agent */
 .ag-mode {
-  border-radius: 18px;
+  border-radius: var(--radius-xl);
   padding: 1.1rem 1.2rem;
   color: #fff;
   background: linear-gradient(120deg, #07202b, #0b2f3a 60%, #0d4a44);
@@ -3163,7 +3186,7 @@ table.skills {
 .ag-mode-icon {
   width: 32px;
   height: 32px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: rgba(22, 185, 129, 0.2);
   color: #7ff0c4;
   display: inline-flex;
@@ -3178,7 +3201,7 @@ table.skills {
   gap: 0.7rem;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(255, 255, 255, 0.04);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   padding: 0.65rem 0.8rem;
   margin-bottom: 0.5rem;
 }
@@ -3189,7 +3212,7 @@ table.skills {
 .ag-mode-opt-icon {
   width: 30px;
   height: 30px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: rgba(255, 255, 255, 0.12);
   display: inline-flex;
   align-items: center;
@@ -3267,7 +3290,7 @@ table.skills {
 .ag-history {
   margin-top: 0.6rem;
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   padding: 0.75rem;
   background: #f7fbf9;
 }
@@ -3278,7 +3301,7 @@ table.skills {
   justify-content: center;
   width: 32px;
   height: 32px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: var(--green-soft);
   color: var(--green-dark);
   flex: none;
@@ -3334,7 +3357,7 @@ table.skills {
 .pf-hero {
   position: relative;
   overflow: hidden;
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   padding: 1.4rem 1.5rem;
   color: #fff;
   background:
@@ -3352,7 +3375,7 @@ table.skills {
   position: relative;
   width: 118px;
   height: 118px;
-  border-radius: 22px;
+  border-radius: var(--radius-xl);
   background: linear-gradient(135deg, #16b981, #0a6b4c);
   display: inline-flex;
   align-items: center;
@@ -3360,7 +3383,7 @@ table.skills {
   box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.16);
   flex-shrink: 0;
 }
-.pf-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 22px; }
+.pf-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: var(--radius-xl); }
 .pf-avatar span { font-family: var(--font-head); font-size: 2.2rem; font-weight: 700; color: #fff; }
 .pf-avatar-initials { font-family: var(--font-head); font-size: 2.2rem; font-weight: 700; color: #fff; }
 .pf-avatar-add {
@@ -3369,7 +3392,7 @@ table.skills {
   bottom: -7px;
   width: 32px;
   height: 32px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: #fff;
   color: var(--green-dark);
   display: inline-flex;
@@ -3389,7 +3412,7 @@ table.skills {
 .pf-dot {
   width: 8px;
   height: 8px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: #16b981;
   box-shadow: 0 0 0 3px rgba(22, 185, 129, 0.22);
 }
@@ -3397,7 +3420,7 @@ table.skills {
 .pf-chips-tight { margin-top: 0.35rem; }
 
 /* Carte de force du profil (blanche, posée sur la bannière) */
-.pf-score { background: #fff; border-radius: 16px; padding: 0.9rem 1rem; color: var(--text); }
+.pf-score { background: #fff; border-radius: var(--radius-xl); padding: 0.9rem 1rem; color: var(--text); }
 .pf-score-top { display: flex; align-items: center; gap: 0.8rem; }
 .pf-score-body { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
 .pf-score-label { font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); }
@@ -3437,7 +3460,7 @@ table.skills {
   align-items: baseline;
   gap: 0.25rem;
   padding: 0.32rem 0.55rem;
-  border-radius: 8px;
+  border-radius: var(--radius);
   border: 1px solid #d7ebe1;
   background: #fff;
   color: var(--muted);
@@ -3461,7 +3484,7 @@ table.skills {
   flex-direction: column;
   gap: 0.1rem;
   padding: 0.5rem 0.65rem;
-  border-radius: 9px;
+  border-radius: var(--radius);
   border: 1px solid var(--border);
   background: #fff;
 }
@@ -3472,7 +3495,7 @@ table.skills {
 .pf-import-warning {
   margin: 0.35rem 0 0;
   padding: 0.55rem 0.7rem;
-  border-radius: 9px;
+  border-radius: var(--radius);
   border: 1px solid #e8cf94;
   background: #fdf5e3;
   color: #7a4f0a;
@@ -3484,7 +3507,7 @@ table.skills {
   width: 40px;
   height: 40px;
   flex: none;
-  border-radius: 11px;
+  border-radius: var(--radius-lg);
   background: #e7f7ef;
   color: var(--green-dark);
   display: inline-flex;
@@ -3507,7 +3530,7 @@ table.skills {
   align-items: center;
   text-align: left;
   padding: 0.65rem 0.75rem;
-  border-radius: 11px;
+  border-radius: var(--radius-lg);
   border: 1px solid var(--border);
   background: #f7faf8;
   color: var(--text);
@@ -3539,7 +3562,7 @@ table.skills {
   width: 100%;
   padding: 0.6rem 0.7rem;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: #fff;
   color: var(--text);
   text-align: left;
@@ -3551,7 +3574,7 @@ table.skills {
   width: 32px;
   height: 32px;
   flex: none;
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: #eef6f2;
   color: var(--green-dark);
   display: inline-flex;
@@ -3570,7 +3593,7 @@ table.skills {
   width: 18px;
   height: 18px;
   flex: none;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   border: 2px solid #c8d7d0;
   background: #fff;
 }
@@ -3582,7 +3605,7 @@ table.skills {
   gap: 0.4rem;
   padding: 1rem;
   border: 1px dashed var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: #fbfdfc;
 }
 .cv-import-empty p { margin: 0; font-size: 0.84rem; color: var(--muted); }
@@ -3598,7 +3621,7 @@ table.skills {
   gap: 0.3rem;
   padding: 1.25rem 1rem;
   border: 1.5px dashed #b8d8ca;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: #f8fbf9;
   text-align: center;
   cursor: pointer;
@@ -3609,7 +3632,7 @@ table.skills {
 .cv-import-drop-icon {
   width: 42px;
   height: 42px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: #e7f7ef;
   color: var(--green-dark);
   display: inline-flex;
@@ -3624,7 +3647,7 @@ table.skills {
   gap: 0.5rem;
   margin-top: 0.55rem;
   padding: 0.5rem 0.65rem;
-  border-radius: 9px;
+  border-radius: var(--radius);
   border: 1px solid var(--border);
   background: #fff;
   font-size: 0.8rem;
@@ -3648,7 +3671,7 @@ table.skills {
 .pf-insight {
   display: flex;
   gap: 1rem;
-  border-radius: 18px;
+  border-radius: var(--radius-xl);
   padding: 1.1rem 1.2rem;
   background: linear-gradient(120deg, #eefaf3, #f2fbf7);
   border: 1px solid #cbeadb;
@@ -3656,7 +3679,7 @@ table.skills {
 .pf-insight-icon {
   width: 44px;
   height: 44px;
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   background: linear-gradient(135deg, #16b981, #0a6b4c);
   color: #fff;
   display: inline-flex;
@@ -3674,7 +3697,7 @@ table.skills {
   gap: 0.55rem;
   margin-top: 0.7rem;
   padding: 0.65rem 0.8rem;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: #f2faf6;
   border-left: 3px solid var(--green);
 }
@@ -3682,7 +3705,7 @@ table.skills {
   flex-shrink: 0;
   width: 26px;
   height: 26px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -3713,7 +3736,7 @@ table.skills {
 .pf-trio-card > :last-child { margin-top: auto; }
 .pf-trio-head { display: flex; align-items: center; gap: 0.55rem; }
 .pf-trio-head h3 { margin: 0; font-family: var(--font-head); font-size: 0.98rem; }
-.pf-trio-icon { width: 32px; height: 32px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.pf-trio-icon { width: 32px; height: 32px; border-radius: var(--radius-lg); display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
 .pf-tone-green { background: var(--green-soft); color: var(--green-ink); }
 .pf-tone-violet { background: #efeafe; color: #7c3aed; }
 .pf-tone-blue { background: #e8f1fe; color: #2f80ed; }
@@ -3724,7 +3747,7 @@ table.skills {
 .pf-rank {
   width: 24px;
   height: 24px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: #efeafe;
   color: #7c3aed;
   font-size: 0.78rem;
@@ -3752,7 +3775,7 @@ table.skills {
   gap: 0.42rem;
   padding: 0.5rem 0.9rem;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: #fff;
   box-shadow: var(--shadow-sm);
   font-family: inherit;
@@ -3768,7 +3791,7 @@ table.skills {
   background: var(--green);
   border-color: var(--green);
   color: #fff;
-  box-shadow: 0 10px 20px -12px rgba(14, 138, 99, 0.9);
+  box-shadow: 0 10px 20px -12px rgba(10, 107, 76, 0.9);
 }
 
 /* Grilles de contenu */
@@ -3793,7 +3816,7 @@ table.skills {
 .pf-timeline-dot {
   width: 32px;
   height: 32px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--green-soft);
   color: var(--green-ink);
   display: inline-flex;
@@ -3812,14 +3835,14 @@ table.skills {
 .pf-skill-line { display: flex; align-items: baseline; justify-content: space-between; gap: 0.6rem; }
 .pf-skill-name { font-size: 0.88rem; font-weight: 600; }
 .pf-skill-level { font-size: 0.78rem; color: var(--muted); }
-.pf-skill-bar { height: 8px; border-radius: 999px; background: #e9eeea; overflow: hidden; }
-.pf-skill-fill { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, #16b981, #0e8a63); }
+.pf-skill-bar { height: 8px; border-radius: var(--radius-pill); background: #e9eeea; overflow: hidden; }
+.pf-skill-fill { display: block; height: 100%; border-radius: var(--radius-pill); background: linear-gradient(90deg, #16b981, #0a6b4c); }
 .pf-skill-note { font-size: 0.72rem; color: var(--muted); }
 .pf-subtabs { display: flex; gap: 0.35rem; flex-wrap: wrap; margin: 0.5rem 0 0.2rem; }
 .pf-subtabs button {
   border: 1px solid var(--border);
   background: #fff;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.3rem 0.75rem;
   font-family: inherit;
   font-size: 0.79rem;
@@ -3838,11 +3861,11 @@ table.skills {
 
 /* Projets */
 .pf-projects { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.9rem; margin-top: 0.6rem; }
-.pf-project { display: flex; gap: 0.8rem; border: 1px solid var(--border); border-radius: 14px; padding: 0.9rem 1rem; background: #fff; }
+.pf-project { display: flex; gap: 0.8rem; border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 0.9rem 1rem; background: #fff; }
 .pf-project-icon {
   width: 38px;
   height: 38px;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: var(--green-soft);
   color: var(--green-ink);
   display: inline-flex;
@@ -3858,7 +3881,7 @@ table.skills {
   gap: 0.25rem;
   text-align: center;
   border: 1.5px dashed #cbd5cf;
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   padding: 1rem;
   background: #fafcfb;
   cursor: pointer;
@@ -3866,7 +3889,7 @@ table.skills {
 .pf-project-add-icon {
   width: 38px;
   height: 38px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: #fff;
   border: 1px solid var(--border);
   color: var(--green-dark);
@@ -3885,7 +3908,7 @@ table.skills {
 
 /* Rail latéral */
 .pf-assistant {
-  border-radius: 18px;
+  border-radius: var(--radius-xl);
   padding: 1.1rem 1.2rem;
   color: #fff;
   background:
@@ -3898,7 +3921,7 @@ table.skills {
 .pf-assistant-icon {
   width: 32px;
   height: 32px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: rgba(22, 185, 129, 0.2);
   color: #7ff0c4;
   display: inline-flex;
@@ -3910,7 +3933,7 @@ table.skills {
 .pf-verif { display: inline-flex; align-items: center; gap: 0.4rem; margin: 0.3rem 0 0.4rem; font-size: 0.85rem; font-weight: 600; color: var(--warn); }
 .pf-verif.verified { color: var(--green-dark); }
 .pf-quote {
-  border-radius: 18px;
+  border-radius: var(--radius-xl);
   padding: 1.1rem 1.2rem;
   background: linear-gradient(120deg, #eef2ff, #f5f3ff);
   border: 1px solid #ddd9f5;
@@ -3925,7 +3948,7 @@ table.skills {
   align-items: center;
   gap: 1rem;
   flex-wrap: wrap;
-  border-radius: 18px;
+  border-radius: var(--radius-xl);
   padding: 0.9rem 1.1rem;
   background: linear-gradient(120deg, #eefaf3, #f2fbf7);
   border: 1px solid #cbeadb;
@@ -3933,7 +3956,7 @@ table.skills {
 .pf-footer-icon {
   width: 38px;
   height: 38px;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: #fff;
   color: var(--green-dark);
   display: inline-flex;
@@ -4016,7 +4039,7 @@ table.skills {
   align-items: center;
   background: #fff;
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   padding: 1rem 1.1rem;
   box-shadow: var(--shadow);
 }
@@ -4024,7 +4047,7 @@ table.skills {
   grid-row: span 2;
   width: 38px;
   height: 38px;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -4061,7 +4084,7 @@ table.skills {
 .opps-best-head .badge { margin-left: 0.15rem; }
 .opps-best-top { display: grid; grid-template-columns: 190px minmax(0, 1fr); gap: 1.1rem; align-items: start; }
 .opps-best-media {
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   overflow: hidden;
   border: 1px solid var(--border);
   background: #fff;
@@ -4094,7 +4117,7 @@ table.skills {
   font-family: var(--font-head);
   font-weight: 700;
   font-size: 0.82rem;
-  border-radius: 8px;
+  border-radius: var(--radius);
   padding: 0.18rem 0.5rem;
   white-space: nowrap;
 }
@@ -4124,7 +4147,7 @@ table.skills {
   gap: 0.5rem;
   background: #fff;
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   padding: 0.9rem 1rem;
 }
 .opps-panel-head h4 { margin: 0; font-family: var(--font-head); font-size: 0.9rem; color: var(--text); }
@@ -4137,7 +4160,7 @@ table.skills {
 .mk {
   width: 18px;
   height: 18px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -4158,7 +4181,7 @@ table.skills {
 .opps-sort select {
   padding: 0.35rem 0.65rem;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: #fff;
   font-family: inherit;
   font-size: 0.83rem;
@@ -4178,7 +4201,7 @@ table.skills {
   align-items: center;
   padding: 0.42rem 0.9rem;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: #fff;
   box-shadow: var(--shadow-sm);
   font-family: inherit;
@@ -4194,7 +4217,7 @@ table.skills {
   background: var(--green);
   border-color: var(--green);
   color: #fff;
-  box-shadow: 0 10px 20px -12px rgba(14, 138, 99, 0.9);
+  box-shadow: 0 10px 20px -12px rgba(10, 107, 76, 0.9);
 }
 
 /* Filtres */
@@ -4213,7 +4236,7 @@ table.skills {
   gap: 0.5rem;
   padding: 0.55rem 0.75rem;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: #fff;
   color: var(--muted);
 }
@@ -4252,7 +4275,7 @@ table.skills {
 .opps-page-size select {
   padding: 0.32rem 0.5rem;
   font-size: 0.8rem;
-  border-radius: 8px;
+  border-radius: var(--radius);
 }
 .opps-page-nav { display: inline-flex; align-items: center; gap: 0.6rem; }
 .opps-page-nav .btn:disabled { opacity: 0.45; cursor: not-allowed; }
@@ -4262,7 +4285,7 @@ table.skills {
   align-items: center;
   gap: 0.9rem;
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   padding: 0.85rem 1rem;
   background: #fff;
   text-decoration: none;
@@ -4273,7 +4296,7 @@ table.skills {
 .opps-row-logo {
   width: 50px;
   height: 50px;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: #f2f6f3;
   border: 1px solid var(--border);
   display: inline-flex;
@@ -4295,7 +4318,7 @@ table.skills {
   font-size: 0.72rem;
   font-weight: 600;
   padding: 0.15rem 0.55rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: #eef4f1;
   color: var(--green-ink);
 }
@@ -4313,7 +4336,7 @@ table.skills {
   align-items: center;
   gap: 1rem;
   flex-wrap: wrap;
-  border-radius: 18px;
+  border-radius: var(--radius-xl);
   padding: 1rem 1.2rem;
   background: linear-gradient(120deg, #eefaf3, #f2fbf7);
   border: 1px solid #cbeadb;
@@ -4321,7 +4344,7 @@ table.skills {
 .opps-alert-icon {
   width: 42px;
   height: 42px;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: #fff;
   color: var(--green-dark);
   display: inline-flex;
@@ -4343,7 +4366,7 @@ table.skills {
 .opps-trends .count { font-size: 0.74rem; font-weight: 400; color: var(--muted); }
 .opps-trends .up { color: var(--green-dark); font-weight: 700; }
 .potentiel-card {
-  border-radius: 18px;
+  border-radius: var(--radius-xl);
   padding: 1.1rem 1.2rem;
   color: #fff;
   background:
@@ -4362,7 +4385,7 @@ table.skills {
   justify-content: space-between;
   gap: 0.7rem;
   padding: 0.5rem 0.7rem;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: rgba(255, 255, 255, 0.06);
   text-decoration: none;
   color: #fff;
@@ -4421,7 +4444,7 @@ table.skills {
 .offre-hero {
   position: relative;
   overflow: hidden;
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   padding: 1.35rem 1.5rem;
   color: #fff;
   background:
@@ -4462,7 +4485,7 @@ table.skills {
 /* Carte de correspondance posée sur le bandeau */
 .offre-score {
   background: #fff;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   padding: 0.95rem 1.05rem;
   color: var(--text);
 }
@@ -4525,7 +4548,7 @@ table.skills {
 .offre-panel {
   background: #fff;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   padding: 0.85rem 0.95rem;
 }
 .offre-panel h3 {
@@ -4547,7 +4570,7 @@ table.skills {
   flex-wrap: wrap;
   margin-top: 1rem;
   padding: 0.7rem 0.9rem;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: var(--accent-soft);
   border: 1px solid #f0dcbd;
   color: var(--warn);
@@ -4563,7 +4586,7 @@ table.skills {
   gap: 0.8rem;
   margin-top: 0.8rem;
 }
-.offre-template { border: 1px solid var(--border); border-radius: 12px; padding: 0.85rem 0.95rem; }
+.offre-template { border: 1px solid var(--border); border-radius: var(--radius-xl); padding: 0.85rem 0.95rem; }
 .offre-template p { margin: 0.35rem 0 0.7rem; }
 
 /* ---------- Offres proches ---------- */
@@ -4576,7 +4599,7 @@ table.skills {
 .offre-company-logo {
   width: 46px;
   height: 46px;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: #f2f6f3;
   border: 1px solid var(--border);
   display: inline-flex;
@@ -4644,7 +4667,7 @@ table.skills {
   font-weight: 600;
   color: var(--green-ink);
   background: var(--green-soft);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.2rem 0.6rem;
   flex-shrink: 0;
 }
@@ -4698,7 +4721,7 @@ table.skills {
 .ent-coverage-track {
   display: block;
   height: 8px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--green-soft);
   overflow: hidden;
   margin: 0.5rem 0 0.4rem;
@@ -4706,7 +4729,7 @@ table.skills {
 .ent-coverage-fill {
   display: block;
   height: 100%;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: linear-gradient(90deg, var(--green-bright), var(--green));
 }
 .ent-coverage-note { margin: 0; font-size: 0.78rem; color: var(--muted); }
@@ -4737,7 +4760,7 @@ table.skills {
 .ent-trade-tag {
   font-size: 0.76rem;
   background: #eef2f0;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.2rem 0.55rem;
   color: var(--slate);
 }
@@ -4764,7 +4787,7 @@ table.skills {
   flex-shrink: 0;
   width: 1.3rem;
   height: 1.3rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--green-soft);
   color: var(--green-ink);
   font-size: 0.75rem;
@@ -4785,7 +4808,7 @@ table.skills {
   color: var(--slate);
   background: #fff;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.35rem 0.75rem;
   cursor: pointer;
 }
@@ -4819,7 +4842,7 @@ table.skills {
   font-weight: 600;
   color: var(--green-ink);
   background: var(--green-soft);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.15rem 0.5rem;
 }
 .ent-res-desc { margin: 0; font-size: 0.8rem; line-height: 1.5; color: var(--slate); }
@@ -4845,7 +4868,7 @@ table.skills {
   flex-shrink: 0;
   font-size: 0.74rem;
   font-weight: 600;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.2rem 0.55rem;
 }
 .ent-mission-score.forte { background: var(--green-soft); color: var(--green-ink); }
@@ -4878,7 +4901,7 @@ table.skills {
   font-weight: 600;
   color: var(--muted);
   background: #f1f3f2;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.15rem 0.45rem;
 }
 .ent-fin-what { margin: 0.3rem 0 0.2rem; font-size: 0.79rem; line-height: 1.45; color: var(--slate); }
@@ -4991,7 +5014,7 @@ table.skills {
   font-size: 0.78rem;
   padding: 0.3rem 0.45rem;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: #fff;
   color: var(--text);
 }
@@ -5001,7 +5024,7 @@ table.skills {
 
 .apps-item {
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   padding: 0.95rem 1.05rem 1rem;
   background: #fff;
   box-shadow: var(--shadow-sm);
@@ -5022,7 +5045,7 @@ table.skills {
 .apps-logo {
   width: 42px;
   height: 42px;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: var(--green-soft);
   color: var(--green-ink);
   display: inline-flex;
@@ -5053,7 +5076,7 @@ table.skills {
   display: inline-flex;
   align-items: center;
   padding: 0.16rem 0.6rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-size: 0.72rem;
   font-weight: 600;
   white-space: nowrap;
@@ -5084,7 +5107,7 @@ table.skills {
   font-size: 0.78rem;
   padding: 0.26rem 0.45rem;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: #fff;
   color: var(--text);
 }
@@ -5105,7 +5128,7 @@ table.skills {
   flex-direction: column;
   gap: 0.3rem;
 }
-.apps-step-dot { height: 5px; border-radius: 999px; background: #e2e8e4; }
+.apps-step-dot { height: 5px; border-radius: var(--radius-pill); background: #e2e8e4; }
 .apps-step-label { font-size: 0.71rem; line-height: 1.3; color: var(--muted); }
 .apps-step.done .apps-step-dot { background: var(--green); }
 .apps-step.done .apps-step-label { color: var(--green-dark); font-weight: 600; }
@@ -5121,7 +5144,7 @@ table.skills {
   gap: 0.5rem;
   margin: 0.85rem 0 0;
   padding: 0.5rem 0.7rem;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: #fdf0ef;
   color: #a8322b;
   font-size: 0.8rem;
@@ -5168,7 +5191,7 @@ table.skills {
   flex-direction: column;
   gap: 0.4rem;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   padding: 0.7rem 0.8rem 0.8rem;
   background: var(--bg);
 }
@@ -5191,7 +5214,7 @@ table.skills {
 .apps-prep {
   margin-top: 0.85rem;
   border: 0;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   padding: 0.8rem 1rem 0.9rem;
   background: #f7fcfa;
 }
@@ -5253,7 +5276,7 @@ table.skills {
   justify-content: center;
   width: 34px;
   height: 34px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   margin-bottom: 0.5rem;
 }
 .apps-next h2 { margin: 0 0 0.35rem; font-size: 1rem; color: var(--green-dark); }
@@ -5275,11 +5298,11 @@ table.skills {
 .apps-funnel-track {
   display: block;
   height: 7px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: #eef2f0;
   overflow: hidden;
 }
-.apps-funnel-fill { display: block; height: 100%; border-radius: 999px; background: #8fa8a0; }
+.apps-funnel-fill { display: block; height: 100%; border-radius: var(--radius-pill); background: #8fa8a0; }
 .apps-funnel-fill.wait { background: var(--accent); }
 .apps-funnel-fill.focus { background: #7c3aed; }
 .apps-funnel-fill.ok { background: var(--green); }
@@ -5413,7 +5436,7 @@ table.skills {
   text-transform: uppercase;
   color: var(--green-ink);
   background: var(--green-soft);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.1rem 0.5rem;
   margin-bottom: 0.3rem;
 }
@@ -5424,7 +5447,7 @@ table.skills {
   flex: 0 0 auto;
   font-size: 0.72rem;
   font-weight: 600;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.22rem 0.6rem;
   white-space: nowrap;
 }
@@ -5452,7 +5475,7 @@ table.skills {
 .learn-step-dot {
   width: 0.6rem;
   height: 0.6rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   border: 2px solid #cfd8d4;
   background: #fff;
   flex-shrink: 0;
@@ -5554,7 +5577,7 @@ table.skills {
   font-family: inherit;
   font-size: 0.8rem;
   font-weight: 600;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.4rem 0.85rem;
   cursor: pointer;
 }
@@ -5596,7 +5619,7 @@ table.skills {
 .learn-kind {
   font-size: 0.66rem;
   font-weight: 600;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.08rem 0.45rem;
   white-space: nowrap;
   background: #eef2f0;
@@ -5615,7 +5638,7 @@ table.skills {
   flex: 0 0 auto;
   width: 1.35rem;
   height: 1.35rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--green-soft);
   color: var(--green-ink);
   font-size: 0.74rem;
@@ -5721,7 +5744,7 @@ table.skills {
   text-transform: uppercase;
   color: var(--green-ink);
   background: var(--green-soft);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.1rem 0.5rem;
   margin-bottom: 0.3rem;
 }
@@ -5740,7 +5763,7 @@ table.skills {
   gap: 0.3rem;
   font-size: 0.72rem;
   font-weight: 600;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.22rem 0.6rem;
   white-space: nowrap;
 }
@@ -5839,7 +5862,7 @@ table.skills {
   font-size: 0.72rem;
   color: var(--slate);
   background: #eef2f0;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.18rem 0.55rem;
   white-space: nowrap;
 }
@@ -5863,8 +5886,8 @@ table.skills {
   gap: 0.6rem;
 }
 .car-bar-label { font-size: 0.78rem; color: var(--slate); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.car-bar-track { height: 0.5rem; border-radius: 999px; background: #edf1ef; overflow: hidden; }
-.car-bar-fill { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--green), var(--green-bright)); }
+.car-bar-track { height: 0.5rem; border-radius: var(--radius-pill); background: #edf1ef; overflow: hidden; }
+.car-bar-fill { display: block; height: 100%; border-radius: var(--radius-pill); background: linear-gradient(90deg, var(--green), var(--green-bright)); }
 .car-bar-count { font-size: 0.72rem; color: var(--muted); white-space: nowrap; }
 .car-moves-kind {
   display: inline-flex;
@@ -5971,7 +5994,7 @@ table.skills {
 .sk-level {
   font-size: 0.66rem;
   font-weight: 700;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.08rem 0.45rem;
   white-space: nowrap;
 }
@@ -5996,7 +6019,7 @@ table.skills {
   gap: 0.28rem;
   font-size: 0.7rem;
   font-weight: 600;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.2rem 0.55rem;
   white-space: nowrap;
 }
@@ -6062,8 +6085,8 @@ table.skills {
 
 /* Teintes par institution (elles colorent la tuile, le rail et la fiche) */
 .inst-page,
-.inst-rail { --inst-accent: #0e8a63; --inst-soft: #e6f6ef; --inst-ink: #0a5c42; }
-.tone-green { --inst-accent: #0e8a63; --inst-soft: #e6f6ef; --inst-ink: #0a5c42; }
+.inst-rail { --inst-accent: #0a6b4c; --inst-soft: #e6f6ef; --inst-ink: #0a5c42; }
+.tone-green { --inst-accent: #0a6b4c; --inst-soft: #e6f6ef; --inst-ink: #0a5c42; }
 .tone-blue { --inst-accent: #20689e; --inst-soft: #e7f1f8; --inst-ink: #164b73; }
 .tone-orange { --inst-accent: #b96a1c; --inst-soft: #fdf0e2; --inst-ink: #854a10; }
 .tone-violet { --inst-accent: #6b4fa8; --inst-soft: #efebf9; --inst-ink: #4b3578; }
@@ -6104,7 +6127,7 @@ table.skills {
   gap: 0.15rem;
   border: 1px solid rgba(255, 255, 255, 0.18);
   background: rgba(255, 255, 255, 0.07);
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   padding: 0.85rem 1rem;
 }
 .inst-hero-badge-num {
@@ -6147,7 +6170,7 @@ table.skills {
   text-align: left;
   border: 1px solid var(--border);
   background: #ffffff;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   padding: 0.5rem 0.7rem;
   cursor: pointer;
   transition: border-color 0.15s ease, background 0.15s ease;
@@ -6161,7 +6184,7 @@ table.skills {
   flex: 0 0 auto;
   width: 34px;
   height: 34px;
-  border-radius: 9px;
+  border-radius: var(--radius);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -6213,7 +6236,7 @@ table.skills {
   .inst-side::-webkit-scrollbar-track { background: transparent; }
   .inst-side::-webkit-scrollbar-thumb {
     background: rgba(10, 107, 76, 0.25);
-    border-radius: 999px;
+    border-radius: var(--radius-pill);
   }
   .inst-side::-webkit-scrollbar-thumb:hover {
     background: rgba(10, 107, 76, 0.45);
@@ -6245,7 +6268,7 @@ table.skills {
   font-weight: 600;
   color: var(--muted);
   background: #eef2f0;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.25rem 0.65rem;
   white-space: nowrap;
 }
@@ -6275,7 +6298,7 @@ table.skills {
   flex: 0 0 auto;
   width: 42px;
   height: 42px;
-  border-radius: 11px;
+  border-radius: var(--radius-lg);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -6299,7 +6322,7 @@ table.skills {
   flex: 0 0 auto;
   min-width: 1.85rem;
   height: 1.85rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -6326,7 +6349,7 @@ table.skills {
   font-size: 0.68rem;
   color: var(--inst-ink);
   background: var(--inst-soft);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.18rem 0.5rem;
 }
 .inst-device b { font-weight: 700; }
@@ -6361,7 +6384,7 @@ table.skills {
   flex: 0 0 auto;
   width: 48px;
   height: 48px;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -6386,7 +6409,7 @@ table.skills {
   color: var(--inst-ink);
   background: #ffffff;
   border: 1px solid var(--inst-accent);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.25rem 0.6rem;
   white-space: nowrap;
 }
@@ -6442,7 +6465,7 @@ table.skills {
   font-size: 0.7rem;
   color: var(--slate);
   background: #eef2f0;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.18rem 0.55rem;
   white-space: nowrap;
 }
@@ -6461,7 +6484,7 @@ table.skills {
   line-height: 1.45;
   color: var(--muted);
   background: var(--inst-soft);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   padding: 0.4rem 0.55rem;
 }
 .prog-elig-label {
@@ -6484,7 +6507,7 @@ table.skills {
   gap: 0.4rem;
   max-width: 100%;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: #ffffff;
   padding: 0.32rem 0.5rem;
   font-size: 0.75rem;
@@ -6507,7 +6530,7 @@ table.skills {
   letter-spacing: 0.05em;
   color: var(--inst-ink);
   background: var(--inst-soft);
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   padding: 0.08rem 0.3rem;
 }
 .prog-actions { margin-top: 0.55rem; }
@@ -6567,7 +6590,7 @@ table.skills {
   flex: 0 0 auto;
   width: 74px;
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   background: #fff;
   box-shadow: var(--shadow-sm);
 }
@@ -6578,19 +6601,19 @@ table.skills {
   height: 70px;
   background: #fff;
   border: 1px solid var(--border);
-  border-radius: 3px;
+  border-radius: var(--radius-xs);
   display: flex;
   overflow: hidden;
 }
 .tpl-thumb-one { flex-direction: column; }
 .tpl-thumb-two { flex-direction: row; }
-.tpl-head { display: block; height: 13px; margin: 5px 5px 3px; border-radius: 2px; }
+.tpl-head { display: block; height: 13px; margin: 5px 5px 3px; border-radius: var(--radius-xs); }
 .tpl-side { display: block; width: 34%; }
 .tpl-thumb-one .tpl-body { padding: 0 5px 5px; }
 .tpl-thumb-two .tpl-body { padding: 5px 4px 0 5px; }
 .tpl-thumb.flat .tpl-body { padding-top: 6px; }
 .tpl-body { flex: 1 1 auto; display: flex; flex-direction: column; gap: 3px; }
-.tpl-body i { display: block; height: 3px; border-radius: 2px; background: #D9E0DC; }
+.tpl-body i { display: block; height: 3px; border-radius: var(--radius-xs); background: #D9E0DC; }
 .tpl-body i:nth-child(2) { width: 82%; }
 .tpl-body i:nth-child(3) { width: 64%; }
 .tpl-body i:nth-child(4) { width: 74%; }
@@ -6603,7 +6626,7 @@ table.skills {
 .tpl-swatch {
   width: 1.35rem;
   height: 1.35rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   border: 2px solid #fff;
   box-shadow: 0 0 0 1px var(--border);
   cursor: pointer;
@@ -6613,7 +6636,7 @@ table.skills {
 .tpl-swatch-default {
   width: auto;
   height: 1.35rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0 0.6rem;
   font-family: inherit;
   font-size: 0.72rem;
@@ -6669,7 +6692,7 @@ table.skills {
   display: inline-block;
   width: 0.62rem;
   height: 0.62rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   flex-shrink: 0;
   box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12) inset;
 }
@@ -6830,7 +6853,7 @@ table.skills {
   font-weight: 700;
   background: #eef2f0;
   color: var(--slate);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.06rem 0.4rem;
 }
 .docs-tab.is-active .docs-tab-count { background: var(--green-soft); color: var(--green-ink); }
@@ -6842,7 +6865,7 @@ table.skills {
   gap: 0.55rem;
   flex-wrap: wrap;
   border: 1px dashed #cfd9d4;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: #fbfcfc;
   padding: 0.55rem 0.8rem;
   font-size: 0.8rem;
@@ -6873,7 +6896,7 @@ table.skills {
   flex: 0 0 auto;
   width: 40px;
   height: 40px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -6906,7 +6929,7 @@ table.skills {
   width: 108px;
   height: auto;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: #ffffff;
 }
 .gen-preview-copy {
@@ -6953,7 +6976,7 @@ table.skills {
   min-width: 0;
   background: #ffffff;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   overflow: hidden;
   transition: border-color 0.14s ease, box-shadow 0.14s ease, transform 0.14s ease;
 }
@@ -6980,7 +7003,7 @@ table.skills {
   object-fit: cover;
   object-position: top center;
   border: 1px solid #dce5e0;
-  border-radius: 5px 5px 0 0;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
   background: #ffffff;
   box-shadow: 0 8px 18px -12px rgba(16, 40, 30, 0.55);
 }
@@ -6993,7 +7016,7 @@ table.skills {
   position: absolute;
   top: 0.55rem;
   z-index: 1;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.14rem 0.48rem;
   font-size: 0.65rem;
   font-weight: 700;
@@ -7029,7 +7052,7 @@ table.skills {
   flex: 0 0 auto;
   width: 1rem;
   height: 1rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   border: 2px solid #ffffff;
   box-shadow: 0 0 0 1px var(--border);
 }
@@ -7066,7 +7089,7 @@ table.skills {
   gap: 0.55rem;
   margin-top: 0.95rem;
   border: 1px dashed #cfd9d4;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: #fbfcfc;
   padding: 0.65rem 0.8rem;
 }
@@ -7094,7 +7117,7 @@ table.skills {
   flex: 0 0 auto;
   width: 42px;
   height: 42px;
-  border-radius: 11px;
+  border-radius: var(--radius-lg);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -7119,7 +7142,7 @@ table.skills {
   color: var(--green-ink);
   background: var(--green-soft);
   border: 1px solid #c7ead9;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.18rem 0.5rem;
 }
 .docs-current .docs-ready { margin: 0.7rem 0 0.2rem; }
@@ -7152,7 +7175,7 @@ table.skills {
   gap: 0.4rem;
   min-width: 16rem;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: #ffffff;
   padding: 0.28rem 0.7rem;
 }
@@ -7222,7 +7245,7 @@ table.skills {
   gap: 0.5rem;
   flex-wrap: wrap;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: #ffffff;
   padding: 0.35rem 0.55rem;
   font-size: 0.8rem;
@@ -7244,7 +7267,7 @@ table.skills {
   letter-spacing: 0.05em;
   background: #f9e9ec;
   color: #93374a;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   padding: 0.08rem 0.3rem;
 }
 .admin-doc-row .btn { margin-left: auto; }
@@ -7263,7 +7286,7 @@ table.skills {
   font-size: 0.7rem;
   color: var(--green-dark);
   background: var(--green-soft);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.15rem 0.5rem;
   text-decoration: none;
 }
@@ -7285,7 +7308,7 @@ table.skills {
   width: 148px;
   aspect-ratio: 16 / 10;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   overflow: hidden;
   background: #eef2f0;
   display: flex;
@@ -7313,7 +7336,7 @@ table.skills {
 .job-writer {
   margin: 0.8rem 0 1rem;
   border: 1px solid #cfe7db;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: #f7fcfa;
   padding: 0.85rem 0.95rem;
 }
@@ -7331,7 +7354,7 @@ table.skills {
   margin-top: 0.8rem;
   padding: 0.85rem 0.9rem;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: #fff;
 }
 .job-writer-proposal-head {
@@ -7389,13 +7412,13 @@ table.skills {
 .job-visual-row {
   width: 74px;
   height: 54px;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   border: 1px solid rgba(10, 107, 76, 0.16);
 }
 .job-visual-thumb {
   width: 50px;
   height: 50px;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   border: 1px solid rgba(10, 107, 76, 0.16);
 }
 .job-visual-banner {
@@ -7435,7 +7458,7 @@ table.skills {
   justify-content: center;
   width: 26px;
   height: 26px;
-  border-radius: 9px;
+  border-radius: var(--radius);
   background: rgba(255, 255, 255, 0.14);
   color: #eafff6;
 }
@@ -7454,7 +7477,7 @@ table.skills {
   left: 1.2rem;
   width: 42px;
   height: 42px;
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
 }
 .job-visual-banner .job-visual-initials {
   right: 1.4rem;
@@ -7563,7 +7586,7 @@ table.skills {
   flex-direction: column;
   gap: 0.35rem;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   padding: 0.6rem 0.7rem;
   margin: 0.4rem 0 0.7rem;
   max-height: 32vh;
@@ -7608,7 +7631,7 @@ table.skills {
   width: 132px;
   height: auto;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: #fff;
 }
 .doc-update-preview-wrap .tpl-thumb { width: 108px; height: 152px; }
@@ -7616,7 +7639,7 @@ table.skills {
 .doc-accent-swatch {
   width: 0.9rem;
   height: 0.9rem;
-  border-radius: 3px;
+  border-radius: var(--radius-xs);
   flex-shrink: 0;
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.16);
 }
@@ -7636,7 +7659,7 @@ table.skills {
   margin-top: 0.7rem;
   padding: 0.55rem 0.7rem;
   border: 1px solid #e2eee7;
-  border-radius: 9px;
+  border-radius: var(--radius);
   background: #f8fcfa;
 }
 .talent-cert-strip-label {
@@ -7652,7 +7675,7 @@ table.skills {
 .talent-cert-chip { font-size: 0.73rem; padding: 0.2rem 0.55rem; }
 .talent-cv-pill {
   padding: 0.18rem 0.55rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--green-soft);
   color: var(--green-ink);
   font-weight: 600;
@@ -7666,7 +7689,7 @@ table.skills {
 }
 .talent-profile-hero {
   padding: 1.45rem 1.55rem;
-  border-radius: 18px;
+  border-radius: var(--radius-xl);
 }
 .talent-profile-hero .pf-cover {
   position: absolute;
@@ -7674,7 +7697,7 @@ table.skills {
   overflow: hidden;
   pointer-events: none;
   background:
-    radial-gradient(420px 240px at 88% -20%, rgba(230, 126, 34, 0.2), transparent 65%),
+    radial-gradient(420px 240px at 88% -20%, rgba(180, 83, 9, 0.2), transparent 65%),
     linear-gradient(100deg, rgba(255, 255, 255, 0.035), transparent 55%);
 }
 .talent-profile-hero .pf-cover::after {
@@ -7709,7 +7732,7 @@ table.skills {
 .talent-profile-avatar {
   width: 104px;
   height: 104px;
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
 }
 .talent-profile-avatar .pf-avatar-initials { font-size: 2rem; }
 .talent-profile-hero .pf-name-row h1 { font-size: 1.45rem; line-height: 1.2; }
@@ -7727,7 +7750,7 @@ table.skills {
   gap: 0.45rem;
   padding: 0.8rem;
   border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   background: rgba(255, 255, 255, 0.07);
   backdrop-filter: blur(4px);
 }
@@ -7752,7 +7775,7 @@ table.skills {
   margin: -1.65rem 1.1rem 0;
   padding: 0.85rem 1rem;
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   background: #fff;
   box-shadow: 0 14px 30px -24px rgba(7, 32, 43, 0.65);
 }
@@ -7803,7 +7826,7 @@ table.skills {
   gap: 0.65rem;
   padding: 0.75rem;
   border: 1px solid var(--border);
-  border-radius: 11px;
+  border-radius: var(--radius-lg);
   background: #fbfdfc;
   min-width: 0;
 }
@@ -7813,7 +7836,7 @@ table.skills {
   width: 34px;
   height: 34px;
   flex-shrink: 0;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -7831,7 +7854,7 @@ table.skills {
   gap: 0.55rem;
   padding: 1rem;
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   background: #fff;
 }
 .talent-cv.is-shared {
@@ -7844,7 +7867,7 @@ table.skills {
 .talent-cv-icon {
   width: 38px;
   height: 38px;
-  border-radius: 11px;
+  border-radius: var(--radius-lg);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -7889,7 +7912,7 @@ table.skills {
 @media (max-width: 700px) {
   .talent-profile-hero { padding: 1.15rem; }
   .talent-profile-hero-grid { grid-template-columns: minmax(0, 1fr); }
-  .talent-profile-avatar { width: 78px; height: 78px; border-radius: 16px; }
+  .talent-profile-avatar { width: 78px; height: 78px; border-radius: var(--radius-xl); }
   .talent-profile-avatar .pf-avatar-initials { font-size: 1.5rem; }
   .talent-profile-hero .pf-name-row h1 { font-size: 1.25rem; }
   .talent-profile-actions { flex-direction: column; align-items: stretch; }
@@ -7919,7 +7942,7 @@ table.skills {
 .cv-share-status {
   flex-shrink: 0;
   padding: 0.18rem 0.55rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: #eef1ef;
   color: var(--muted);
   font-size: 0.68rem;
@@ -7955,7 +7978,7 @@ table.skills {
   align-items: center;
   gap: 0.2rem;
   padding: 0.08rem 0.4rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--green-soft);
   color: var(--green-dark);
   font-size: 0.62rem;
@@ -8009,14 +8032,14 @@ table.skills {
   max-width: 440px;
   padding: 0;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: #fff;
   color: var(--muted);
 }
 .minesup-search > svg { position: absolute; left: 0.7rem; pointer-events: none; }
 .minesup-search input {
   border: none;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   padding: 0.58rem 2rem 0.58rem 2.1rem;
   background: transparent;
   font-size: 0.84rem;
@@ -8024,7 +8047,7 @@ table.skills {
 .minesup-search input:focus { outline: none; }
 .minesup-search:focus-within {
   border-color: var(--green);
-  box-shadow: 0 0 0 3px rgba(14, 138, 99, 0.12);
+  box-shadow: 0 0 0 3px rgba(10, 107, 76, 0.12);
 }
 .minesup-search-clear {
   position: absolute;
@@ -8044,7 +8067,7 @@ table.skills {
   flex-wrap: wrap;
   padding: 0.65rem 0.85rem;
   border: 1px solid #e1ebe6;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: #f7fbf9;
   color: var(--muted);
   font-size: 0.8rem;
@@ -8064,7 +8087,7 @@ table.skills {
   gap: 0.65rem;
   padding: 0.75rem 0.9rem;
   border: 1px dashed #cfe2d8;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: #fbfdfc;
   color: var(--slate);
 }
@@ -8082,7 +8105,7 @@ table.skills {
   gap: 0.38rem;
   text-align: left;
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   padding: 0.95rem 1rem;
   background:
     linear-gradient(180deg, #ffffff, #fbfdfc);
@@ -8111,8 +8134,8 @@ table.skills {
   min-width: 48px;
   height: 44px;
   padding: 0 0.65rem;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #0c3d30, #0e8a63);
+  border-radius: var(--radius-xl);
+  background: linear-gradient(135deg, #0c3d30, #0a6b4c);
   color: #fff;
   font-family: var(--font-head);
   font-size: 0.86rem;
@@ -8123,7 +8146,7 @@ table.skills {
 .minesup-monogram.is-large {
   min-width: 88px;
   height: 82px;
-  border-radius: 18px;
+  border-radius: var(--radius-xl);
   font-size: 1.15rem;
   padding: 0 0.9rem;
   background: rgba(255, 255, 255, 0.13);
@@ -8132,7 +8155,7 @@ table.skills {
 }
 .minesup-uni-badge {
   padding: 0.15rem 0.5rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: #edf5f1;
   color: var(--green-ink);
   font-size: 0.62rem;
@@ -8206,10 +8229,10 @@ table.skills {
   gap: 1rem;
   flex-wrap: wrap;
   padding: 1.15rem 1.25rem;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   color: #fff;
   background:
-    radial-gradient(500px 220px at 94% -30%, rgba(230, 126, 34, 0.25), transparent 65%),
+    radial-gradient(500px 220px at 94% -30%, rgba(180, 83, 9, 0.25), transparent 65%),
     linear-gradient(120deg, #07231b, #0b3b2d 58%, #0d5040);
   box-shadow: 0 20px 38px -30px rgba(7, 32, 43, 0.95);
 }
@@ -8234,7 +8257,7 @@ table.skills {
   min-width: 100px;
   padding: 0.55rem 0.8rem;
   border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: rgba(255, 255, 255, 0.07);
   color: rgba(255, 255, 255, 0.82);
   font-size: 0.72rem;
@@ -8268,7 +8291,7 @@ table.skills {
   gap: 0.65rem;
   padding: 0.95rem 1rem;
   border: 1px solid var(--border);
-  border-radius: 13px;
+  border-radius: var(--radius-xl);
   background: #fff;
   box-shadow: var(--shadow-sm);
 }
@@ -8278,7 +8301,7 @@ table.skills {
   width: 38px;
   height: 38px;
   flex-shrink: 0;
-  border-radius: 11px;
+  border-radius: var(--radius-lg);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -8333,7 +8356,7 @@ table.skills {
   overflow-y: auto;
   padding: 0.35rem;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: #f8faf9;
 }
 .minesup-admin-pick {
@@ -8342,7 +8365,7 @@ table.skills {
   gap: 0.1rem;
   padding: 0.55rem 0.65rem;
   border: 1px solid transparent;
-  border-radius: 9px;
+  border-radius: var(--radius);
   background: #fff;
   color: var(--text);
   text-align: left;
@@ -8358,7 +8381,7 @@ table.skills {
   min-width: 0;
   padding: 1rem 1.1rem;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: #fff;
 }
 .minesup-admin-head {
@@ -8382,7 +8405,7 @@ table.skills {
   flex-wrap: wrap;
   padding: 0.6rem 0.7rem;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: #fbfdfc;
 }
 .minesup-admin-school > div:first-child { min-width: 0; flex: 1 1 260px; }
@@ -8579,7 +8602,7 @@ table.skills {
   align-items: center;
   gap: 1rem;
   padding: 1rem 1.15rem;
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   border: 1px solid #bfe4d4;
   background: linear-gradient(120deg, #f2fbf7, #ffffff 60%);
   margin-bottom: 1rem;
@@ -8587,7 +8610,7 @@ table.skills {
 .ag-next-icon {
   width: 42px;
   height: 42px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -8612,7 +8635,7 @@ table.skills {
 .report-status {
   display: inline-flex;
   align-items: center;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.18rem 0.55rem;
   font-size: 0.7rem;
   font-weight: 700;
@@ -8648,7 +8671,7 @@ table.skills {
   padding: 0.6rem 0.75rem;
   border-left: 3px solid var(--green);
   background: #f7faf8;
-  border-radius: 0 8px 8px 0;
+  border-radius: 0 var(--radius) var(--radius) 0;
   font-size: 0.84rem;
   white-space: pre-wrap;
 }
@@ -8685,7 +8708,7 @@ table.skills {
   align-items: center;
   gap: 0.35rem;
   padding: 0.45rem 0.75rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: #e2f7ec;
   color: #14724e;
   font-size: 0.82rem;
@@ -8812,7 +8835,7 @@ table.skills {
   border-collapse: collapse;
   margin-top: 1rem;
   background: #fff;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   overflow: hidden;
   border: 1px solid var(--border);
 }
@@ -8860,7 +8883,7 @@ table.skills {
 .invite-card { margin-bottom: 0.8rem; }
 .invite-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.8rem; flex-wrap: wrap; }
 .invite-card-head h2 { margin: 0.35rem 0 0.15rem; font-size: 1.15rem; }
-.invite-badge { display: inline-block; padding: 0.16rem 0.5rem; border-radius: 999px; font-size: 0.7rem; font-weight: 700; border: 1px solid var(--border); background: #fff; color: var(--slate); }
+.invite-badge { display: inline-block; padding: 0.16rem 0.5rem; border-radius: var(--radius-pill); font-size: 0.7rem; font-weight: 700; border: 1px solid var(--border); background: #fff; color: var(--slate); }
 .invite-pending { background: #fff8e6; color: #8a5a00; border-color: #f5deb3; }
 .invite-accepted { background: #e8f7ef; color: var(--green-dark); border-color: #bfe6d2; }
 .invite-declined { background: #fdeee8; color: #9a3412; border-color: #f6c9b8; }
@@ -8889,7 +8912,7 @@ table.skills {
 .interview-steps li {
   padding: 0.3rem 0.65rem;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: #fff;
   color: var(--muted);
   font-size: 0.74rem;
@@ -8918,7 +8941,7 @@ table.skills {
   gap: 0.2rem;
   padding: 0.7rem 0.75rem;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: #fff;
   color: var(--text);
   cursor: pointer;
@@ -8935,7 +8958,7 @@ table.skills {
   margin: 0.8rem 0;
   padding: 0.75rem 0.8rem;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: #fbfcfc;
 }
 .slot-days {
@@ -8952,7 +8975,7 @@ table.skills {
   gap: 0.05rem;
   padding: 0.35rem 0.2rem;
   border: 1px solid var(--border);
-  border-radius: 9px;
+  border-radius: var(--radius);
   background: #fff;
   color: var(--text);
   cursor: pointer;
@@ -8965,7 +8988,7 @@ table.skills {
 .slot-time {
   padding: 0.3rem 0.6rem;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: #fff;
   color: var(--text);
   cursor: pointer;
@@ -9001,7 +9024,7 @@ table.skills {
   flex-wrap: wrap;
   padding: 0.45rem 0.6rem;
   border: 1px solid var(--border);
-  border-radius: 9px;
+  border-radius: var(--radius);
   background: #fbfcfc;
 }
 .request-slot strong { font-size: 0.86rem; }
@@ -9112,7 +9135,7 @@ table.skills {
   width: min(320px, 100%);
   height: auto;
   aspect-ratio: 1;
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   background: #0d1f18;
   cursor: grab;
   touch-action: none;
@@ -9122,7 +9145,7 @@ table.skills {
 .photo-crop-loading {
   width: min(320px, 100%);
   aspect-ratio: 1;
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   background: #eef4f1;
   display: flex;
   align-items: center;
@@ -9170,13 +9193,13 @@ table.skills {
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 1.4rem;
   align-items: center;
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   padding: 1.6rem 1.7rem;
   margin-bottom: 1rem;
   color: #fff;
   background:
     radial-gradient(600px 220px at 92% 8%, rgba(22, 185, 129, 0.34), transparent 64%),
-    radial-gradient(420px 260px at 6% 100%, rgba(230, 126, 34, 0.16), transparent 66%),
+    radial-gradient(420px 260px at 6% 100%, rgba(180, 83, 9, 0.16), transparent 66%),
     linear-gradient(118deg, #0b2a21 0%, #123a2c 58%, #0f5540 100%);
   box-shadow: 0 24px 48px -34px rgba(11, 42, 33, 0.95);
 }
@@ -9220,7 +9243,7 @@ table.skills {
   gap: 0.3rem;
   border: 1px solid rgba(255, 255, 255, 0.18);
   background: rgba(255, 255, 255, 0.08);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.2rem 0.55rem;
   font-weight: 700;
   color: #fff;
@@ -9235,7 +9258,7 @@ table.skills {
 .notif-hero-stat {
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(255, 255, 255, 0.075);
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   padding: 0.7rem 0.75rem;
   text-align: center;
 }
@@ -9287,7 +9310,7 @@ table.skills {
   flex-wrap: wrap;
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   padding: 0.55rem;
   margin-bottom: 1rem;
   box-shadow: var(--shadow-sm);
@@ -9300,7 +9323,7 @@ table.skills {
   border: 1px solid transparent;
   background: transparent;
   color: var(--slate);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.35rem 0.65rem;
   font-family: var(--font);
   font-size: 0.8rem;
@@ -9319,10 +9342,10 @@ table.skills {
   justify-content: center;
   min-width: 18px;
   height: 18px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0 0.25rem;
   font-size: 0.68rem;
-  background: rgba(14, 138, 99, 0.12);
+  background: rgba(10, 107, 76, 0.12);
   color: var(--green-ink);
 }
 .notif-filter.is-active .notif-filter-count {
@@ -9334,7 +9357,7 @@ table.skills {
   align-items: center;
   gap: 0.35rem;
   padding: 0.35rem 0.6rem;
-  border-radius: 9px;
+  border-radius: var(--radius);
   color: var(--green-dark);
   font-size: 0.8rem;
   font-weight: 700;
@@ -9391,7 +9414,7 @@ table.skills {
   justify-content: center;
   min-width: 20px;
   height: 20px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: var(--green-soft);
   color: var(--green-ink);
   font-size: 0.7rem;
@@ -9406,7 +9429,7 @@ table.skills {
   gap: 0.85rem;
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   padding: 0.95rem 1.05rem;
   box-shadow: var(--shadow);
   transition: border-color 0.14s ease, transform 0.14s ease;
@@ -9422,7 +9445,7 @@ table.skills {
 .notif-icon {
   width: 40px;
   height: 40px;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -9474,14 +9497,14 @@ table.skills {
   font-weight: 700;
   text-decoration: none;
   padding: 0.2rem 0.45rem;
-  border-radius: 8px;
+  border-radius: var(--radius);
 }
 .notif-action:hover { background: var(--green-soft); }
 
 .notif-side-card {
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   padding: 1rem 1.05rem;
   box-shadow: var(--shadow);
 }
@@ -9500,7 +9523,7 @@ table.skills {
 .notif-side-icon {
   width: 34px;
   height: 34px;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -9517,7 +9540,7 @@ table.skills {
   width: 100%;
   border: 1px solid transparent;
   background: transparent;
-  border-radius: 9px;
+  border-radius: var(--radius);
   padding: 0.4rem 0.35rem;
   color: var(--slate);
   font-family: var(--font);
@@ -9542,7 +9565,7 @@ table.skills {
   justify-content: center;
   min-width: 21px;
   height: 21px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0 0.3rem;
   background: var(--green-soft);
   color: var(--green-ink);
@@ -9558,14 +9581,14 @@ table.skills {
 .notif-filter-empty {
   background: var(--panel);
   border: 1px dashed var(--border);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   padding: 2rem 1.2rem;
   text-align: center;
 }
 .notif-filter-empty-icon {
   width: 46px;
   height: 46px;
-  border-radius: 14px;
+  border-radius: var(--radius-xl);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -9608,7 +9631,7 @@ table.skills {
   .notif-hero-stat { padding: 0.55rem 0.4rem; }
   .notif-hero-stat strong { font-size: 1.35rem; }
   .notif-card { padding: 0.85rem 0.85rem; gap: 0.65rem; }
-  .notif-icon { width: 34px; height: 34px; border-radius: 10px; }
+  .notif-icon { width: 34px; height: 34px; border-radius: var(--radius-lg); }
   .notif-card-top { align-items: flex-start; }
 }
 
@@ -9623,7 +9646,7 @@ table.skills {
   margin: 0.9rem 0;
   padding: 0.9rem 1rem;
   border: 1px solid #cfe7db;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: #f7fcfa;
 }
 .job-route-box h3 {
@@ -9646,7 +9669,7 @@ table.skills {
   display: inline-block;
   padding: 0.12rem 0.42rem;
   border: 1px solid #cfe7db;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: #ffffff;
   color: var(--green-dark);
   font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
@@ -9661,7 +9684,7 @@ table.skills {
   margin: 0.9rem 0;
   padding: 0.9rem 1rem;
   border: 1px solid #cfe7db;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: #f7fcfa;
 }
 .public-email-apply h3 {
@@ -9704,17 +9727,17 @@ table.skills {
 .poster-preview {
   background: #ffffff;
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: var(--radius-xl);
   padding: 0.65rem;
   box-shadow: 0 22px 55px rgba(7, 31, 21, 0.12);
 }
-.poster-preview img { width: 100%; display: block; border-radius: 12px; }
+.poster-preview img { width: 100%; display: block; border-radius: var(--radius-xl); }
 .poster-side {
   position: sticky;
   top: 1.6rem;
   background: #ffffff;
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: var(--radius-xl);
   padding: 1.25rem;
   box-shadow: var(--shadow);
 }
@@ -9739,7 +9762,7 @@ table.skills {
   margin: 0.85rem 0;
   padding: 0.75rem 0.85rem;
   border: 1px solid #dbe9e2;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   background: #f8fcfa;
 }
 .poster-recap span { font-size: 0.68rem; color: var(--muted); }
@@ -9769,7 +9792,7 @@ table.skills {
   padding: 1.4rem;
   background: #ffffff;
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   box-shadow: var(--shadow);
 }
 @media (max-width: 980px) {
@@ -9778,7 +9801,7 @@ table.skills {
 }
 @media (max-width: 640px) {
   .poster-page { padding: 1rem 0.75rem 2rem; }
-  .poster-preview { padding: 0.35rem; border-radius: 12px; }
+  .poster-preview { padding: 0.35rem; border-radius: var(--radius-xl); }
   .poster-side { padding: 1rem; }
 }
 
@@ -9786,7 +9809,7 @@ table.skills {
   margin: 0.9rem 0;
   padding: 0.85rem 1rem 0.95rem;
   border: 1px solid var(--border);
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   background: #fbfdfc;
 }
 .inbound-section h3 {
@@ -9807,7 +9830,7 @@ table.skills {
 .inbound-status {
   display: inline-block;
   padding: 0.15rem 0.5rem;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-size: 0.7rem;
   font-weight: 700;
   background: #eef1ef;
@@ -9833,13 +9856,13 @@ table.skills {
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 1.3rem;
   align-items: center;
-  border-radius: 20px;
+  border-radius: var(--radius-xl);
   padding: 1.5rem 1.7rem;
   margin-bottom: 1rem;
   color: #fff;
   background:
     radial-gradient(620px 220px at 92% 10%, rgba(22, 185, 129, 0.34), transparent 64%),
-    radial-gradient(420px 260px at 5% 100%, rgba(230, 126, 34, 0.14), transparent 66%),
+    radial-gradient(420px 260px at 5% 100%, rgba(180, 83, 9, 0.14), transparent 66%),
     linear-gradient(118deg, #0b2a21 0%, #123a2c 58%, #0f5540 100%);
   box-shadow: 0 24px 48px -34px rgba(11, 42, 33, 0.95);
 }
@@ -9892,14 +9915,14 @@ table.skills {
   min-width: 170px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   background: rgba(255, 255, 255, 0.075);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   padding: 0.9rem 1rem;
   text-align: center;
 }
 .sources-hero-ring {
   width: 42px;
   height: 42px;
-  border-radius: 13px;
+  border-radius: var(--radius-xl);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -9958,7 +9981,7 @@ table.skills {
 .source-card {
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   padding: 1rem 1.1rem;
   margin-bottom: 0.7rem;
   box-shadow: var(--shadow);
@@ -9993,7 +10016,7 @@ table.skills {
 .source-icon {
   width: 42px;
   height: 42px;
-  border-radius: 12px;
+  border-radius: var(--radius-xl);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -10010,7 +10033,7 @@ table.skills {
 .source-health {
   display: inline-flex;
   align-items: center;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.18rem 0.55rem;
   font-size: 0.7rem;
   font-weight: 700;
@@ -10031,7 +10054,7 @@ table.skills {
 .source-metric {
   background: #f8faf9;
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   padding: 0.45rem 0.6rem;
 }
 .source-metric strong {
@@ -10043,7 +10066,7 @@ table.skills {
 .source-metric span { color: var(--muted); font-size: 0.7rem; }
 .source-meter {
   height: 6px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: #edf2ef;
   overflow: hidden;
   margin: 0.35rem 0 0.45rem;
@@ -10051,7 +10074,7 @@ table.skills {
 .source-meter span {
   display: block;
   height: 100%;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   background: linear-gradient(90deg, var(--green), var(--green-bright));
   transition: width 0.25s ease;
 }
@@ -10102,7 +10125,7 @@ table.skills {
 .source-side-card {
   background: var(--panel);
   border: 1px solid var(--border);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   padding: 1rem 1.05rem;
   box-shadow: var(--shadow);
   scroll-margin-top: 1rem;
@@ -10111,7 +10134,7 @@ table.skills {
 .source-side-icon {
   width: 36px;
   height: 36px;
-  border-radius: 11px;
+  border-radius: var(--radius-lg);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -10139,7 +10162,7 @@ table.skills {
   flex-direction: column;
   gap: 0.15rem;
   margin-top: 0.55rem;
-  border-radius: 10px;
+  border-radius: var(--radius-lg);
   padding: 0.55rem 0.65rem;
   font-size: 0.75rem;
   line-height: 1.4;
@@ -10286,4 +10309,45 @@ table.skills {
   .recv-stack { padding: 0.6rem; }
   .recv-app-head { flex-direction: column; }
   .recv-app-actions .btn { width: 100%; }
+}
+
+/* ---------------- Point 12 : formes institutionnelles ---------------- */
+/* Les badges et statuts sont rectangulaires. Les pastilles rondes sont
+   réservées aux compteurs, aux filtres et aux indicateurs. */
+.badge,
+.skill-tag,
+.apps-status,
+.attention-tag,
+.trend-chip,
+.ag-attn-tag,
+.ag-attn-chip,
+.ent-tag,
+.ent-trade-tag,
+.opps-tag,
+.learn-kind,
+.learn-status,
+.sk-status,
+.report-status,
+.notif-status,
+.inbound-status,
+.offre-submitted-badge,
+.invite-badge,
+.docs-current-badge,
+.ag-step-state {
+  border-radius: var(--radius-xs);
+}
+.chip,
+.chip-soft,
+.evidence-chip,
+.suggestion,
+.tab,
+.opps-tab,
+.ent-tab,
+.pf-tab,
+.pf-subtabs button,
+.doc-filter,
+.notif-filter,
+.docs-search,
+.opps-sort select {
+  border-radius: var(--radius-sm);
 }
