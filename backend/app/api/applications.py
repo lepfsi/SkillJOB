@@ -160,6 +160,17 @@ def _notify_recruiter(db: Session, user: models.User, job: models.Job,
         body="\n".join(lines),
         job_id=job.id,
     ))
+    # E-mail optionnel selon les préférences du recruteur (catalogue
+    # recruteur, événement « nouvelle candidature »). Best effort.
+    from app.services.notifications import dispatch
+
+    dispatch(
+        db,
+        recruiter,
+        "OrientSkill AI : nouvelle candidature",
+        "\n".join(lines),
+        event="new_application",
+    )
 
 
 def _send_external_application(db: Session, user: models.User, job: models.Job,

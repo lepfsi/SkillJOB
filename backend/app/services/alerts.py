@@ -20,7 +20,11 @@ from sqlalchemy.orm import Session
 from app import models
 from app.services import agent_prefs
 from app.services.matching import LEVEL_STRONG, compute_match
-from app.services.notifications import dispatch, normalize_prefs
+from app.services.notifications import (
+    dispatch,
+    email_wanted,
+    normalize_prefs,
+)
 from app.services.skills_taxonomy import load_taxonomy
 
 logger = logging.getLogger("orientskill.alerts")
@@ -203,9 +207,29 @@ def _already_alerted(db: Session, user_id: int, event: str, job_id: int) -> bool
 
 
 def _wants_email(user: models.User, event: str) -> bool:
-    prefs = normalize_prefs(getattr(user, "notification_prefs", None) or {})
+    role = getattr(user, "role", "candidate")
+    prefs = normalize_prefs(
+        getattr(user, "notification_prefs", None) or {}, role
+    )
     return bool(prefs["email_enabled"] and prefs["email"]
-                and prefs["events"].get(event))
+                and email_wanted(prefs, event, role))
+
+
+def build_job_expiring_body(user: models.User, job: models.Job) -> str:
+    """Rappel recruteur : une offre publiée arrive à échéance."""
+    remaining = max((job.deadline - datetime.utcnow()).days, 0) if job.deadline else 0
+    first_name = (getattr(user, "full_name", "") or "").split(" ")[0]
+    return "\n".join([
+        f"Bonjour {first_name},",
+        "",
+        f"Votre offre « {job.title} » arrive à échéance dans "
+        f"{remaining} jour(s).",
+        "",
+        "Vous pouvez la prolonger ou la clôturer depuis votre espace "
+        "recruteur. Les candidatures déjà reçues restent disponibles.",
+        "",
+        "L'équipe OrientSkill AI",
+    ])
 
 
 def run_alerts_once(db: Session) -> dict:
@@ -292,5 +316,62 @@ def run_alerts_once(db: Session) -> dict:
         except Exception as exc:
             logger.warning("Alerte agent user %s : %s", user.id, exc)
             errors += 1
+
+    # ---- Recruteurs : une de leurs offres arrive à échéance.
+    # Une seule alerte par offre et par recruteur, même si la passe
+    # planifiée tourne plusieurs fois dans la fenêtre de 7 jours.
+    now = datetime.utcnow()
+    recruiters = (
+        db.query(models.User)
+        .filter(models.User.role == "recruiter")
+        .all()
+    )
+    for recruiter in recruiters:
+        if not _wants_email(recruiter, "job_expiring"):
+            continue
+        companies = (
+            db.query(models.Company)
+            .filter(models.Company.owner_user_id == recruiter.id)
+            .all()
+        )
+        for company in companies:
+            jobs = (
+                db.query(models.Job)
+                .filter(
+                    models.Job.company_id == company.id,
+                    models.Job.deadline.isnot(None),
+                )
+                .all()
+            )
+            for job in jobs:
+                remaining = (job.deadline - now).days
+                if not (0 <= remaining <= DEADLINE_WINDOW_DAYS):
+                    continue
+                if _already_alerted(
+                    db, recruiter.id, "job_expiring", job.id
+                ):
+                    continue
+                try:
+                    results = dispatch(
+                        db, recruiter,
+                        "OrientSkill AI : une de vos offres expire bientôt",
+                        build_job_expiring_body(recruiter, job),
+                        event="job_expiring",
+                    )
+                    db.add(models.NotificationLog(
+                        user_id=recruiter.id,
+                        event="job_expiring",
+                        job_id=job.id,
+                    ))
+                    if results and any(r["ok"] for r in results):
+                        notified += 1
+                    else:
+                        errors += 1
+                except Exception as exc:
+                    logger.warning(
+                        "Alerte job_expiring recruteur %s : %s",
+                        recruiter.id, exc,
+                    )
+                    errors += 1
     db.commit()
     return {"notified": notified, "skipped": skipped, "errors": errors}

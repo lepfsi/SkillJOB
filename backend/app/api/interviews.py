@@ -143,8 +143,9 @@ def respond(
         ics = calendar_service.attachment(
             invite, job, candidate, recruiter, status=invite.status
         )
-        notifications.send_email(
-            db, recruiter.email, subject, mail_body,
+        notifications.dispatch(
+            db, recruiter, subject, mail_body,
+            event="interview_response",
             attachments=[ics], reply_to=user.email,
         )
     # Confirmation immédiate au candidat, quel que soit son choix.
@@ -155,7 +156,8 @@ def respond(
         ics = calendar_service.attachment(
             invite, job, candidate, recruiter, status=invite.status
         )
-        notifications.send_email(
-            db, candidate.email, subject, mail_body, attachments=[ics]
+        notifications.dispatch(
+            db, candidate, subject, mail_body,
+            event="interview", attachments=[ics],
         )
     return interview_service.invite_dict(db, invite)

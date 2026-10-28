@@ -588,7 +588,7 @@ humain (§47).
     `watch_jobs`, `alert_deadlines` (booléens). Une action désactivée est
     bloquée côté API (403) et filtrée dans l'inbox et les alertes.
   - `channels` : résumé en lecture seule des canaux de notification
-    (`channels_href` pointe vers `/notifications`).
+    (`channels_href` pointe vers `/parametres-compte#notifications`).
 - `PUT /api/agent/preferences` : mise à jour partielle des mêmes champs
   (le mode peut être inclus). 422 sur une valeur inconnue ou le mode
   autonome avec `validation=toujours` ; 403 pour un rôle non candidat.
@@ -970,17 +970,44 @@ l'administration. Les calendriers restent ceux annoncés par le MINESUP.
 ### Notifications par événement (§25, §52)
 
 - `GET /api/profile/notifications` → préférences de l'utilisateur :
-  canaux (`email_enabled`, `email`, `telegram_*`, `whatsapp_*`) et
-  `events` : opt-in e-mail **par événement** (`new_match`, `expiring`,
-  `agent`, `message`, `application`, `verification_decision` ;
-  `false` = l'événement reste dans l'application). `event_types` fournit
-  les libellés pour l'interface.
-- `PUT /api/profile/notifications { ...canaux, events?: {clé: bool} }` :
-  fusion (mise à jour partielle possible).
+  canaux (`email_enabled`, `email`, `telegram_*`, `whatsapp_*`),
+  `email_frequency` (`immediate` | `daily`) et `events` : opt-in e-mail
+  **par événement** (`false` = l'information reste dans l'application).
+  La réponse contient aussi `role`, `event_types` (libellés) et
+  `event_catalog` (liste `{key, label, description, group, critical}`)
+  **filtrés selon le rôle connecté** :
+  - candidat : `new_match`, `expiring`, `message`, `application`,
+    `interview`, `verification_decision`, `agent` ;
+  - recruteur : `new_application`, `candidate_message`,
+    `interview_response`, `job_published`, `job_expiring`,
+    `company_verification` ;
+  - admin : `verification_request`, `appeal`, `report`,
+    `ingestion_failure`, `critical_alert`.
+- `PUT /api/profile/notifications { ...canaux, email_frequency?, events?:
+  {clé: bool} }` : fusion (mise à jour partielle possible). Les clés
+  d'événements d'un autre rôle sont ignorées. `email_frequency` invalide
+  → `422`.
+- Fréquence des offres : `immediate` = passe horaire, fenêtre d'une heure ;
+  `daily` = fenêtre de 24 h, après `digest_hour` configuré par l'admin.
+  Dans les deux cas, **un seul e-mail d'offres par jour et par candidat** ;
+  les offres déjà envoyées sont dédupliquées dans `notification_log`.
+  Les autres correspondances restent dans l'inbox.
 - Événements déclencheurs : message d'un recruteur (messagerie), mise à
-  jour de candidature (statut recruteur), digest des nouvelles offres,
-  échéance proche et conseil de l'agent (passes planifiées quotidiennes,
-  dédupliquées dans `notification_log`).
+  jour de candidature, nouvelle candidature reçue (recruteur), réponse à
+  une invitation (recruteur), publication et expiration d'offre
+  (recruteur), alertes de l'équipe admin (routage par catégorie).
+- E-mails critiques (`critical_alert`, sécurité, compte) : toujours
+  envoyés sur l'adresse du compte, même si le canal e-mail ou la catégorie
+  est désactivé. Ils n'incluent pas de lien de désabonnement.
+- `GET /api/profile/notifications/unsubscribe?token=...` : désabonnement
+  en un clic, **sans authentification**, via un jeton HMAC signé
+  (`SECRET_KEY`). Il désactive uniquement les alertes emploi du rôle
+  (`new_match`, `expiring`, `agent` côté candidat ; `job_expiring` côté
+  recruteur). Les messages transactionnels et les e-mails critiques
+  restent envoyés. Réponse HTML de confirmation ; jeton invalide → `400`.
+- Les e-mails non critiques contiennent un lien vers
+  `/parametres-compte#notifications` ; les alertes emploi ajoutent le lien
+  de désabonnement signé.
 - `POST /api/profile/notifications/test` : envoi manuel sur les canaux
   activés (ignore les opt-in par événement : c'est un test).
 

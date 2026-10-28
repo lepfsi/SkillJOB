@@ -4,7 +4,7 @@ vérification de profil (§7.1, §9ter).
 from pathlib import Path
 
 from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from sqlalchemy.orm import Session
 
 from app import config, models, schemas, security
@@ -189,13 +189,20 @@ def set_cv_visibility(
 # ------------------------------------------------ Notifications (§25)
 
 def _prefs_out(user: models.User) -> dict:
-    from app.services.notifications import normalize_prefs
+    from app.services.notifications import (
+        event_catalog_list,
+        event_types,
+        normalize_prefs,
+    )
 
-    prefs = normalize_prefs(getattr(user, "notification_prefs", None) or {})
-    # Catalogue des événements : libellés pour l'interface de réglage.
-    from app.services.notifications import EVENT_TYPES
-
-    prefs["event_types"] = EVENT_TYPES
+    role = getattr(user, "role", "candidate") or "candidate"
+    prefs = normalize_prefs(
+        getattr(user, "notification_prefs", None) or {}, role
+    )
+    # Catalogue du rôle connecté : libellés et descriptions pour l'UI.
+    prefs["event_types"] = event_types(role)
+    prefs["event_catalog"] = event_catalog_list(role)
+    prefs["role"] = role
     return prefs
 
 
@@ -213,23 +220,83 @@ def update_notifications(
     """Canaux, coordonnées et choix PAR ÉVÉNEMENT de l'utilisateur :
     sans opt-in e-mail pour un événement, la notification reste dans
     l'application. Les identifiants des services (SMTP, bots) restent
-    côté admin."""
+    côté admin. Seuls les événements du rôle connecté sont acceptés."""
+    from app.services.notifications import event_keys
+
+    role = getattr(user, "role", "candidate") or "candidate"
     prefs = _prefs_out(user)
     incoming = payload.model_dump()
     events_incoming = incoming.pop("events", None) or {}
     for key, value in incoming.items():
         if value is not None:
             prefs[key] = value
+    allowed = set(event_keys(role))
     if events_incoming:
         merged = dict(prefs.get("events") or {})
         for key, value in events_incoming.items():
-            if value is not None:
+            if key in allowed and value is not None:
                 merged[key] = bool(value)
         prefs["events"] = merged
-    prefs.pop("event_types", None)  # jamais persisté
+    for key in ("event_types", "event_catalog", "role"):
+        prefs.pop(key, None)  # jamais persistés
+    # Le catalogue du rôle est désormais appliqué : la migration de
+    # démarrage ne doit plus réinitialiser ces choix au prochain redémarrage.
+    prefs["role_events_migrated"] = True
     user.notification_prefs = prefs
     db.commit()
     return _prefs_out(user)
+
+
+@router.get("/notifications/unsubscribe", response_class=HTMLResponse)
+def unsubscribe_notifications(
+    token: str,
+    db: Session = Depends(get_db),
+):
+    """Désabonnement en un clic depuis un e-mail, sans connexion.
+
+    Le jeton signé ne permet que de désactiver les alertes emploi du
+    compte concerné : les messages transactionnels et les alertes
+    critiques restent envoyés.
+    """
+    from app.services.notifications import (
+        apply_unsubscribe,
+        parse_unsubscribe_token,
+    )
+
+    parsed = parse_unsubscribe_token(token)
+    if parsed is None:
+        return HTMLResponse(
+            "<h1>Lien de désabonnement invalide</h1>"
+            "<p>Ce lien est incomplet ou a été modifié. "
+            "Gérez vos préférences depuis votre compte.</p>",
+            status_code=400,
+        )
+    user_id, scope = parsed
+    user = db.get(models.User, user_id)
+    if user is None:
+        return HTMLResponse(
+            "<h1>Compte introuvable</h1>"
+            "<p>Ce compte n'existe plus.</p>",
+            status_code=404,
+        )
+    keys = apply_unsubscribe(db, user, scope)
+    if not keys:
+        return HTMLResponse(
+            "<h1>Désabonnement non applicable</h1>"
+            "<p>Ce type d'alerte n'est pas disponible pour ce compte.</p>",
+            status_code=400,
+        )
+    settings_url = (
+        f"{config.PUBLIC_BASE_URL.rstrip('/')}"
+        "/parametres-compte#notifications"
+    )
+    return HTMLResponse(
+        "<h1>Désabonnement confirmé</h1>"
+        "<p>Les alertes emploi ne vous seront plus envoyées par e-mail. "
+        "Les messages liés à vos candidatures et les alertes critiques "
+        "restent envoyés.</p>"
+        f"<p><a href=\"{settings_url}\">Gérer mes autres préférences</a></p>"
+    )
 
 
 @router.post("/notifications/test", response_model=list[dict])

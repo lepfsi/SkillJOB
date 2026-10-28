@@ -648,12 +648,15 @@ class BusinessPlanIn(BaseModel):
 class NotificationPrefsIn(BaseModel):
     email_enabled: Optional[bool] = None
     email: Optional[str] = None
+    # Fréquence des alertes emploi : immédiate (au fil de l'eau, plafonnée
+    # à un e-mail par jour) ou résumé quotidien.
+    email_frequency: Optional[Literal["immediate", "daily"]] = None
     whatsapp_enabled: Optional[bool] = None
     whatsapp_number: Optional[str] = None
     telegram_enabled: Optional[bool] = None
     telegram_username: Optional[str] = None
-    # Opt-in e-mail PAR ÉVÉNEMENT (false = reste in-app uniquement) :
-    # new_match, expiring, agent, message, application.
+    # Opt-in e-mail PAR ÉVÉNEMENT (false = reste in-app uniquement).
+    # Les clés autorisées dépendent du rôle : voir EVENT_CATALOGS.
     events: Optional[dict[str, bool]] = None
 
 

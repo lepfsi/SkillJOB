@@ -554,6 +554,17 @@ input:focus, select:focus, textarea:focus {
 .events-prefs .check input:disabled + *,
 .events-prefs .check:has(input:disabled) { opacity: 0.55; cursor: not-allowed; }
 .check input { width: auto; }
+.events-group { margin-top: 0.8rem; }
+.events-group h4 {
+  margin: 0 0 0.25rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.events-group .check { align-items: flex-start; }
+.events-group .check > span { display: block; }
+#notifications, #agent { scroll-margin-top: 1.2rem; }
 
 /* Équipe d'administration et journal des alertes */
 .admin-alert-head {

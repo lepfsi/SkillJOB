@@ -162,6 +162,24 @@ def publish_job(
     db.add(job)
     db.commit()
     db.refresh(job)
+    # Confirmation optionnelle : le recruteur choisit cette catégorie dans
+    # ses préférences e-mail (catalogue recruteur).
+    from app.services.notifications import dispatch
+
+    dispatch(
+        db,
+        user,
+        "OrientSkill AI : votre offre est publiée",
+        "\n".join([
+            f"Bonjour {(user.full_name or '').split(' ')[0]},",
+            "",
+            f"Votre offre « {job.title} » est désormais en ligne.",
+            "Les candidatures reçues apparaîtront dans votre espace recruteur.",
+            "",
+            "L'équipe OrientSkill AI",
+        ]),
+        event="job_published",
+    )
     return _job_dict(job)
 
 

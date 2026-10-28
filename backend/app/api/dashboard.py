@@ -335,7 +335,10 @@ def set_agent_mode(
 
 
 def _agent_channels(user: models.User) -> list[str]:
-    prefs = normalize_prefs(getattr(user, "notification_prefs", None) or {})
+    prefs = normalize_prefs(
+        getattr(user, "notification_prefs", None) or {},
+        getattr(user, "role", "candidate"),
+    )
     channels = ["In-app"]
     if prefs["email_enabled"] and prefs["email"]:
         channels.append("E-mail")
@@ -355,7 +358,7 @@ def _agent_preferences_payload(user: models.User) -> dict:
         "prefs": prefs,
         **agent_prefs.catalog(),
         "channels": _agent_channels(user),
-        "channels_href": "/notifications",
+        "channels_href": "/parametres-compte#notifications",
     }
 
 

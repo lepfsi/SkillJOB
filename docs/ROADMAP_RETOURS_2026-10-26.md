@@ -448,6 +448,12 @@ notifications importantes dans l'application.
 - Les préférences sont conservées après déconnexion.
 - Aucun e-mail réel n'est envoyé pendant les tests.
 
+Statut : implémenté et vérifié le 28 octobre 2026 (section « Notifications
+e-mail » dans les paramètres, catalogue candidat, fréquence immédiate ou
+quotidienne, plafond d'un e-mail d'offres par jour, déduplication par offre
+dans `notification_log`, e-mails critiques toujours envoyés, lien de
+désabonnement signé et testé sans envoi réel).
+
 ### 19. Paramètres e-mail spécifiques aux recruteurs et aux admins
 
 **Constat**
@@ -474,6 +480,13 @@ Afficher à chaque rôle uniquement les événements qui le concernent.
 - Les événements candidat ne sont plus affichés à ces rôles.
 - Chaque rôle peut activer ou désactiver ses alertes indépendamment.
 - Les tests couvrent la séparation des catalogues.
+
+Statut : implémenté et vérifié le 28 octobre 2026 (catalogues distincts
+candidat / recruteur / admin renvoyés par l'API, interface dynamique,
+déclencheurs réels pour nouvelle candidature, réponse à une invitation,
+publication et expiration d'offre, routage des alertes admin via les
+préférences personnelles, migration idempotente sans e-mail non demandé,
+tests de séparation des catalogues).
 
 ### 20. Page recruteur des candidatures reçues
 

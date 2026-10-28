@@ -101,7 +101,7 @@ def test_agent_preferences_defaults_and_persistence(client):
         "documents", "toujours"
     }
     assert body["channels"] == ["In-app"]
-    assert body["channels_href"] == "/notifications"
+    assert body["channels_href"] == "/parametres-compte#notifications"
 
     updated = client.put("/api/agent/preferences", json={
         "scope": "secteur",

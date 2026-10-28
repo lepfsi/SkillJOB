@@ -112,7 +112,8 @@ def test_prefs_expose_event_catalog_and_defaults(client, demo_headers):
     prefs = client.get("/api/profile/notifications", headers=demo_headers).json()
     assert set(prefs["events"].keys()) == EVENT_KEYS
     assert all(value is False for value in prefs["events"].values())
-    assert prefs["event_types"]["expiring"].startswith("Offre correspondante")
+    assert prefs["event_types"]["expiring"] == "Offres expirantes"
+    assert prefs["email_frequency"] == "daily"
 
     # PUT : mise à jour partielle des événements, puis persistance.
     updated = client.put("/api/profile/notifications", json={

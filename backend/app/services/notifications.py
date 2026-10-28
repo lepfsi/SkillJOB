@@ -7,6 +7,8 @@ d'envoi ne casse jamais la requête métier ; il est journalisé côté
 réponse pour le test manuel uniquement.
 """
 import base64
+import hashlib
+import hmac
 import json
 import logging
 import smtplib
@@ -17,6 +19,7 @@ from urllib.parse import quote
 
 import urllib.request
 
+from app import config
 from app.services import settings_store
 
 logger = logging.getLogger("orientskill.notifications")
@@ -30,51 +33,300 @@ RENDER_SMTP_HINT = (
 PROVIDER_LABELS = {"smtp": "SMTP", "brevo": "Brevo", "resend": "Resend"}
 
 # ------------------------------------------------- Événements (§25, §52)
-# Types d'événements notifiables. Le candidat choisit, POUR CHAQUE
-# événement, s'il veut aussi l'e-mail ; sinon la notification reste
-# dans l'application (inbox / messagerie / briefing).
+# Chaque rôle a son propre catalogue : un recruteur ne voit pas les
+# événements candidat, un administrateur ne voit pas les événements
+# recruteur. Le choix par événement vaut pour l'e-mail ; la notification
+# reste toujours disponible dans l'application.
 
-EVENT_TYPES: dict[str, str] = {
-    "new_match": "Nouvelle offre correspondant au profil",
-    "expiring": "Offre correspondante dont la date limite approche",
-    "agent": "Conseil ou alerte importante de l'agent",
-    "message": "Message d'un recruteur",
-    "application": "Mise à jour d'une candidature",
-    "verification_decision": "Décision sur la vérification de votre profil",
-    "interview": "Invitation ou décision d'entretien",
+EVENT_CATALOGS: dict[str, dict[str, dict[str, Any]]] = {
+    "candidate": {
+        "new_match": {
+            "label": "Nouvelles offres",
+            "description": "Une nouvelle offre correspond à votre profil.",
+            "group": "offres",
+        },
+        "expiring": {
+            "label": "Offres expirantes",
+            "description": "Une offre correspondante arrive à échéance.",
+            "group": "offres",
+        },
+        "message": {
+            "label": "Messages",
+            "description": "Un recruteur ou l'équipe vous écrit.",
+            "group": "relations",
+        },
+        "application": {
+            "label": "Candidatures",
+            "description": "Le statut de votre candidature change.",
+            "group": "candidatures",
+        },
+        "interview": {
+            "label": "Entretiens",
+            "description": "Invitation, réponse ou décision d'entretien.",
+            "group": "candidatures",
+        },
+        "verification_decision": {
+            "label": "Vérification du profil",
+            "description": "Décision sur votre demande de vérification.",
+            "group": "compte",
+        },
+        "agent": {
+            "label": "Conseil de l'agent",
+            "description": "Le conseil le plus important du moment.",
+            "group": "agent",
+        },
+    },
+    "recruiter": {
+        "new_application": {
+            "label": "Nouvelle candidature",
+            "description": "Un candidat a postulé à l'une de vos offres.",
+            "group": "candidatures",
+        },
+        "candidate_message": {
+            "label": "Message d'un candidat",
+            "description": "Un candidat vous a envoyé un message.",
+            "group": "relations",
+        },
+        "interview_response": {
+            "label": "Réponse à une invitation",
+            "description": "Un candidat accepte, refuse ou propose un autre créneau.",
+            "group": "candidatures",
+        },
+        "job_published": {
+            "label": "Offre publiée",
+            "description": "Confirmation de publication d'une offre.",
+            "group": "offres",
+        },
+        "job_expiring": {
+            "label": "Offre arrivant à expiration",
+            "description": "Une de vos offres arrive à échéance.",
+            "group": "offres",
+        },
+        "company_verification": {
+            "label": "Vérification d'entreprise",
+            "description": "Décision sur la vérification de votre entreprise.",
+            "group": "compte",
+        },
+    },
+    "admin": {
+        "verification_request": {
+            "label": "Demande de vérification",
+            "description": "Un candidat dépose une pièce d'identité.",
+            "group": "administration",
+        },
+        "appeal": {
+            "label": "Recours",
+            "description": "Un compte suspendu conteste une décision.",
+            "group": "administration",
+        },
+        "report": {
+            "label": "Signalement",
+            "description": "Une offre est signalée comme frauduleuse ou expirée.",
+            "group": "administration",
+        },
+        "ingestion_failure": {
+            "label": "Échec d'ingestion",
+            "description": "Une source d'offres ne répond plus.",
+            "group": "technique",
+        },
+        "critical_alert": {
+            "label": "Alerte critique",
+            "description": "Un service essentiel est indisponible.",
+            "group": "technique",
+            "critical": True,
+        },
+    },
 }
+
+# Compatibilité : le catalogue candidat reste exposé sous EVENT_TYPES.
+EVENT_TYPES: dict[str, str] = {
+    key: value["label"] for key, value in EVENT_CATALOGS["candidate"].items()
+}
+
+# Événements qui ne peuvent jamais être désactivés (compte, sécurité,
+# défaillance critique). Ils partent sur l'adresse du compte.
+CRITICAL_EVENTS = {"critical_alert", "security", "account"}
+
+# Correspondance entre les catégories d'alertes de l'équipe admin et les
+# événements personnels de l'administrateur.
+ADMIN_CATEGORY_EVENTS = {
+    "verification": "verification_request",
+    "appeal": "appeal",
+    "report": "report",
+    "ingestion": "ingestion_failure",
+    "critical": "critical_alert",
+}
+
+# Alertes emploi concernées par le lien de désabonnement en un clic.
+JOB_ALERT_EVENTS = {"new_match", "expiring", "agent", "job_expiring"}
 
 DEFAULT_PREFS: dict[str, Any] = {
     "email_enabled": False,
     "email": "",
+    "email_frequency": "daily",
     "whatsapp_enabled": False,
     "whatsapp_number": "",
     "telegram_enabled": False,
     "telegram_username": "",
     # Choix par événement : e-mail souhaité (false = in-app uniquement).
-    "events": {event: False for event in EVENT_TYPES},
+    "events": {event: False for event in EVENT_CATALOGS["candidate"]},
 }
 
 
-def normalize_prefs(raw: Optional[dict]) -> dict[str, Any]:
+def event_catalog(role: Optional[str]) -> dict[str, dict[str, Any]]:
+    """Catalogue d'événements du rôle connecté."""
+    return EVENT_CATALOGS.get(role or "candidate", EVENT_CATALOGS["candidate"])
+
+
+def event_keys(role: Optional[str]) -> list[str]:
+    return list(event_catalog(role))
+
+
+def event_types(role: Optional[str] = "candidate") -> dict[str, str]:
+    return {key: value["label"] for key, value in event_catalog(role).items()}
+
+
+def event_catalog_list(role: Optional[str] = "candidate") -> list[dict[str, Any]]:
+    return [
+        {
+            "key": key,
+            "label": value["label"],
+            "description": value.get("description", ""),
+            "group": value.get("group", "autres"),
+            "critical": bool(value.get("critical")),
+        }
+        for key, value in event_catalog(role).items()
+    ]
+
+
+def normalize_prefs(
+    raw: Optional[dict], role: Optional[str] = "candidate"
+) -> dict[str, Any]:
     prefs = {**DEFAULT_PREFS, **(raw or {})}
     for key in ("email_enabled", "whatsapp_enabled", "telegram_enabled"):
         prefs[key] = bool(prefs.get(key))
     for key in ("email", "whatsapp_number", "telegram_username"):
         prefs[key] = str(prefs.get(key) or "").strip()
+    frequency = str(prefs.get("email_frequency") or "daily").strip().lower()
+    prefs["email_frequency"] = (
+        frequency if frequency in ("immediate", "daily") else "daily"
+    )
     events = prefs.get("events") or {}
     prefs["events"] = {
-        event: bool(events.get(event, False)) for event in EVENT_TYPES
+        event: bool(events.get(event, False)) for event in event_keys(role)
     }
     return prefs
 
 
-def email_wanted(prefs: dict, event: Optional[str]) -> bool:
+def resolve_event(role: Optional[str], event: Optional[str]) -> Optional[str]:
+    """Traduit un événement générique vers la clé du catalogue du rôle."""
+    if not event:
+        return None
+    catalog = event_catalog(role)
+    if event in catalog:
+        return event
+    if role == "recruiter":
+        return {
+            "message": "candidate_message",
+            "application": "new_application",
+            "interview": "interview_response",
+        }.get(event)
+    if role == "admin":
+        return {
+            "verification": "verification_request",
+            "verification_decision": "verification_request",
+            "ingestion": "ingestion_failure",
+            "critical": "critical_alert",
+        }.get(event)
+    return event
+
+
+def email_wanted(
+    prefs: dict, event: Optional[str], role: Optional[str] = "candidate"
+) -> bool:
     """E-mail souhaité pour cet événement ? (True si pas d'événement :
     envoi manuel / test des canaux.)"""
     if not event:
         return True
-    return bool((prefs.get("events") or {}).get(event, False))
+    resolved = resolve_event(role, event)
+    if not resolved:
+        return False
+    return bool((prefs.get("events") or {}).get(resolved, False))
+
+
+def is_critical_event(role: Optional[str], event: Optional[str]) -> bool:
+    resolved = resolve_event(role, event)
+    return bool((resolved and resolved in CRITICAL_EVENTS)
+                or (event and event in CRITICAL_EVENTS))
+
+
+# --------------------------------------------------- désabonnement signé
+# Jeton sans état : identifiant + portée + signature HMAC. Il permet un
+# désabonnement en un clic depuis un e-mail, sans mot de passe.
+
+def unsubscribe_token(user_id: int, scope: str = "job_alerts") -> str:
+    message = f"{int(user_id)}:{scope}".encode("utf-8")
+    signature = hmac.new(
+        config.SECRET_KEY.encode("utf-8"), message, hashlib.sha256
+    ).hexdigest()[:32]
+    return f"{int(user_id)}.{scope}.{signature}"
+
+
+def parse_unsubscribe_token(token: str) -> Optional[tuple[int, str]]:
+    try:
+        user_id, scope, signature = str(token).split(".", 2)
+        expected = hmac.new(
+            config.SECRET_KEY.encode("utf-8"),
+            f"{int(user_id)}:{scope}".encode("utf-8"),
+            hashlib.sha256,
+        ).hexdigest()[:32]
+        if not hmac.compare_digest(signature, expected):
+            return None
+        return int(user_id), scope
+    except (TypeError, ValueError):
+        return None
+
+
+def apply_unsubscribe(db, user, scope: str = "job_alerts") -> list[str]:
+    """Désactive les alertes emploi du rôle, sans toucher aux messages
+    transactionnels ni aux e-mails critiques."""
+    role = getattr(user, "role", "candidate")
+    prefs = normalize_prefs(
+        getattr(user, "notification_prefs", None) or {}, role
+    )
+    if scope == "job_alerts":
+        keys = (
+            ["new_match", "expiring", "agent"]
+            if role == "candidate"
+            else ["job_expiring"] if role == "recruiter" else []
+        )
+        for key in keys:
+            prefs["events"][key] = False
+        prefs["role_events_migrated"] = True
+        user.notification_prefs = prefs
+        db.commit()
+        return keys
+    return []
+
+
+def email_footer(user, event: Optional[str]) -> str:
+    """Pied de page des e-mails non critiques : préférences + désabonnement
+    emploi en un clic."""
+    role = getattr(user, "role", "candidate")
+    base = config.PUBLIC_BASE_URL.rstrip("/")
+    lines = [
+        "",
+        "---",
+        f"Gérer mes préférences e-mail : {base}/parametres-compte#notifications",
+    ]
+    resolved = resolve_event(role, event)
+    if resolved in JOB_ALERT_EVENTS:
+        token = unsubscribe_token(getattr(user, "id", 0) or 0)
+        lines.append(
+            "Se désabonner des alertes emploi : "
+            f"{base}/api/profile/notifications/unsubscribe?token={token}"
+        )
+    return "\n".join(lines)
 
 
 # ------------------------------------------------------------- canaux
@@ -539,24 +791,44 @@ def send_whatsapp(db, number: str, text: str) -> tuple[bool, str]:
 # ----------------------------------------------------------- dispatch
 
 def dispatch(
-    db, user, subject: str, body: str, event: Optional[str] = None
+    db,
+    user,
+    subject: str,
+    body: str,
+    event: Optional[str] = None,
+    attachments: Optional[list[Any]] = None,
+    reply_to: str = "",
+    critical: bool = False,
 ) -> list[dict[str, Any]]:
     """Envoie une notification sur les canaux ACTIVÉS du destinataire.
 
-    ``event`` : type d'événement (voir EVENT_TYPES). Quand il est
+    ``event`` : type d'événement (voir EVENT_CATALOGS). Quand il est
     renseigné et que le destinataire n'a PAS demandé l'e-mail pour cet
     événement, la notification reste in-app (inbox / messagerie) : aucun
-    e-mail n'est envoyé. Best effort : jamais d'exception remontée à
-    l'appelant métier.
+    e-mail n'est envoyé. Les événements critiques (sécurité, compte,
+    défaillance) partent toujours sur l'adresse du compte. Best effort :
+    jamais d'exception remontée à l'appelant métier.
     """
-    prefs = normalize_prefs(getattr(user, "notification_prefs", None) or {})
+    role = getattr(user, "role", "candidate")
+    prefs = normalize_prefs(
+        getattr(user, "notification_prefs", None) or {}, role
+    )
+    critical = bool(critical or is_critical_event(role, event))
     results: list[dict[str, Any]] = []
-    if (
-        prefs["email_enabled"]
-        and prefs["email"]
-        and email_wanted(prefs, event)
-    ):
-        ok, detail = send_email(db, prefs["email"], subject, body)
+
+    email = prefs["email"]
+    email_enabled = bool(prefs["email_enabled"])
+    if critical:
+        # Les messages critiques ne dépendent pas de l'opt-in : ils vont
+        # sur l'adresse du compte, même si le canal e-mail est désactivé.
+        email = str(getattr(user, "email", "") or "").strip() or email
+        email_enabled = bool(email)
+    if email_enabled and email and (critical or email_wanted(prefs, event, role)):
+        mail_body = body if critical else body + email_footer(user, event)
+        ok, detail = send_email(
+            db, email, subject, mail_body,
+            attachments=attachments, reply_to=reply_to,
+        )
         results.append({"channel": "email", "ok": ok, "detail": detail})
     if prefs["telegram_enabled"] and prefs["telegram_username"]:
         # chat_id = identifiant Telegram fourni par l'utilisateur
@@ -566,3 +838,66 @@ def dispatch(
         ok, detail = send_whatsapp(db, prefs["whatsapp_number"], f"{subject}\n\n{body}")
         results.append({"channel": "whatsapp", "ok": ok, "detail": detail})
     return results
+
+
+def migrate_notification_prefs(db) -> int:
+    """Migration idempotente vers les catalogues par rôle.
+
+    - candidat : ajoute ``email_frequency`` sans toucher aux opt-in ;
+    - recruteur : conserve l'e-mail de réponse aux entretiens déjà envoyé
+      directement avant cette version, désactive les nouveaux événements ;
+    - admin : reprend le routage d'équipe existant pour ne pas créer
+      d'e-mails non demandés, et garde les alertes critiques actives.
+    """
+    from app import models
+    from app.services import admin_alerts
+
+    team = admin_alerts.get_config(db)
+    admin_events: dict[str, set[str]] = {}
+    for recipient in team.get("recipients", []):
+        events: set[str] = set()
+        for category, event in ADMIN_CATEGORY_EVENTS.items():
+            if not team.get("categories", {}).get(category, True):
+                continue
+            if (not recipient.get("categories")
+                    or category in recipient["categories"]):
+                events.add(event)
+        admin_events[str(recipient.get("email") or "").lower()] = events
+
+    changed = 0
+    for user in db.query(models.User).all():
+        raw = user.notification_prefs or {}
+        if raw.get("role_events_migrated"):
+            continue
+        role = user.role or "candidate"
+        prefs = normalize_prefs(raw, role)
+        if role == "candidate":
+            # Les confirmations d'entretien étaient envoyées directement
+            # avant cette version. On les conserve pour les candidats qui
+            # avaient déjà activé le canal e-mail ; les autres gardent la
+            # notification in-app et peuvent l'activer dans les réglages.
+            if prefs["email_enabled"] and prefs["email"]:
+                prefs["events"]["interview"] = True
+        elif role == "recruiter":
+            had_prefs = bool(raw)
+            for key in event_keys("recruiter"):
+                prefs["events"][key] = False
+            if not had_prefs and user.email:
+                # Ancien comportement : le recruteur recevait la réponse du
+                # candidat à une invitation sur l'adresse du compte.
+                prefs["email"] = prefs["email"] or user.email
+                prefs["email_enabled"] = True
+            if prefs["email_enabled"] and prefs["email"]:
+                prefs["events"]["interview_response"] = True
+        elif role == "admin":
+            assigned = admin_events.get((user.email or "").lower(), set())
+            for key in event_keys("admin"):
+                prefs["events"][key] = key in assigned
+            # Le repli des alertes critiques vise tous les admins.
+            prefs["events"]["critical_alert"] = True
+        prefs["role_events_migrated"] = True
+        user.notification_prefs = prefs
+        changed += 1
+    if changed:
+        db.commit()
+    return changed

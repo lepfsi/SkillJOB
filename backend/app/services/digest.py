@@ -1,10 +1,11 @@
-"""Notifications intelligentes (§52) : digest quotidien.
+"""Notifications intelligentes (§52) : alertes d'offres.
 
-Chaque jour, chaque candidat ayant activé au moins un canal reçoit les
-NOUVELLES offres correspondant à son profil (score >= 45, publiées dans
-les dernières 24 h). Filtrage par pertinence pour éviter la surcharge
-informationnelle. Planificateur léger (thread daemon) démarré avec
-l'application ; activable/désactivable par l'administrateur.
+Deux fréquences au choix du candidat : immédiate (fenêtre d'une heure)
+ou résumé quotidien (fenêtre de 24 h, après l'heure choisie par
+l'administrateur). Dans les deux cas, un seul e-mail d'offres par jour :
+les autres correspondances restent visibles dans l'application. Le
+planificateur léger (thread daemon) tourne toutes les heures et reste
+activable/désactivable par l'administrateur.
 """
 import logging
 import threading
@@ -25,74 +26,175 @@ logger = logging.getLogger("orientskill.digest")
 MATCH_THRESHOLD = 45  # correspondance moyenne minimum
 
 
-def build_digest_for(db: Session, user: models.User, since) -> str:
-    """Construit le texte du digest pour UN candidat (testable)."""
-    profile = db.query(models.Profile).filter(models.Profile.user_id == user.id).first()
+WINDOW_DAILY = timedelta(hours=24)
+WINDOW_IMMEDIATE = timedelta(hours=1)
+DIGEST_LIMIT = 5
+
+
+def digest_matches_for(
+    db: Session,
+    user: models.User,
+    since,
+    exclude_job_ids: Optional[set[int]] = None,
+) -> list[tuple[models.Job, dict]]:
+    """Offres récentes qui correspondent au profil, hors offres déjà
+    envoyées par e-mail."""
+    profile = (
+        db.query(models.Profile)
+        .filter(models.Profile.user_id == user.id)
+        .first()
+    )
     if profile is None:
-        return ""
+        return []
     taxonomy = load_taxonomy()
-    cutoff = since
     jobs = (
         db.query(models.Job)
-        .filter(models.Job.published_at >= cutoff)
+        .filter(models.Job.published_at >= since)
         .order_by(models.Job.published_at.desc())
         .limit(80)
         .all()
     )
-    matches = []
+    matches: list[tuple[models.Job, dict]] = []
+    excluded = exclude_job_ids or set()
     for job in jobs:
-        match = compute_match(profile.skills or [], job.required_skills, taxonomy)
+        if job.id in excluded:
+            continue
+        match = compute_match(
+            profile.skills or [], job.required_skills, taxonomy
+        )
         if match["score"] >= MATCH_THRESHOLD:
             matches.append((job, match))
+    return matches
+
+
+def _format_digest(user: models.User, matches: list[tuple]) -> str:
     if not matches:
         return ""
-    lines = [f"Bonjour {user.full_name.split(' ')[0]},",
-             f"{len(matches)} nouvelle(s) offre(s) correspondent à votre profil :"]
-    for job, match in matches[:5]:
+    first_name = (getattr(user, "full_name", "") or "").split(" ")[0]
+    lines = [
+        f"Bonjour {first_name},",
+        f"{len(matches)} nouvelle(s) offre(s) correspondent à votre profil :",
+    ]
+    for job, match in matches[:DIGEST_LIMIT]:
         lines.append(
             f"· {job.title} · {job.company} ({job.location}) · "
             f"correspondance {match['score']}/100"
         )
-    lines.append("Connectez-vous à OrientSkill AI pour analyser le match et préparer votre candidature.")
+    lines.append(
+        "Connectez-vous à OrientSkill AI pour analyser le match et "
+        "préparer votre candidature."
+    )
     return "\n".join(lines)
 
 
+def build_digest_for(db: Session, user: models.User, since) -> str:
+    """Construit le texte du digest pour UN candidat (testable)."""
+    return _format_digest(user, digest_matches_for(db, user, since))
+
+
+def _already_digested_today(
+    db: Session, user_id: int, now: datetime
+) -> bool:
+    """Plafond : un seul e-mail d'offres par jour et par candidat.
+
+    La boîte in-app continue de recevoir toutes les correspondances ; ce
+    plafond ne concerne que l'e-mail, pour éviter la surcharge.
+    """
+    start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    return (
+        db.query(models.NotificationLog.id)
+        .filter(
+            models.NotificationLog.user_id == user_id,
+            models.NotificationLog.event == "new_match",
+            models.NotificationLog.sent_at >= start,
+        )
+        .first()
+        is not None
+    )
+
+
+def _digested_job_ids(db: Session, user_id: int) -> set[int]:
+    """Offres déjà envoyées à ce candidat : jamais deux fois le même job."""
+    rows = (
+        db.query(models.NotificationLog.job_id)
+        .filter(
+            models.NotificationLog.user_id == user_id,
+            models.NotificationLog.event == "new_match",
+        )
+        .all()
+    )
+    return {row[0] for row in rows if row[0] is not None}
+
+
+def run_digest_for_user(
+    db: Session,
+    user: models.User,
+    now: Optional[datetime] = None,
+    digest_hour: int = 8,
+) -> dict:
+    """Une passe pour un candidat : immédiate (fenêtre 1 h) ou quotidienne.
+
+    Dans les deux cas, un seul e-mail d'offres par jour : le reste reste
+    visible dans l'application.
+    """
+    now = now or datetime.utcnow()
+    if not agent_prefs.frequency_allows_auto(user, now):
+        return {"notified": 0, "skipped": 1, "errors": 0}
+    prefs = normalize_prefs(
+        getattr(user, "notification_prefs", None) or {},
+        getattr(user, "role", "candidate"),
+    )
+    if not any([
+        prefs["email_enabled"],
+        prefs["telegram_enabled"],
+        prefs["whatsapp_enabled"],
+    ]):
+        return {"notified": 0, "skipped": 1, "errors": 0}
+    if not agent_prefs.action_enabled(user, "watch_jobs"):
+        return {"notified": 0, "skipped": 1, "errors": 0}
+    frequency = prefs.get("email_frequency", "daily")
+    if frequency == "daily" and now.hour < int(digest_hour):
+        return {"notified": 0, "skipped": 1, "errors": 0}
+    if _already_digested_today(db, user.id, now):
+        return {"notified": 0, "skipped": 1, "errors": 0}
+    window = WINDOW_IMMEDIATE if frequency == "immediate" else WINDOW_DAILY
+    matches = digest_matches_for(
+        db, user, now - window, _digested_job_ids(db, user.id)
+    )
+    if not matches:
+        return {"notified": 0, "skipped": 1, "errors": 0}
+    try:
+        results = dispatch(
+            db, user,
+            "OrientSkill AI : nouvelles offres pour vous",
+            _format_digest(user, matches),
+            event="new_match",
+        )
+        if results and any(r["ok"] for r in results):
+            for job, _match in matches[:DIGEST_LIMIT]:
+                db.add(models.NotificationLog(
+                    user_id=user.id, event="new_match", job_id=job.id,
+                ))
+            db.commit()
+            return {"notified": 1, "skipped": 0, "errors": 0}
+        return {"notified": 0, "skipped": 0, "errors": 1}
+    except Exception as exc:
+        logger.warning("Digest utilisateur %s : %s", user.id, exc)
+        return {"notified": 0, "skipped": 0, "errors": 1}
+
+
 def run_digest_once(db: Session) -> dict:
-    """Une passe de digest : retoure {notified, skipped, errors}."""
-    since = datetime.utcnow() - timedelta(hours=24)
+    """Une passe de digest : retourne {notified, skipped, errors}."""
+    now = datetime.utcnow()
+    conf = settings_store.get_settings(db)
+    digest_hour = int(conf.get("notifications", {}).get("digest_hour", 8) or 8)
     notified = skipped = errors = 0
     users = db.query(models.User).filter(models.User.role == "candidate").all()
     for user in users:
-        # La fréquence de veille choisie dans les réglages de l'agent
-        # s'applique aussi au digest : manuelle = aucune passe auto.
-        if not agent_prefs.frequency_allows_auto(user):
-            skipped += 1
-            continue
-        prefs = normalize_prefs(getattr(user, "notification_prefs", None) or {})
-        if not any([prefs["email_enabled"], prefs["telegram_enabled"], prefs["whatsapp_enabled"]]):
-            skipped += 1
-            continue
-        if not agent_prefs.action_enabled(user, "watch_jobs"):
-            skipped += 1
-            continue
-        try:
-            body = build_digest_for(db, user, since)
-            if not body:
-                skipped += 1
-                continue
-            results = dispatch(
-                db, user,
-                "OrientSkill AI : nouvelles offres pour vous",
-                body,
-                event="new_match",
-            )
-            if results and any(r["ok"] for r in results):
-                notified += 1
-            else:
-                errors += 1
-        except Exception as exc:
-            logger.warning("Digest utilisateur %s : %s", user.id, exc)
-            errors += 1
+        result = run_digest_for_user(db, user, now, digest_hour)
+        notified += result["notified"]
+        skipped += result["skipped"]
+        errors += result["errors"]
     return {"notified": notified, "skipped": skipped, "errors": errors}
 
 
@@ -125,7 +227,7 @@ def _digest_loop(stop_event: threading.Event, interval_hours: float) -> None:
 class DigestService:
     """Cycle de vie du planificateur de digest."""
 
-    def __init__(self, interval_hours: float = 24):
+    def __init__(self, interval_hours: float = 1):
         self.interval_hours = interval_hours
         self.stop_event: Optional[threading.Event] = None
         self.thread: Optional[threading.Thread] = None

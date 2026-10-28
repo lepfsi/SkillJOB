@@ -130,7 +130,60 @@ def save_config(db: Session, data: dict[str, Any]) -> dict[str, Any]:
         "categories": categories,
         "recipients": recipients,
     })
+    _sync_new_recipient_prefs(db, current, get_config(db))
     return get_config(db)
+
+
+def _recipient_categories(recipient: dict[str, Any]) -> set[str]:
+    """Catégories reçues ; liste vide = toutes."""
+    selected = set(recipient.get("categories") or [])
+    return selected or set(ADMIN_CATEGORIES)
+
+
+def _sync_new_recipient_prefs(
+    db: Session, previous: dict[str, Any], current: dict[str, Any]
+) -> None:
+    """Active les événements personnels des destinataires nouvellement
+    ajoutés (ou nouvellement affectés à une catégorie).
+
+    On n'éteint jamais un événement existant : un administrateur peut
+    avoir choisi de recevoir une catégorie à titre personnel même s'il
+    n'est plus dans le routage d'équipe.
+    """
+    old: dict[str, set[str]] = {
+        str(r.get("email") or "").lower(): _recipient_categories(r)
+        for r in previous.get("recipients", [])
+    }
+    admins = {
+        (user.email or "").lower(): user
+        for user in db.query(models.User)
+        .filter(models.User.role == "admin")
+        .all()
+        if user.email
+    }
+    changed = False
+    for recipient in current.get("recipients", []):
+        email = str(recipient.get("email") or "").lower()
+        user = admins.get(email)
+        if user is None:
+            continue
+        newly_assigned = _recipient_categories(recipient) - old.get(email, set())
+        if not newly_assigned:
+            continue
+        prefs = notifications.normalize_prefs(
+            getattr(user, "notification_prefs", None) or {}, "admin"
+        )
+        for category in newly_assigned:
+            if not current.get("categories", {}).get(category, True):
+                continue
+            event = notifications.ADMIN_CATEGORY_EVENTS.get(category)
+            if event:
+                prefs["events"][event] = True
+        prefs["role_events_migrated"] = True
+        user.notification_prefs = prefs
+        changed = True
+    if changed:
+        db.commit()
 
 
 def _receives(recipient: dict[str, Any], category: str) -> bool:
@@ -201,6 +254,17 @@ def notify_admins(
     sent = 0
     failed = 0
     details: list[str] = []
+    # Les destinataires qui possèdent un compte administrateur reçoivent
+    # l'alerte via leurs préférences personnelles (catalogue admin). Les
+    # adresses externes restent routées directement. Les alertes critiques
+    # ignorent l'opt-in et partent sur l'adresse du compte.
+    admin_users = {
+        (user.email or "").lower(): user
+        for user in db.query(models.User)
+        .filter(models.User.role == "admin")
+        .all()
+        if user.email
+    }
     if not config.get("enabled"):
         details.append("Alertes administratives désactivées.")
     elif not (config.get("categories") or {}).get(category, True):
@@ -208,10 +272,35 @@ def notify_admins(
     elif not recipients:
         details.append("Aucun destinataire configuré pour cette catégorie.")
     else:
+        event = notifications.ADMIN_CATEGORY_EVENTS.get(category)
         for recipient in recipients:
-            ok, detail = notifications.send_email(
-                db, recipient["email"], subject, body
+            admin_user = admin_users.get(
+                str(recipient["email"] or "").lower()
             )
+            if admin_user is not None:
+                results = notifications.dispatch(
+                    db,
+                    admin_user,
+                    subject,
+                    body,
+                    event=event,
+                    critical=(category == "critical"),
+                )
+                ok = any(result["ok"] for result in results)
+                if results:
+                    detail = "; ".join(
+                        f"{result['channel']}: {result['detail']}"
+                        for result in results
+                    )
+                else:
+                    detail = (
+                        "aucun canal e-mail activé pour ce compte "
+                        "administrateur"
+                    )
+            else:
+                ok, detail = notifications.send_email(
+                    db, recipient["email"], subject, body
+                )
             if ok:
                 sent += 1
             else:

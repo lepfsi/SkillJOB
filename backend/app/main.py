@@ -676,6 +676,11 @@ async def lifespan(app: FastAPI):
         sync_new_specialties(db)
         if db.query(models.User).count() == 0:
             seed_database(db)
+        # Catalogues d'e-mails par rôle : migration idempotente, exécutée
+        # après le seed pour que les comptes de démonstration en profitent.
+        from app.services.notifications import migrate_notification_prefs
+
+        migrate_notification_prefs(db)
         backfill_job_domains(db)
         sync_learning_resources(db)
         sync_institutional_offers(db)
