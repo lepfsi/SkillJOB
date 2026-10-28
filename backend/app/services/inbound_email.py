@@ -39,6 +39,32 @@ TEMP_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
 MAX_ATTACHMENTS = 8
 MAX_ATTACHMENT_BYTES = 10 * 1024 * 1024
 
+# Expéditeurs à ignorer systématiquement (alertes, newsletters, robots).
+AUTOMATED_SENDER_PREFIXES = (
+    "no-reply",
+    "noreply",
+    "donotreply",
+    "do-not-reply",
+    "mailer-daemon",
+    "mailerdaemon",
+    "postmaster",
+    "store-news",
+)
+
+
+def _is_automated_sender(sender_email: str) -> bool:
+    """Détecte un expéditeur automatisé (newsletter, alerte, robot).
+
+    Ces messages ne doivent jamais déclencher la création d'un compte
+    candidat ni l'envoi d'accès OrientSkill AI.
+    """
+    email = (sender_email or "").lower()
+    local_part = email.split("@")[0] if "@" in email else email
+    return any(
+        local_part.startswith(prefix) or local_part == prefix
+        for prefix in AUTOMATED_SENDER_PREFIXES
+    )
+
 
 @dataclass
 class Attachment:
@@ -261,7 +287,7 @@ def _application_for(
     cover_note = (message.body or "").strip()[:5000]
     if application is None:
         application = models.Application(
-            user_id=user.id,
+            user_id=user.id if user else None,
             job_id=job.id,
             status="envoyee",
             apply_channel="email",
@@ -396,9 +422,46 @@ def process_inbound(db: Session, message: InboundMessage) -> dict[str, Any]:
     conf = settings_store.get_raw_group(db, "inbound")
     job, routing = email_routing.match_job(db, message.subject, message.body)
     reference = email_routing.reference_for(job) if job else ""
-    user, created, password = _find_or_create_user(db, message)
+
+    # 🔒 Ignorer les expéditeurs automatisés (newsletters, alertes, robots).
+    if _is_automated_sender(message.sender_email):
+        row = models.InboundEmail(
+            message_id=message_id,
+            source=message.source,
+            sender_email=message.sender_email,
+            sender_name=message.sender_name,
+            subject=message.subject,
+            body_text=message.body,
+            job_id=None,
+            user_id=None,
+            application_id=None,
+            attachments=[],
+            routing="",
+            status="non_routee",
+            detail="Expéditeur automatisé ignoré.",
+        )
+        db.add(row)
+        db.commit()
+        db.refresh(row)
+        return {
+            "ok": True,
+            "duplicate": False,
+            "status": "non_routee",
+            "inbound_id": row.id,
+            "job_id": None,
+            "application_id": None,
+            "user_id": None,
+            "account_created": False,
+            "access_email_sent": False,
+            "forward_email_sent": False,
+            "routing": "",
+            "detail": row.detail,
+        }
+
+    user, created, password = None, False, ""
     application = None
     if job is not None:
+        user, created, password = _find_or_create_user(db, message)
         application, _new = _application_for(db, user, job, message, reference)
     attachments = _save_attachments(message, job.id if job else None)
 
@@ -410,7 +473,7 @@ def process_inbound(db: Session, message: InboundMessage) -> dict[str, Any]:
         subject=message.subject,
         body_text=message.body,
         job_id=job.id if job else None,
-        user_id=user.id,
+        user_id=user.id if user else None,
         application_id=application.id if application else None,
         attachments=attachments,
         routing=routing,
@@ -452,9 +515,9 @@ def process_inbound(db: Session, message: InboundMessage) -> dict[str, Any]:
     else:
         forward_detail = "Offre non identifiée : candidature conservée pour revue."
 
-    # 2. Accès au compte (nouveau compte) ou confirmation (compte existant).
+    # 2. Accès au compte : uniquement pour une candidature routée vers une offre.
     access_ok = False
-    if created:
+    if created and job is not None:
         access_ok, access_detail = notifications.send_email(
             db,
             user.email,
@@ -463,7 +526,7 @@ def process_inbound(db: Session, message: InboundMessage) -> dict[str, Any]:
         )
         if not access_ok:
             forward_detail = (forward_detail + " " + access_detail).strip()
-    elif job is not None:
+    elif job is not None and not created:
         notifications.send_email(
             db,
             user.email,
@@ -477,6 +540,7 @@ def process_inbound(db: Session, message: InboundMessage) -> dict[str, Any]:
                 "OrientSkill AI\n"
             ),
         )
+    # Si job is None : aucun compte créé, aucun accès envoyé.
 
     if job is None:
         row.status = "non_routee"
