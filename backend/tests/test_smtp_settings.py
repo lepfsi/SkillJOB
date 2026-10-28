@@ -248,7 +248,10 @@ def test_brevo_send_email_posts_payload(
     assert payload["sender"]["email"] == "no-reply@exemple.test"
     assert payload["to"] == [{"email": "candidat@exemple.test"}]
     assert payload["subject"] == "Sujet"
-    assert payload["textContent"] == "Corps"
+    assert payload["textContent"].startswith("Corps")
+    assert "OrientSkill AI" in payload["textContent"]
+    assert "OrientSkill AI" in payload["htmlContent"]
+    assert "#0a6b4c" in payload["htmlContent"]
     assert payload["attachment"][0]["name"] == "cv.pdf"
     assert payload["attachment"][0]["content"] == base64.b64encode(
         b"pdf"
@@ -279,4 +282,6 @@ def test_resend_send_email_posts_payload(
     payload = json.loads(call["data"].decode("utf-8"))
     assert payload["from"] == "OrientSkill AI <no-reply@exemple.test>"
     assert payload["to"] == ["candidat@exemple.test"]
-    assert payload["text"] == "Corps"
+    assert payload["text"].startswith("Corps")
+    assert "OrientSkill AI" in payload["text"]
+    assert "OrientSkill AI" in payload["html"]

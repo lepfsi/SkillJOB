@@ -584,6 +584,15 @@ Obtenir un design sobre, professionnel et cohérent avec la charte OrientSkill A
 - Aucun visuel n'utilise plus de deux couleurs d'accent.
 - Le rendu reste lisible sur mobile, Gmail, Outlook et en impression.
 
+Statut : implémenté et vérifié le 28 octobre 2026. Tous les e-mails
+passent par un gabarit HTML commun (`email_branding.py`) avec version
+texte de repli, signature de marque et pied de page à libellés courts.
+SMTP envoie désormais un message `multipart/alternative` ; Brevo et
+Resend reçoivent les deux versions. Les affiches et visuels publics
+utilisent un fond clair imprimable, un bandeau institutionnel, des
+rayons réduits et suppriment cercles et dégradés décoratifs. La charte
+complète est documentée dans `docs/BRAND_GUIDE.md`.
+
 ### 12. Révision globale de l'identité visuelle
 
 **Constat**

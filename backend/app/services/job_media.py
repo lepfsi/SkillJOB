@@ -161,29 +161,24 @@ def default_svg(job, domain_name: str = "", public_url: str = "") -> str:
       <stop offset="0.55" stop-color="{end}"/>
       <stop offset="1" stop-color="{start}"/>
     </linearGradient>
-    <radialGradient id="glow" cx="0.18" cy="0.12" r="0.85">
-      <stop offset="0" stop-color="{accent}" stop-opacity="0.32"/>
-      <stop offset="1" stop-color="{accent}" stop-opacity="0"/>
-    </radialGradient>
   </defs>
   <rect width="1200" height="800" fill="url(#bg)"/>
-  <rect width="1200" height="800" fill="url(#glow)"/>
-  <circle cx="1080" cy="120" r="220" fill="{accent}" fill-opacity="0.08"/>
-  <circle cx="1020" cy="640" r="160" fill="{accent}" fill-opacity="0.06"/>
   <rect x="0" y="0" width="1200" height="10" fill="{accent}"/>
+  <rect x="0" y="0" width="180" height="10" fill="#b45309"/>
 
   <text x="72" y="86" font-family="Arial, Helvetica, sans-serif" font-size="40" font-weight="700" fill="#ffffff">OrientSkill AI</text>
   <text x="72" y="118" font-family="Arial, Helvetica, sans-serif" font-size="19" font-weight="400" fill="{accent}">Intelligence professionnelle</text>
 
-  <rect x="72" y="160" width="{pill_width}" height="44" rx="22" fill="{accent}" fill-opacity="0.16" stroke="{accent}" stroke-opacity="0.5"/>
+  <rect x="72" y="160" width="{pill_width}" height="44" rx="4" fill="{accent}" fill-opacity="0.16" stroke="{accent}" stroke-opacity="0.5"/>
   <text x="96" y="189" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="700" letter-spacing="1" fill="{accent}">{escape(label)}</text>
 
   {title_block}
   <text x="72" y="{meta_y}" font-family="Arial, Helvetica, sans-serif" font-size="24" font-weight="400" fill="#d7f8e9">{escape(meta)}</text>
 
-  <circle cx="1020" cy="620" r="100" fill="{accent}" fill-opacity="0.12" stroke="{accent}" stroke-opacity="0.38"/>
+  <rect x="920" y="520" width="200" height="200" rx="8" fill="{accent}" fill-opacity="0.12" stroke="{accent}" stroke-opacity="0.38"/>
   <text x="1020" y="655" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="64" font-weight="700" fill="{accent}">{escape(_initials(getattr(job, 'company', '')))}</text>
 
+  <rect x="72" y="680" width="1056" height="1" fill="{accent}" fill-opacity="0.2"/>
   <text x="72" y="716" font-family="Arial, Helvetica, sans-serif" font-size="20" font-weight="700" fill="#ffffff">Offre publiée sur OrientSkill AI</text>
   <text x="72" y="750" font-family="Arial, Helvetica, sans-serif" font-size="18" font-weight="400" fill="#bff3dd">{escape(url)}</text>
 </svg>

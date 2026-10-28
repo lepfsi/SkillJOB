@@ -294,7 +294,9 @@ def test_critical_email_bypasses_opt_in(client, captured_smtp):
         assert critical and critical[0]["ok"] is True
         emails = _emails_to(captured_smtp, user.email)
         assert len(emails) == 1
-        assert "désabonner" not in emails[0].get_content().lower()
+        plain = emails[0].get_body(preferencelist=("plain",)).get_content()
+        assert "désabonner" not in plain.lower()
+        assert "OrientSkill AI" in plain
     finally:
         db.close()
 

@@ -20,7 +20,7 @@ from urllib.parse import quote
 import urllib.request
 
 from app import config
-from app.services import settings_store
+from app.services import email_branding, settings_store
 
 logger = logging.getLogger("orientskill.notifications")
 
@@ -316,6 +316,10 @@ def email_footer(user, event: Optional[str]) -> str:
     base = config.PUBLIC_BASE_URL.rstrip("/")
     lines = [
         "",
+        "--",
+        email_branding.SIGNATURE_MARKER,
+        base,
+        "",
         "---",
         f"Gérer mes préférences e-mail : {base}/parametres-compte#notifications",
     ]
@@ -397,6 +401,7 @@ def _build_message(
     to_email: str,
     subject: str,
     body: str,
+    html_body: str,
     attachments: Optional[list[Any]],
     reply_to: str,
     default_from: str,
@@ -407,7 +412,10 @@ def _build_message(
     msg["To"] = to_email
     if reply_to:
         msg["Reply-To"] = reply_to
+    # Version texte de repli puis version HTML : tous les clients reçoivent
+    # la même structure de marque, y compris ceux qui bloquent le HTML.
     msg.set_content(body, charset="utf-8")
+    msg.add_alternative(html_body, subtype="html")
     _add_attachments(msg, attachments)
     return msg
 
@@ -458,6 +466,7 @@ def _send_via_brevo(
     to_email: str,
     subject: str,
     body: str,
+    html_body: str,
     attachments: Optional[list[Any]],
     reply_to: str,
 ) -> tuple[bool, str]:
@@ -469,6 +478,7 @@ def _send_via_brevo(
         "to": [{"email": to_email}],
         "subject": subject,
         "textContent": body,
+        "htmlContent": html_body,
     }
     if reply_to:
         payload["replyTo"] = {"email": reply_to}
@@ -497,6 +507,7 @@ def _send_via_resend(
     to_email: str,
     subject: str,
     body: str,
+    html_body: str,
     attachments: Optional[list[Any]],
     reply_to: str,
 ) -> tuple[bool, str]:
@@ -505,6 +516,7 @@ def _send_via_resend(
         "to": [to_email],
         "subject": subject,
         "text": body,
+        "html": html_body,
     }
     if reply_to:
         payload["reply_to"] = reply_to
@@ -547,6 +559,8 @@ def _send_configured(
     provider = _provider(conf)
     if not (conf.get("enabled") and to_email):
         return False, "Service e-mail non configuré (voir administrateur)."
+    plain_body = email_branding.ensure_signature(body)
+    html_body = email_branding.render_html(subject, body)
     if provider == "smtp":
         if not conf.get("host"):
             return False, "Service e-mail non configuré (voir administrateur)."
@@ -555,7 +569,8 @@ def _send_configured(
                 conf,
                 to_email,
                 subject,
-                body,
+                plain_body,
+                html_body,
                 attachments,
                 reply_to,
                 default_from,
@@ -569,13 +584,15 @@ def _send_configured(
         if not (conf.get("api_key") and _from_address(conf)):
             return False, "Service e-mail non configuré (voir administrateur)."
         return _send_via_brevo(
-            conf, to_email, subject, body, attachments, reply_to
+            conf, to_email, subject, plain_body, html_body,
+            attachments, reply_to,
         )
     if provider == "resend":
         if not (conf.get("api_key") and _from_address(conf)):
             return False, "Service e-mail non configuré (voir administrateur)."
         return _send_via_resend(
-            conf, to_email, subject, body, attachments, reply_to
+            conf, to_email, subject, plain_body, html_body,
+            attachments, reply_to,
         )
     return False, f"Fournisseur e-mail inconnu : {provider}."
 
