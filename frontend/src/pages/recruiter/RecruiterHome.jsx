@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../../api/client.js";
-import { STATUS_LABELS, statusTone } from "../../lib.js";
+import {
+  RECRUITER_NEXT, REFUSABLE_STATUSES, STATUS_LABELS, statusTone,
+} from "../../lib.js";
 import Avatar from "../../components/Avatar.jsx";
 import ContactDialog from "../../components/ContactDialog.jsx";
 import TalentCard from "../../components/TalentCard.jsx";
@@ -11,15 +13,6 @@ import { Loader, ErrorNote } from "../../components/ui.jsx";
 // Dashboard recruteur (§37) : entreprise, offres publiées, profils
 // disponibles avec contact direct via la messagerie, statut PARTAGÉ
 // des candidatures reçues.
-
-// Transitions réellement autorisées au recruteur. Le candidat garde la
-// main sur l'envoi, l'acceptation et le retrait ; le recruteur instruit.
-const RECRUITER_NEXT = {
-  envoyee: "en_attente",
-  en_attente: "entretien",
-  entretien: "offre",
-};
-const REFUSABLE = new Set(["envoyee", "en_attente", "entretien", "offre"]);
 
 export default function RecruiterHome() {
   const [company, setCompany] = useState(null);
@@ -261,6 +254,16 @@ export default function RecruiterHome() {
         <section className="section" id="candidatures">
           <div className="section-head">
             <h2>Candidatures reçues ({visibleApplications.length})</h2>
+            <Link
+              className="small"
+              to={
+                jobFilter
+                  ? `/recruteur/candidatures?offre=${jobFilter}`
+                  : "/recruteur/candidatures"
+              }
+            >
+              Page dédiée
+            </Link>
           </div>
           {jobFilter && (
             <p className="small muted" style={{ margin: "0 0 0.5rem" }}>
@@ -306,7 +309,7 @@ export default function RecruiterHome() {
                       Passer à « {STATUS_LABELS[RECRUITER_NEXT[a.status]]} »
                     </button>
                   )}
-                  {REFUSABLE.has(a.status) && (
+                  {REFUSABLE_STATUSES.has(a.status) && (
                     <button
                       className="btn btn-remove btn-small"
                       onClick={() => {

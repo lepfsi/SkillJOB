@@ -970,10 +970,22 @@ l'administration. Les calendriers restent ceux annoncés par le MINESUP.
 à définir en production.
 
 - `GET /api/recruiter/applications` → `[RecruiterApplication]` :
-  candidatures reçues, avec `candidate_photo_url`,
+  candidatures reçues, avec `candidate_photo_url`, `candidate_title`,
+  `job_location`, `job_contract_type`, `job_deadline`, `status_label`,
+  `is_new`, `match_score`, `match_level`, `submitted_at`, `cover_note`,
   `apply_channel`, `apply_url`, `apply_email`, `apply_instructions`
   (lien de postulation quand la candidature se fait sur le site de
-  l'entreprise).
+  l'entreprise). `match_score` est calculé avec le même moteur explicable
+  que côté candidat ; `null` si le profil est absent.
+- `GET /api/recruiter/applications/grouped` → page « Candidatures reçues ».
+  Filtres : `job_id`, `status`, `q` (nom, e-mail ou titre d'offre),
+  `date_from`, `date_to`, `page`, `page_size` (1 à 50). Réponse :
+  `{ items, page, page_size, total_groups, total_applications, total_new,
+  has_more }`. Chaque `item` contient `job_id`, `job_title`,
+  `job_location`, `job_contract_type`, `job_deadline`, `total`,
+  `new_count`, `latest_at` et `applications` (mêmes champs que la liste,
+  plafonnées à 200 par offre ; `total` reste exact). Une page regroupe
+  plusieurs offres, avec les candidatures empilées sous chacune.
 - `PATCH /api/recruiter/applications/{id} {status, reason?}`: **statut
   partagé**. Transitions autorisées : `envoyee` → `en_attente`|`entretien`|
   `refusee` ; `en_attente` → `entretien`|`refusee` ; `entretien` → `offre`|

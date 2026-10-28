@@ -45,6 +45,7 @@ import AdminSkillGraph from "./pages/admin/AdminSkillGraph.jsx";
 import AdminAlerts from "./pages/admin/AdminAlerts.jsx";
 
 import RecruiterHome from "./pages/recruiter/RecruiterHome.jsx";
+import RecruiterApplications from "./pages/recruiter/RecruiterApplications.jsx";
 import RecruiterJobs from "./pages/recruiter/RecruiterJobs.jsx";
 import RecruiterCandidates from "./pages/recruiter/RecruiterCandidates.jsx";
 import RecruiterShortlists from "./pages/recruiter/RecruiterShortlists.jsx";
@@ -123,6 +124,7 @@ export default function App() {
 
       {/* -------------------- Espace recruteur -------------------- */}
       <Route path="/recruteur" element={<RequireRecruiter><RecruiterHome /></RequireRecruiter>} />
+      <Route path="/recruteur/candidatures" element={<RequireRecruiter><RecruiterApplications /></RequireRecruiter>} />
       <Route path="/recruteur/offres" element={<RequireRecruiter><RecruiterJobs /></RequireRecruiter>} />
       <Route path="/recruteur/candidats" element={<RequireRecruiter><RecruiterCandidates /></RequireRecruiter>} />
       <Route path="/recruteur/candidats/:candidateId" element={<RequireRecruiter><RecruiterCandidates /></RequireRecruiter>} />

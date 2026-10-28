@@ -5,11 +5,14 @@ par compétences et suit les candidatures reçues. Le matching recruteur
 est explicable, comme côté candidat (§21).
 """
 import unicodedata
-from datetime import datetime, timedelta
+from datetime import date, datetime, time, timedelta
 from typing import Optional
 
-from fastapi import APIRouter, Depends, File, HTTPException, Response, UploadFile
+from fastapi import (
+    APIRouter, Depends, File, HTTPException, Query, Response, UploadFile,
+)
 from fastapi.responses import FileResponse
+from sqlalchemy import case, func, or_
 from sqlalchemy.orm import Session
 
 from app import config, models, schemas, security
@@ -23,6 +26,7 @@ from app.services.applications import (
     timeline_entry,
     transition_detail,
 )
+from app.services.matching import compute_match
 from app.services.profile_store import profile_to_dict
 from app.services.skills_taxonomy import load_taxonomy
 
@@ -498,6 +502,71 @@ def candidate_cv(
     )
 
 
+def _application_profile(
+    db: Session,
+    app: models.Application,
+    profile_cache: dict[int, Optional[models.Profile]],
+    taxonomy,
+) -> tuple[Optional[models.Profile], Optional[dict]]:
+    """Profil et score explicable d'une candidature, avec cache par candidat."""
+    if app.user_id not in profile_cache:
+        profile_cache[app.user_id] = (
+            db.query(models.Profile)
+            .filter(models.Profile.user_id == app.user_id)
+            .first()
+        )
+    profile = profile_cache[app.user_id]
+    if profile is None:
+        return None, None
+    match = compute_match(
+        profile.skills or [],
+        app.job.required_skills or [],
+        taxonomy,
+    )
+    return profile, match
+
+
+def _application_payload(
+    app: models.Application,
+    candidate: Optional[models.User],
+    profile: Optional[models.Profile],
+    match: Optional[dict],
+) -> dict:
+    """Candidature exposée au recruteur, avec score et contexte d'offre."""
+    return {
+        "id": app.id,
+        "job_id": app.job_id,
+        "job_title": app.job.title,
+        "job_location": app.job.location or "",
+        "job_contract_type": app.job.contract_type or "",
+        "job_deadline": app.job.deadline,
+        "candidate_id": app.user_id,
+        "candidate_name": candidate.full_name if candidate else "?",
+        "candidate_title": profile.title if profile else "",
+        "candidate_verified": (
+            candidate.verification_status == "verified"
+            if candidate else False
+        ),
+        "candidate_photo_url": (
+            f"/api/recruiter/candidates/{candidate.id}/photo"
+            if candidate and candidate.photo_path else ""
+        ),
+        "status": app.status,
+        "status_label": STATUS_LABELS.get(app.status, app.status),
+        "is_new": app.status == "envoyee",
+        "match_score": match["score"] if match else None,
+        "match_level": match["level"] if match else "",
+        "timeline": app.timeline or [],
+        "created_at": app.created_at,
+        "submitted_at": app.submitted_at,
+        "cover_note": app.cover_note or "",
+        "apply_channel": app.apply_channel or "",
+        "apply_url": app.job.source_url or "",
+        "apply_email": app.job.apply_email or "",
+        "apply_instructions": app.job.apply_instructions or "",
+    }
+
+
 @router.get("/applications", response_model=list[schemas.RecruiterApplicationOut])
 def received_applications(
     user: models.User = Depends(security.get_current_user),
@@ -516,29 +585,141 @@ def received_applications(
         .order_by(models.Application.created_at.desc())
         .all()
     )
+    taxonomy = load_taxonomy()
+    profile_cache: dict[int, Optional[models.Profile]] = {}
     out = []
     for app in apps:
         candidate = db.get(models.User, app.user_id)
-        out.append({
-            "id": app.id,
-            "job_id": app.job_id,
-            "job_title": app.job.title,
-            "candidate_id": app.user_id,
-            "candidate_name": candidate.full_name if candidate else "?",
-            "candidate_verified": (candidate.verification_status == "verified") if candidate else False,
-            "candidate_photo_url": (
-                f"/api/recruiter/candidates/{candidate.id}/photo"
-                if candidate and candidate.photo_path else ""
-            ),
-            "status": app.status,
-            "timeline": app.timeline or [],
-            "created_at": app.created_at,
-            "apply_channel": app.apply_channel or "",
-            "apply_url": app.job.source_url or "",
-            "apply_email": app.job.apply_email or "",
-            "apply_instructions": app.job.apply_instructions or "",
-        })
+        profile, match = _application_profile(
+            db, app, profile_cache, taxonomy
+        )
+        out.append(_application_payload(app, candidate, profile, match))
     return out
+
+
+@router.get(
+    "/applications/grouped",
+    response_model=schemas.RecruiterApplicationsGroupedOut,
+)
+def grouped_received_applications(
+    job_id: Optional[int] = Query(default=None),
+    status: str = Query(default=""),
+    q: str = Query(default=""),
+    date_from: Optional[date] = Query(default=None),
+    date_to: Optional[date] = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=10, ge=1, le=50),
+    user: models.User = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Candidatures reçues, groupées par offre, avec filtres et pagination.
+
+    Une page regroupe plusieurs offres ; chaque offre contient ses
+    candidatures empilées, son total et le nombre de nouvelles. Les
+    candidatures sont plafonnées à 200 par offre pour garder la page
+    utilisable ; le total exact reste affiché.
+    """
+    _require_recruiter(user)
+    company = _get_company(db, user)
+    job_ids = [j.id for j in db.query(models.Job).filter(
+        models.Job.company_id == company.id).all()]
+    if not job_ids:
+        return {
+            "items": [], "page": page, "page_size": page_size,
+            "total_groups": 0, "total_applications": 0, "total_new": 0,
+            "has_more": False,
+        }
+    if job_id is not None and job_id not in job_ids:
+        raise HTTPException(status_code=404, detail="Offre introuvable")
+    if status and status not in schemas.APPLICATION_STATUSES:
+        raise HTTPException(status_code=422, detail="Statut invalide")
+
+    base = (
+        db.query(models.Application)
+        .join(models.User, models.User.id == models.Application.user_id)
+        .join(models.Job, models.Job.id == models.Application.job_id)
+        .filter(models.Application.job_id.in_(job_ids))
+    )
+    if job_id is not None:
+        base = base.filter(models.Application.job_id == job_id)
+    if status:
+        base = base.filter(models.Application.status == status)
+    if q.strip():
+        like = f"%{q.strip()}%"
+        base = base.filter(or_(
+            models.User.full_name.ilike(like),
+            models.User.email.ilike(like),
+            models.Job.title.ilike(like),
+        ))
+    if date_from:
+        base = base.filter(
+            models.Application.created_at
+            >= datetime.combine(date_from, time.min)
+        )
+    if date_to:
+        base = base.filter(
+            models.Application.created_at
+            < datetime.combine(date_to + timedelta(days=1), time.min)
+        )
+
+    grouped = (
+        base.with_entities(
+            models.Application.job_id.label("job_id"),
+            func.count(models.Application.id).label("total"),
+            func.sum(case(
+                (models.Application.status == "envoyee", 1), else_=0
+            )).label("new_count"),
+            func.max(models.Application.created_at).label("latest_at"),
+        )
+        .group_by(models.Application.job_id)
+        .order_by(func.max(models.Application.created_at).desc())
+        .all()
+    )
+    total_groups = len(grouped)
+    total_applications = sum(int(row.total or 0) for row in grouped)
+    total_new = sum(int(row.new_count or 0) for row in grouped)
+    start = (page - 1) * page_size
+    page_rows = grouped[start:start + page_size]
+    taxonomy = load_taxonomy()
+    profile_cache: dict[int, Optional[models.Profile]] = {}
+    items = []
+    for row in page_rows:
+        job = db.get(models.Job, row.job_id)
+        apps = (
+            base.filter(models.Application.job_id == row.job_id)
+            .order_by(models.Application.created_at.desc())
+            .limit(200)
+            .all()
+        )
+        applications = []
+        for app in apps:
+            candidate = db.get(models.User, app.user_id)
+            profile, match = _application_profile(
+                db, app, profile_cache, taxonomy
+            )
+            applications.append(
+                _application_payload(app, candidate, profile, match)
+            )
+        items.append({
+            "job_id": row.job_id,
+            "job_title": job.title if job else f"Offre #{row.job_id}",
+            "job_location": job.location if job else "",
+            "job_contract_type": job.contract_type if job else "",
+            "job_deadline": job.deadline if job else None,
+            "total": int(row.total or 0),
+            "new_count": int(row.new_count or 0),
+            "latest_at": row.latest_at,
+            "applications": applications,
+        })
+    return {
+        "items": items,
+        "page": page,
+        "page_size": page_size,
+        "total_groups": total_groups,
+        "total_applications": total_applications,
+        "total_new": total_new,
+        "has_more": start + len(page_rows) < total_groups,
+    }
 
 
 @router.get("/candidates/{candidate_id}/photo")

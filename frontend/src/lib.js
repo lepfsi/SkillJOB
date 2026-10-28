@@ -81,6 +81,18 @@ export function statusTone(status) {
   return "open";
 }
 
+// Transitions réellement autorisées au recruteur. Le candidat garde la
+// main sur l'envoi, l'acceptation et le retrait ; le recruteur instruit.
+export const RECRUITER_NEXT = {
+  envoyee: "en_attente",
+  en_attente: "entretien",
+  entretien: "offre",
+};
+
+export const REFUSABLE_STATUSES = new Set([
+  "envoyee", "en_attente", "entretien", "offre",
+]);
+
 export const EXPERIENCE_TYPE_LABELS = {
   formal: "Emploi formel",
   informal: "Expérience informelle",

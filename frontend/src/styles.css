@@ -10167,3 +10167,109 @@ table.skills {
   .source-actions .btn { flex: 1 1 auto; }
   .source-metrics { grid-template-columns: 1fr 1fr; }
 }
+
+/* ============================================================
+   Recruteur : page Candidatures reçues (groupes par offre)
+   ============================================================ */
+
+.recruiter-applications-page { max-width: 1120px; }
+.recv-stats { margin: 1rem 0 0.4rem; }
+.recv-stats .stat-card { box-shadow: none; }
+.recv-filters { align-items: end; }
+.recv-reset { align-self: end; }
+.recv-group {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin: 0.9rem 0;
+  overflow: hidden;
+}
+.recv-group-head {
+  padding: 0.95rem 1.1rem;
+  background: linear-gradient(180deg, #fbfdfb, #f5f9f5);
+  border-bottom: 1px solid var(--border);
+}
+.recv-group-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+.recv-group-title h2 {
+  margin: 0;
+  font-family: var(--font-head);
+  font-size: 1.05rem;
+  color: var(--green-dark);
+}
+.recv-group-meta { margin: 0.3rem 0 0; }
+.recv-group-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-top: 0.55rem;
+}
+.recv-stack {
+  padding: 0.75rem 0.9rem 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  background: #fcfdfc;
+}
+.recv-app {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--green-soft);
+  border-radius: var(--radius-sm);
+  padding: 0.8rem 0.9rem;
+}
+.recv-app:hover { border-left-color: var(--green); }
+.recv-app-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}
+.recv-app-meta { margin: 0.15rem 0 0; }
+.recv-app-badges {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-wrap: wrap;
+}
+.recv-cover {
+  margin: 0.55rem 0 0;
+  padding: 0.5rem 0.7rem;
+  background: #f7faf7;
+  border-left: 2px solid var(--border);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 0.82rem;
+  color: var(--slate);
+  white-space: pre-wrap;
+}
+.recv-app-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  margin-top: 0.65rem;
+}
+.recv-app-actions .btn { margin: 0; }
+.recv-more { margin: 0.2rem 0 0; }
+.recv-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin: 1.1rem 0 0.5rem;
+}
+@media (max-width: 700px) {
+  .recv-group-head { padding: 0.8rem; }
+  .recv-stack { padding: 0.6rem; }
+  .recv-app-head { flex-direction: column; }
+  .recv-app-actions .btn { width: 100%; }
+}

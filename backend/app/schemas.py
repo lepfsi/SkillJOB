@@ -1176,17 +1176,49 @@ class RecruiterApplicationOut(BaseModel):
     id: int
     job_id: int
     job_title: str
+    job_location: str = ""
+    job_contract_type: str = ""
+    job_deadline: Optional[datetime] = None
     candidate_id: int
     candidate_name: str
+    candidate_title: str = ""
     candidate_verified: bool = False
     candidate_photo_url: str = ""
     status: str
+    status_label: str = ""
+    is_new: bool = False
+    match_score: Optional[int] = None
+    match_level: str = ""
     timeline: list[TimelineEvent] = Field(default_factory=list)
     created_at: datetime
+    submitted_at: Optional[datetime] = None
+    cover_note: str = ""
     apply_channel: str = ""
     apply_url: str = ""
     apply_email: str = ""
     apply_instructions: str = ""
+
+
+class RecruiterApplicationGroupOut(BaseModel):
+    job_id: int
+    job_title: str
+    job_location: str = ""
+    job_contract_type: str = ""
+    job_deadline: Optional[datetime] = None
+    total: int = 0
+    new_count: int = 0
+    latest_at: Optional[datetime] = None
+    applications: list[RecruiterApplicationOut] = Field(default_factory=list)
+
+
+class RecruiterApplicationsGroupedOut(BaseModel):
+    items: list[RecruiterApplicationGroupOut] = Field(default_factory=list)
+    page: int = 1
+    page_size: int = 10
+    total_groups: int = 0
+    total_applications: int = 0
+    total_new: int = 0
+    has_more: bool = False
 
 
 class JobCompanyOut(BaseModel):

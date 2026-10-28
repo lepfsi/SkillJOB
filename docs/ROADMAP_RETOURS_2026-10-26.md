@@ -525,6 +525,14 @@ candidatures empilées.
 - Les actions de statut respectent les permissions du recruteur.
 - La page reste utilisable avec un grand nombre de candidatures.
 
+Statut : implémenté et vérifié le 28 octobre 2026 (route
+`/recruteur/candidatures`, entrée de navigation « Candidatures reçues »,
+endpoint groupé `/api/recruiter/applications/grouped`, total et nouvelles
+par offre, piles repliables, score de correspondance, filtres offre /
+statut / recherche / dates, pagination par offre, fiche candidat et
+actions autorisées, état vide, plafond de 200 candidatures par offre avec
+total exact).
+
 ## Priorité 2 : administration et identité visuelle
 
 ### 10. Notifications administrateur paramétrables

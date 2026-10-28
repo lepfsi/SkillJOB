@@ -49,6 +49,7 @@ const CANDIDATE_NAV_GROUPS = [
 
 const RECRUITER_NAV = [
   { to: "/recruteur", label: "Accueil recruteur", icon: "home", end: true },
+  { to: "/recruteur/candidatures", label: "Candidatures reçues", icon: "file" },
   { to: "/recruteur/offres", label: "Mes offres", icon: "briefcase" },
   { to: "/recruteur/candidats", label: "Talents", icon: "users" },
   { to: "/recruteur/shortlists", label: "Shortlists", icon: "clipboard" },
