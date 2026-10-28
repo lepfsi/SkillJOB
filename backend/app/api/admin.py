@@ -6,7 +6,6 @@ Accès réservé au rôle ``admin`` (§55 : la gestion opérationnelle reste
 dans le périmètre administrateur, pas candidat).
 """
 import logging
-import smtplib
 from datetime import datetime, timedelta
 from typing import Any, Optional
 
@@ -19,6 +18,10 @@ from app.database import get_db
 from app.services import (
     admin_alerts, email_routing, inbound_email, job_media, llm_client,
     notifications, settings_store, uploads,
+)
+from app.services.applications import (
+    STATUS_LABELS as APPLICATION_STATUS_LABELS,
+    timeline_entry,
 )
 
 logger = logging.getLogger("orientskill.admin")
@@ -294,33 +297,15 @@ def test_smtp(
     payload: schemas.AdminSettingsUpdate | None = None,
     db: Session = Depends(get_db),
 ):
-    """Vérifie la poignée de main SMTP (connexion + STARTTLS + LOGIN).
+    """Teste le transport e-mail configuré, sans envoyer de message.
 
     Les valeurs du formulaire sont testées même si elles ne sont pas encore
-    enregistrées : le mot de passe vide réutilise le secret stocké.
+    enregistrées : les secrets vides réutilisent la valeur stockée. Le
+    transport peut être SMTP, Brevo ou Resend.
     """
     overrides = payload.data if payload else None
-    conf = settings_store.preview_group(db, "smtp", overrides)
-    if not conf.get("enabled"):
-        return {"ok": False, "detail": "SMTP désactivé dans les paramètres."}
-    if not conf.get("host"):
-        return {"ok": False, "detail": "Hôte SMTP manquant."}
-    try:
-        with smtplib.SMTP(conf["host"], int(conf.get("port") or 587), timeout=8) as server:
-            if conf.get("use_tls", True):
-                server.starttls()
-            if conf.get("username") and conf.get("password"):
-                server.login(conf["username"], conf["password"])
-        return {"ok": True, "detail": "Connexion SMTP réussie."}
-    except Exception as exc:  # smtplib lève des erreurs variées
-        detail = f"Échec SMTP : {exc}"
-        if "timed out" in str(exc).lower() or "timeout" in str(exc).lower():
-            detail += (
-                " Vérifiez le port : Render bloque les ports 25, 465 et 587 "
-                "sortants. Utilisez le port 2525 si votre fournisseur le "
-                "propose, ou une API e-mail."
-            )
-        return {"ok": False, "detail": detail}
+    ok, detail = notifications.test_email_transport(db, overrides)
+    return {"ok": ok, "detail": detail}
 
 
 @router.post("/test-imap", response_model=schemas.TestResult)
@@ -979,6 +964,65 @@ def admin_applications(
             "timeline": app.timeline or [],
         })
     return out
+
+
+@router.patch("/applications/{application_id}", response_model=dict)
+def admin_update_application(
+    application_id: int,
+    payload: schemas.ApplicationAdminStatusIn,
+    admin: models.User = Depends(security.require_admin),
+    db: Session = Depends(get_db),
+):
+    """Arbitrage admin : correction ou déblocage d'une candidature.
+
+    Toute transition est autorisée, y compris la réouverture d'un statut
+    terminal, mais elle exige un motif d'au moins 3 caractères. L'auteur,
+    la date et le motif sont conservés dans l'historique, et le candidat
+    est notifié.
+    """
+    if payload.status not in schemas.APPLICATION_STATUSES:
+        raise HTTPException(status_code=422, detail="Statut de candidature invalide")
+    app = db.get(models.Application, application_id)
+    if app is None:
+        raise HTTPException(status_code=404, detail="Candidature introuvable")
+    if payload.status == app.status:
+        raise HTTPException(
+            status_code=422,
+            detail="Le statut demandé est déjà celui de la candidature.",
+        )
+    reason = payload.reason.strip()
+    if len(reason) < 3:
+        raise HTTPException(
+            status_code=422,
+            detail="Un motif d'au moins 3 caractères est requis.",
+        )
+
+    previous = app.status
+    label = APPLICATION_STATUS_LABELS[payload.status]
+    app.status = payload.status
+    timeline = list(app.timeline or [])
+    timeline.append(
+        timeline_entry(
+            f"Arbitrage administrateur : {label}",
+            by=admin.full_name or admin.email or "administrateur",
+            reason=reason,
+        )
+    )
+    app.timeline = timeline
+    db.commit()
+
+    candidate = db.get(models.User, app.user_id)
+    if candidate:
+        notifications.dispatch(
+            db,
+            candidate,
+            "OrientSkill AI : décision sur votre candidature",
+            f"Votre candidature au poste « {app.job.title} » est passée de "
+            f"« {APPLICATION_STATUS_LABELS.get(previous, previous)} » à "
+            f"« {label} ». Motif : {reason}.",
+            event="application",
+        )
+    return {"ok": True, "status": app.status, "previous": previous}
 
 
 @router.get("/reports", response_model=list[schemas.JobReportAdminOut])

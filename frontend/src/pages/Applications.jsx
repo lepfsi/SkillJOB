@@ -7,6 +7,7 @@ import {
   fmtDateTime,
   initialsOf,
   plural,
+  statusTone,
 } from "../lib.js";
 import { Loader, ErrorNote, Empty } from "../components/ui.jsx";
 import { Icon, I, ArrowIcon } from "../components/icons.jsx";
@@ -32,7 +33,7 @@ const PIPELINE = [
   "offre",
   "acceptee",
 ];
-const CLOSED = ["acceptee", "refusee"];
+const CLOSED = ["acceptee", "refusee", "retiree", "declinee"];
 
 const TABS = [
   { id: "toutes", label: "Toutes" },
@@ -54,18 +55,27 @@ const APPS_SUGGESTIONS = [
   "Quelles compétences me manquent ?",
 ];
 
-function statusTone(status) {
-  if (status === "acceptee") return "ok";
-  if (status === "refusee") return "ko";
-  if (status === "entretien" || status === "offre") return "focus";
-  if (status === "en_attente") return "wait";
-  return "open";
-}
-
 function stepIndex(status) {
-  if (status === "refusee") return -1;
+  if (CLOSED.includes(status)) return -1;
   return PIPELINE.indexOf(status);
 }
+
+// Actions que le candidat peut réellement déclencher. Les autres
+// transitions (entretien, offre, refus) appartiennent au recruteur ou à
+// l'admin : elles ne sont jamais proposées ici.
+const CANDIDATE_ACTIONS = {
+  identifiee: [
+    { status: "cv_prepare", label: "Marquer le CV préparé", variant: "btn-primary" },
+    { status: "envoyee", label: "Marquer comme envoyée", variant: "btn-outline" },
+  ],
+  cv_prepare: [
+    { status: "envoyee", label: "Marquer comme envoyée", variant: "btn-primary" },
+  ],
+  offre: [
+    { status: "acceptee", label: "Accepter l'offre", variant: "btn-primary" },
+    { status: "declinee", label: "Décliner l'offre", variant: "btn-outline" },
+  ],
+};
 
 function lastUpdate(app) {
   const times = (app.timeline || [])
@@ -152,8 +162,9 @@ function ApplicationCard({ app, onStatus, busy }) {
   const [prep, setPrep] = useState(null);
   const [historyOpen, setHistoryOpen] = useState(false);
 
-  const index = PIPELINE.indexOf(app.status);
-  const nextStatus = app.status === "refusee" ? null : PIPELINE[index + 1] || null;
+  const isClosed = CLOSED.includes(app.status);
+  const actions = CANDIDATE_ACTIONS[app.status] || [];
+  const canWithdraw = !isClosed && app.status !== "offre";
   const tone = statusTone(app.status);
 
   async function generateCv(templateId) {
@@ -229,35 +240,44 @@ function ApplicationCard({ app, onStatus, busy }) {
           </p>
         </div>
         <div className="apps-item-side">
-          {nextStatus && (
-            <button
-              className="btn btn-primary btn-small"
-              onClick={() => onStatus(app.id, nextStatus)}
-              disabled={busy}
-            >
-              {busy ? "Mise à jour…" : `Passer à « ${STATUS_LABELS[nextStatus]} »`}
-            </button>
-          )}
-          <label className="apps-jump">
-            <span>Changer l'étape</span>
-            <select
-              value={app.status}
-              onChange={(e) => onStatus(app.id, e.target.value)}
-              disabled={busy}
-            >
-              {PIPELINE.concat("refusee").map((status) => (
-                <option key={status} value={status}>{STATUS_LABELS[status]}</option>
+          {busy ? (
+            <span className="small muted">Mise à jour…</span>
+          ) : (
+            <>
+              {actions.map((action) => (
+                <button
+                  key={action.status}
+                  className={`btn ${action.variant} btn-small`}
+                  onClick={() => onStatus(app.id, action.status)}
+                >
+                  {action.label}
+                </button>
               ))}
-            </select>
-          </label>
+              {canWithdraw && (
+                <button
+                  className="btn btn-ghost btn-small"
+                  onClick={() => onStatus(app.id, "retiree")}
+                >
+                  Retirer ma candidature
+                </button>
+              )}
+              {isClosed && (
+                <span className="small muted">Dossier clôturé</span>
+              )}
+            </>
+          )}
         </div>
       </div>
 
-      {app.status === "refusee" ? (
+      {isClosed && app.status !== "acceptee" ? (
         <p className="apps-closed">
           <Icon d={I.alert} size={14} />
-          Candidature refusée. L'historique ci-dessous garde la trace réelle du
-          parcours : il sert pour les candidatures suivantes.
+          {app.status === "refusee" &&
+            "Candidature refusée. L'historique ci-dessous garde la trace réelle du parcours : il sert pour les candidatures suivantes."}
+          {app.status === "retiree" &&
+            "Vous avez retiré cette candidature. L'historique ci-dessous conserve la trace de votre décision."}
+          {app.status === "declinee" &&
+            "Vous avez décliné cette offre. L'historique ci-dessous conserve la trace de votre décision."}
         </p>
       ) : (
         <StatusPipeline status={app.status} />
@@ -346,7 +366,17 @@ function ApplicationCard({ app, onStatus, busy }) {
               {[...app.timeline].reverse().map((event, i) => (
                 <li key={i}>
                   <span className="apps-timeline-dot" />
-                  <span className="apps-timeline-event">{event.event}</span>
+                  <span className="apps-timeline-event">
+                    {event.event}
+                    {event.by && (
+                      <span className="apps-timeline-by"> · par {event.by}</span>
+                    )}
+                    {event.reason && (
+                      <span className="apps-timeline-reason">
+                        Motif : {event.reason}
+                      </span>
+                    )}
+                  </span>
                   <span className="apps-timeline-date">{fmtDateTime(event.at)}</span>
                 </li>
               ))}
@@ -418,7 +448,7 @@ export default function Applications() {
   const interviews = apps.filter((a) => a.status === "entretien");
   const closed = apps.filter((a) => CLOSED.includes(a.status));
   const missingDocs = apps.filter(
-    (a) => a.status !== "refusee" && a.documents.length === 0
+    (a) => !CLOSED.includes(a.status) && a.documents.length === 0
   ).length;
 
   const tabCounts = {
@@ -619,7 +649,7 @@ export default function Applications() {
               <p className="apps-none">Aucune candidature à répartir.</p>
             ) : (
               <div className="apps-funnel">
-                {PIPELINE.concat("refusee").map((status) => {
+                {PIPELINE.concat(["refusee", "retiree", "declinee"]).map((status) => {
                   const count = apps.filter((a) => a.status === status).length;
                   if (count === 0) return null;
                   const share = Math.round((count / apps.length) * 100);

@@ -68,7 +68,8 @@ def _recruiter(client, email):
 
 def _smtp(client, admin_headers, enabled):
     res = client.put("/api/admin/settings/smtp", json={
-        "data": {"enabled": enabled, "host": "smtp.exemple.cm", "port": 587,
+        "data": {"provider": "smtp", "enabled": enabled,
+                 "host": "smtp.exemple.cm", "port": 587,
                  "username": "no@orientskill.cm", "password": "secret",
                  "from_email": "no@orientskill.cm", "use_tls": True},
     }, headers=admin_headers)
@@ -182,6 +183,9 @@ def test_application_update_email_only_when_opted_in(
     }, headers=rh).json()
     app = client.post("/api/applications", json={"job_id": job["id"]},
                       headers=headers).json()
+    sent = client.patch(f"/api/applications/{app['id']}",
+                        json={"status": "envoyee"}, headers=headers)
+    assert sent.status_code == 200, sent.text
 
     try:
         client.patch(f"/api/recruiter/applications/{app['id']}",

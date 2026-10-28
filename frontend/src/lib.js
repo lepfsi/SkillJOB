@@ -52,7 +52,7 @@ export function plural(n, one, many) {
 
 export const STATUS_ORDER = [
   "identifiee", "cv_prepare", "envoyee", "en_attente",
-  "entretien", "offre", "acceptee", "refusee",
+  "entretien", "offre", "acceptee", "refusee", "retiree", "declinee",
 ];
 
 export const STATUS_LABELS = {
@@ -64,7 +64,22 @@ export const STATUS_LABELS = {
   offre: "Offre reçue",
   acceptee: "Acceptée",
   refusee: "Refusée",
+  retiree: "Retirée",
+  declinee: "Déclinée",
 };
+
+export const CLOSED_STATUSES = new Set([
+  "acceptee", "refusee", "retiree", "declinee",
+]);
+
+export function statusTone(status) {
+  if (status === "acceptee") return "ok";
+  if (status === "refusee" || status === "retiree") return "ko";
+  if (status === "declinee") return "wait";
+  if (status === "entretien" || status === "offre") return "focus";
+  if (status === "en_attente") return "wait";
+  return "open";
+}
 
 export const EXPERIENCE_TYPE_LABELS = {
   formal: "Emploi formel",

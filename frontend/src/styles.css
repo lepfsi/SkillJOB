@@ -851,6 +851,19 @@ a.chip-warn:hover { background: #f8e8cb; color: var(--warn); }
   flex-wrap: wrap;
 }
 .app-external-label { font-size: 0.78rem; color: var(--muted); }
+.app-refuse {
+  margin-top: 0.65rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+}
+.app-refuse .field { margin-bottom: 0.5rem; }
+.admin-arbitration-row td { background: var(--bg); }
+.admin-arbitration {
+  padding: 0.75rem 0.4rem;
+}
+.admin-arbitration .setting-grid { margin-bottom: 0.5rem; }
 .admin-apply-links { display: flex; flex-direction: column; gap: 0.15rem; align-items: flex-start; }
 .admin-user-actions { display: flex; flex-direction: column; gap: 0.3rem; align-items: stretch; }
 .user-row-banned td { opacity: 0.75; }
@@ -5154,6 +5167,13 @@ table.skills {
   font-size: 0.79rem;
 }
 .apps-timeline-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+.apps-timeline-by { color: var(--muted); }
+.apps-timeline-reason {
+  display: block;
+  margin-top: 1px;
+  color: var(--slate);
+  font-size: 0.75rem;
+}
 .apps-timeline-date { font-size: 0.74rem; color: var(--muted); white-space: nowrap; }
 
 /* ---------- Colonne latérale ---------- */

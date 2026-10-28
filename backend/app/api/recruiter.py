@@ -17,6 +17,12 @@ from app.database import get_db
 from app.services import calendar as calendar_service
 from app.services import cv_pdf, email_routing, job_media, notifications, uploads
 from app.services import interviews as interview_service
+from app.services.applications import (
+    STATUS_LABELS,
+    can_transition,
+    timeline_entry,
+    transition_detail,
+)
 from app.services.profile_store import profile_to_dict
 from app.services.skills_taxonomy import load_taxonomy
 
@@ -541,9 +547,13 @@ def update_application_status(
     user: models.User = Depends(security.get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Statut PARTAGÉ : le recruteur fait avancer le pipeline côté
-    candidat (entretien, offre…). Le changement est journalisé dans la
-    timeline, visible du candidat."""
+    """Statut PARTAGÉ : le recruteur instruit la candidature.
+
+    Le recruteur peut mettre en attente, convoquer à un entretien,
+    transmettre une offre ou refuser. Il ne peut ni accepter une offre à
+    la place du candidat, ni retirer une candidature. Le changement est
+    journalisé avec l'auteur et le motif éventuel.
+    """
     _require_recruiter(user)
     company = _get_company(db, user)
     app = db.get(models.Application, application_id)
@@ -551,12 +561,23 @@ def update_application_status(
         raise HTTPException(status_code=404, detail="Candidature introuvable")
     if payload.status not in schemas.APPLICATION_STATUSES:
         raise HTTPException(status_code=422, detail="Statut invalide")
+    if not can_transition("recruiter", app.status, payload.status):
+        raise HTTPException(
+            status_code=403,
+            detail=transition_detail("recruiter", app.status, payload.status),
+        )
+
+    reason = (payload.reason or "").strip()
+    label = STATUS_LABELS[payload.status]
     app.status = payload.status
     timeline = list(app.timeline or [])
-    timeline.append({
-        "at": datetime.utcnow().isoformat(timespec="seconds"),
-        "event": f"Mise à jour par {company.name} : {payload.status}",
-    })
+    timeline.append(
+        timeline_entry(
+            f"Mise à jour par {company.name} : {label}",
+            by=company.name,
+            reason=reason,
+        )
+    )
     app.timeline = timeline
     db.commit()
 
@@ -565,11 +586,16 @@ def update_application_status(
 
     candidate = db.get(models.User, app.user_id)
     if candidate:
+        detail = (
+            f"{company.name} a mis à jour votre candidature au poste "
+            f"« {app.job.title} » : {label.lower()}."
+        )
+        if reason:
+            detail += f" Motif : {reason}."
         dispatch(
             db, candidate,
-            f"OrientSkill AI : votre candidature a évolué",
-            f"{company.name} a mis à jour votre candidature au poste "
-            f"« {app.job.title} » : nouveau statut « {payload.status} ».",
+            "OrientSkill AI : votre candidature a évolué",
+            detail,
             event="application",
         )
     return {"ok": True, "status": app.status}

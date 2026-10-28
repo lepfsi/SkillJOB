@@ -20,11 +20,15 @@ SECRET_KEYS = {
 
 DEFAULTS: dict[str, dict[str, Any]] = {
     "smtp": {
+        # Transport : SMTP classique, ou API HTTPS compatible Render.
+        "provider": "smtp",
         "host": "",
         "port": 587,
         "username": "",
         "password": "",
+        "api_key": "",
         "from_email": "",
+        "from_name": "OrientSkill AI",
         "use_tls": True,
         "enabled": False,
     },
@@ -85,6 +89,8 @@ def _mask(group: str, value: dict[str, Any]) -> dict[str, Any]:
     elif group == "smtp":
         out["password_set"] = bool(value.get("password"))
         out["password"] = "<set>" if value.get("password") else ""
+        out["api_key_set"] = bool(value.get("api_key"))
+        out["api_key"] = "<set>" if value.get("api_key") else ""
     elif group == "inbound":
         out["imap_password_set"] = bool(value.get("imap_password"))
         out["imap_password"] = "<set>" if value.get("imap_password") else ""

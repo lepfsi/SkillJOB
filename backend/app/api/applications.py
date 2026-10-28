@@ -7,7 +7,12 @@ from sqlalchemy.orm import Session
 
 from app import models, schemas, security
 from app.database import get_db
-from app.services.applications import STATUS_LABELS as _STATUS_LABELS
+from app.services.applications import (
+    STATUS_LABELS as _STATUS_LABELS,
+    can_transition,
+    timeline_entry,
+    transition_detail,
+)
 
 router = APIRouter(prefix="/api/applications", tags=["applications"])
 
@@ -327,6 +332,11 @@ def update_application(
     user: models.User = Depends(security.get_current_user),
     db: Session = Depends(get_db),
 ):
+    """Action du candidat : préparer, envoyer, accepter, décliner ou retirer.
+
+    Les transitions sont contrôlées côté API : le candidat ne peut pas
+    s'attribuer un entretien, une offre ou un refus.
+    """
     if payload.status not in schemas.APPLICATION_STATUSES:
         raise HTTPException(status_code=422, detail="Statut de candidature invalide")
     app = db.get(models.Application, application_id)
@@ -334,10 +344,21 @@ def update_application(
         raise HTTPException(status_code=404, detail="Candidature introuvable")
     if app.user_id != user.id:
         raise HTTPException(status_code=403, detail="Accès interdit")
+    if not can_transition("candidate", app.status, payload.status):
+        raise HTTPException(
+            status_code=403,
+            detail=transition_detail("candidate", app.status, payload.status),
+        )
 
+    reason = (payload.reason or "").strip()
+    event = {
+        "retiree": "Candidature retirée par le candidat",
+        "declinee": "Offre déclinée par le candidat",
+        "acceptee": "Offre acceptée par le candidat",
+    }.get(payload.status, _STATUS_LABELS[payload.status])
     app.status = payload.status
     timeline = list(app.timeline or [])
-    timeline.append({"at": _now_iso(), "event": _STATUS_LABELS[payload.status]})
+    timeline.append(timeline_entry(event, by="candidat", reason=reason))
     app.timeline = timeline
     db.commit()
     db.refresh(app)

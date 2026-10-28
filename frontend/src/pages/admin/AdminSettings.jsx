@@ -115,11 +115,14 @@ function LlmForm({ value, onSaved }) {
 
 function SmtpForm({ value, onSaved }) {
   const [form, setForm] = useState({
+    provider: value.provider || "smtp",
     host: value.host || "",
     port: value.port || 587,
     username: value.username || "",
     password: "",
+    api_key: "",
     from_email: value.from_email || "",
+    from_name: value.from_name || "OrientSkill AI",
     use_tls: value.use_tls !== false,
     enabled: !!value.enabled,
   });
@@ -129,17 +132,27 @@ function SmtpForm({ value, onSaved }) {
   const [testing, setTesting] = useState(false);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+  const isSmtp = form.provider === "smtp";
+  const secretSet = isSmtp ? value.password_set : value.api_key_set;
+
+  function payload() {
+    const data = { ...form };
+    if (!form.password) delete data.password;
+    if (!form.api_key) delete data.api_key;
+    return data;
+  }
 
   async function save(e) {
     e.preventDefault();
     setBusy(true);
     setError("");
     try {
-      const data = { ...form };
-      if (!form.password) delete data.password;
-      const res = await api("/admin/settings/smtp", { method: "PUT", body: { data } });
+      const res = await api("/admin/settings/smtp", {
+        method: "PUT",
+        body: { data: payload() },
+      });
       onSaved(res);
-      setForm((f) => ({ ...f, password: "" }));
+      setForm((f) => ({ ...f, password: "", api_key: "" }));
     } catch (err) {
       setError(err.detail);
     } finally {
@@ -153,11 +166,9 @@ function SmtpForm({ value, onSaved }) {
     setTest(null);
     try {
       // Tester les valeurs du formulaire, même non enregistrées.
-      const data = { ...form };
-      if (!form.password) delete data.password;
       const res = await api("/admin/test-smtp", {
         method: "POST",
-        body: { data },
+        body: { data: payload() },
       });
       setTest(res);
     } catch (err) {
@@ -169,46 +180,125 @@ function SmtpForm({ value, onSaved }) {
 
   return (
     <form className="panel" onSubmit={save}>
-      <h2>Notifications e-mail (SMTP)</h2>
+      <h2>Notifications e-mail (SMTP ou API)</h2>
       <p className="small muted">
         Utilisé pour les alertes (nouvelles offres compatibles, relances de
-        candidatures). Secret actuel : <b>{value.password_set ? "configuré" : "aucun"}</b>.
+        candidatures). Secret actuel : <b>{secretSet ? "configuré" : "aucun"}</b>.
       </p>
       <div className="setting-grid">
         <label className="field">
-          <span>Hôte SMTP</span>
-          <input value={form.host} onChange={(e) => set("host", e.target.value)} placeholder="smtp.exemple.cm" />
+          <span>Transport</span>
+          <select
+            value={form.provider}
+            onChange={(e) => set("provider", e.target.value)}
+          >
+            <option value="smtp">SMTP classique</option>
+            <option value="brevo">API Brevo (HTTPS)</option>
+            <option value="resend">API Resend (HTTPS)</option>
+          </select>
         </label>
-        <label className="field">
-          <span>Port</span>
-          <input type="number" value={form.port} onChange={(e) => set("port", Number(e.target.value))} />
-        </label>
-        <label className="field">
-          <span>Utilisateur</span>
-          <input value={form.username} onChange={(e) => set("username", e.target.value)} />
-        </label>
-        <label className="field">
-          <span>Mot de passe {value.password_set && "(laisser vide pour conserver)"}</span>
-          <input type="password" value={form.password} onChange={(e) => set("password", e.target.value)} />
-        </label>
+        {isSmtp ? (
+          <>
+            <label className="field">
+              <span>Hôte SMTP</span>
+              <input
+                value={form.host}
+                onChange={(e) => set("host", e.target.value)}
+                placeholder="smtp.exemple.cm"
+              />
+            </label>
+            <label className="field">
+              <span>Port</span>
+              <input
+                type="number"
+                value={form.port}
+                onChange={(e) => set("port", Number(e.target.value))}
+              />
+            </label>
+            <label className="field">
+              <span>Utilisateur</span>
+              <input
+                value={form.username}
+                onChange={(e) => set("username", e.target.value)}
+              />
+            </label>
+            <label className="field">
+              <span>
+                Mot de passe{" "}
+                {value.password_set && "(laisser vide pour conserver)"}
+              </span>
+              <input
+                type="password"
+                value={form.password}
+                onChange={(e) => set("password", e.target.value)}
+              />
+            </label>
+          </>
+        ) : (
+          <label className="field">
+            <span>
+              Clé API{" "}
+              {value.api_key_set && "(laisser vide pour conserver)"}
+            </span>
+            <input
+              type="password"
+              value={form.api_key}
+              onChange={(e) => set("api_key", e.target.value)}
+              placeholder={
+                form.provider === "brevo" ? "xkeysib-…" : "re_…"
+              }
+            />
+          </label>
+        )}
         <label className="field">
           <span>Adresse expéditrice</span>
-          <input value={form.from_email} onChange={(e) => set("from_email", e.target.value)} placeholder="no-reply@orientskill.cm" />
+          <input
+            value={form.from_email}
+            onChange={(e) => set("from_email", e.target.value)}
+            placeholder="no-reply@orientskill.cm"
+          />
+        </label>
+        <label className="field">
+          <span>Nom expéditeur</span>
+          <input
+            value={form.from_name}
+            onChange={(e) => set("from_name", e.target.value)}
+            placeholder="OrientSkill AI"
+          />
         </label>
       </div>
-      <p className="small muted">
-        Hébergement Render : les ports SMTP 25, 465 et 587 sont bloqués en
-        sortie. Si le test expire, utilisez le port 2525 proposé par certains
-        fournisseurs, ou une API e-mail. La relève IMAP (port 993) n'est pas
-        concernée.
-      </p>
+      {isSmtp ? (
+        <p className="small muted">
+          Hébergement Render : les ports SMTP 25, 465 et 587 sont bloqués en
+          sortie. Si le test expire, utilisez le port 2525 proposé par certains
+          fournisseurs, ou choisissez une API e-mail. La relève IMAP (port 993)
+          n'est pas concernée.
+        </p>
+      ) : (
+        <p className="small muted">
+          {form.provider === "brevo"
+            ? "Brevo : créez une clé API dans SMTP & API → API Keys, puis vérifiez l'adresse expéditrice."
+            : "Resend : créez une clé API dans API Keys, puis vérifiez votre domaine d'envoi."}{" "}
+          Les appels passent par HTTPS (port 443), compatible avec Render.
+        </p>
+      )}
       <div className="inline-fields">
+        {isSmtp && (
+          <label className="check">
+            <input
+              type="checkbox"
+              checked={form.use_tls}
+              onChange={(e) => set("use_tls", e.target.checked)}
+            />
+            Chiffrement TLS
+          </label>
+        )}
         <label className="check">
-          <input type="checkbox" checked={form.use_tls} onChange={(e) => set("use_tls", e.target.checked)} />
-          Chiffrement TLS
-        </label>
-        <label className="check">
-          <input type="checkbox" checked={form.enabled} onChange={(e) => set("enabled", e.target.checked)} />
+          <input
+            type="checkbox"
+            checked={form.enabled}
+            onChange={(e) => set("enabled", e.target.checked)}
+          />
           Activer le service
         </label>
       </div>
@@ -216,7 +306,12 @@ function SmtpForm({ value, onSaved }) {
         <button className="btn btn-primary" disabled={busy}>
           {busy ? "Enregistrement…" : "Enregistrer"}
         </button>
-        <button type="button" className="btn btn-outline" onClick={runTest} disabled={testing}>
+        <button
+          type="button"
+          className="btn btn-outline"
+          onClick={runTest}
+          disabled={testing}
+        >
           {testing ? "Test en cours…" : "Tester la connexion"}
         </button>
       </div>

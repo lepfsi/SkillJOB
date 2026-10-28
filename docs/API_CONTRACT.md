@@ -245,8 +245,9 @@ au candidat ou n'est pas du bon type.
 
 ```text
 Application { id, user_id, job_id, job: JobSummary,
-  status: "identifiee"|"cv_prepare"|"envoyee"|"en_attente"|"entretien"|"offre"|"acceptee"|"refusee",
-  timeline: [{ at, event }], documents: [{ id, kind: "cv"|"cover_letter", title }],
+  status: "identifiee"|"cv_prepare"|"envoyee"|"en_attente"|"entretien"|"offre"|"acceptee"|"refusee"|"retiree"|"declinee",
+  timeline: [{ at, event, by?, reason? }],
+  documents: [{ id, kind: "cv"|"cover_letter", title }],
   apply_channel: "platform"|"external"|"email"|"",
   submitted_at: datetime | null,
   cover_note: string,
@@ -257,12 +258,21 @@ Application { id, user_id, job_id, job: JobSummary,
 l'entreprise (voir §6ter). Les pièces d'origine restent attachées à
 l'e-mail de transmission ; le profil n'est jamais complété d'office.
 
-### PATCH /api/applications/{id} `{ "status": ... }` → `Application`
+### PATCH /api/applications/{id} `{ "status": ..., "reason"?: string }` → `Application`
+
+Action du candidat uniquement. Transitions autorisées :
+`identifiee` → `cv_prepare`|`envoyee`|`retiree` ; `cv_prepare` →
+`envoyee`|`retiree` ; `envoyee`|`en_attente`|`entretien` → `retiree` ;
+`offre` → `acceptee`|`declinee`|`retiree`. Toute autre transition est
+refusée en `403` avec un message actionnable. Un statut inconnu reste
+`422`. Le motif éventuel est conservé dans l'historique.
 
 Les `event` de l'historique sont écrits par le backend
 (`app/services/applications.py`, dictionnaire `STATUS_LABELS`) : c'est la
 source unique des libellés d'étape, réutilisée par l'assistant pour parler
-du suivi réel du candidat (aucune étape n'est inventée).
+du suivi réel du candidat (aucune étape n'est inventée). `by` identifie
+l'auteur de la transition (candidat, entreprise, admin) et `reason` le
+motif éventuel.
 
 ### Suivi admin : GET /api/admin/applications?status=&channel=&limit=
 
@@ -276,6 +286,14 @@ documents, et retrouve le lien de postulation externe (site ou e-mail
 du publieur). Le canal `email` correspond aux candidatures reçues par la
 boîte interne puis transmises à l'entreprise. Photo :
 `GET /api/admin/users/{id}/photo` (rôle admin).
+
+### PATCH /api/admin/applications/{id} `{ "status": ..., "reason": ... }` → `{ ok, status, previous }`
+
+Arbitrage admin : toute transition est autorisée, y compris la
+réouverture d'un statut terminal, mais `reason` est obligatoire
+(3 caractères minimum). L'événement est ajouté à la timeline avec
+l'auteur admin, la date et le motif ; le candidat est notifié. Même
+statut ou statut inconnu : `422`. Candidature introuvable : `404`.
 
 Le journal détaillé des messages entrants (routage, transmission, accès,
 pièces jointes) est exposé par `GET /api/admin/inbound-emails` et
@@ -648,7 +666,8 @@ Un secret soumis vide (`""`) CONSERVE la valeur existante.
 Configurations :
 
 ```text
-smtp:        { host, port, username, password*, from_email, use_tls, enabled }
+smtp:        { provider: "smtp"|"brevo"|"resend", host, port, username,
+               password*, api_key*, from_email, from_name, use_tls, enabled }
 inbound:     { enabled, address, protocol: "imap"|"webhook",
                imap_host, imap_port, imap_username, imap_password*,
                imap_use_ssl, imap_mailbox, poll_seconds,
@@ -667,11 +686,15 @@ l'offre ne porte pas d'adresse RH. Modifier `inbound` démarre ou arrête
 la relève IMAP sans redémarrer le serveur.
 
 ### POST /api/admin/test-llm → `{ ok, detail }` (ping réel du LLM configuré)
-### POST /api/admin/test-smtp → `{ ok, detail }` (poignée de main SMTP + STARTTLS + LOGIN)
-Body optionnel : `{ "data": { host, port, username, password, from_email,
-use_tls, enabled } }`. Le test utilise ces valeurs même avant enregistrement ;
-un `password` vide réutilise le secret stocké. Sans body, la configuration
-enregistrée est utilisée.
+### POST /api/admin/test-smtp → `{ ok, detail }` (test du transport e-mail)
+Body optionnel : `{ "data": { provider, host, port, username, password,
+api_key, from_email, from_name, use_tls, enabled } }`. Le test utilise ces
+valeurs même avant enregistrement ; un secret vide réutilise la valeur
+stockée. Sans body, la configuration enregistrée est utilisée.
+Pour `smtp` : poignée de main + STARTTLS + LOGIN. Pour `brevo` ou `resend` :
+appel HTTPS en lecture seule sur le compte, sans envoi de message. Les API
+HTTPS passent par le port 443 et restent compatibles avec Render, qui bloque
+les ports SMTP 25, 465 et 587.
 ### POST /api/admin/test-imap → `{ ok, detail }` (connexion et dossier IMAP en lecture)
 Body optionnel : `{ "data": { imap_host, imap_port, imap_username,
 imap_password, imap_use_ssl, imap_mailbox } }`. Le test utilise ces valeurs
@@ -907,9 +930,14 @@ l'administration. Les calendriers restent ceux annoncés par le MINESUP.
   `apply_channel`, `apply_url`, `apply_email`, `apply_instructions`
   (lien de postulation quand la candidature se fait sur le site de
   l'entreprise).
-- `PATCH /api/recruiter/applications/{id} {status}`: **statut partagé** :
-  la mise à jour est journalisée dans la timeline (visible du candidat) et
-  déclenche sa notification multi-canaux.
+- `PATCH /api/recruiter/applications/{id} {status, reason?}`: **statut
+  partagé**. Transitions autorisées : `envoyee` → `en_attente`|`entretien`|
+  `refusee` ; `en_attente` → `entretien`|`refusee` ; `entretien` → `offre`|
+  `refusee` ; `offre` → `refusee`. Le recruteur ne peut ni accepter une offre
+  à la place du candidat, ni retirer une candidature. Toute autre transition
+  est refusée en `403`. La mise à jour est journalisée avec l'entreprise et
+  le motif éventuel (visible du candidat), et déclenche sa notification
+  multi-canaux.
 
 ### Notifications par événement (§25, §52)
 

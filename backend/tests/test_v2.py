@@ -421,6 +421,11 @@ def test_recruiter_updates_shared_application_status(client):
     dheaders = {"Authorization": f"Bearer {login.json()['token']}"}
     app = client.post("/api/applications", json={"job_id": job["id"]},
                       headers=dheaders).json()
+    # Le candidat marque d'abord sa candidature comme envoyée.
+    sent = client.patch(f"/api/applications/{app['id']}", json={
+        "status": "envoyee",
+    }, headers=dheaders)
+    assert sent.status_code == 200, sent.text
 
     # Le recruteur fait passer la candidature en entretien
     updated = client.patch(f"/api/recruiter/applications/{app['id']}", json={

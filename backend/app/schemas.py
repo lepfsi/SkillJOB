@@ -455,6 +455,7 @@ class JobDetailResponse(BaseModel):
 APPLICATION_STATUSES = {
     "identifiee", "cv_prepare", "envoyee", "en_attente",
     "entretien", "offre", "acceptee", "refusee",
+    "retiree", "declinee",
 }
 
 
@@ -470,6 +471,8 @@ class AgentModeOut(BaseModel):
 class TimelineEvent(BaseModel):
     at: datetime
     event: str
+    by: Optional[str] = None
+    reason: Optional[str] = None
 
 
 class DocumentRef(BaseModel):
@@ -552,6 +555,14 @@ class InboundEmailIn(BaseModel):
 
 class ApplicationStatusIn(BaseModel):
     status: str
+    reason: str = Field(default="", max_length=1000)
+
+
+class ApplicationAdminStatusIn(BaseModel):
+    """Arbitrage admin : toute transition est possible, avec motif."""
+
+    status: str
+    reason: str = Field(min_length=3, max_length=1000)
 
 
 class ApplicationSubmitIn(BaseModel):

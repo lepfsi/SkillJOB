@@ -94,7 +94,8 @@ def _external_job(client, admin_headers, **extra):
 
 def _smtp(client, admin_headers, enabled):
     res = client.put("/api/admin/settings/smtp", json={
-        "data": {"enabled": enabled, "host": "smtp.exemple.cm", "port": 587,
+        "data": {"provider": "smtp", "enabled": enabled,
+                 "host": "smtp.exemple.cm", "port": 587,
                  "username": "candidatures@orientskill.cm", "password": "secret",
                  "from_email": "candidatures@orientskill.cm", "use_tls": True},
     }, headers=admin_headers)

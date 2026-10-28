@@ -1,24 +1,21 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../../api/client.js";
-import { fmtDate, fmtDateTime } from "../../lib.js";
+import {
+  STATUS_LABELS,
+  STATUS_ORDER,
+  fmtDate,
+  fmtDateTime,
+  statusTone,
+} from "../../lib.js";
 import Avatar from "../../components/Avatar.jsx";
 import { Loader, ErrorNote, Empty } from "../../components/ui.jsx";
 
 // Suivi de TOUTES les candidatures envoyées via la plateforme.
 // L'admin voit : qui a postulé où, par quel canal, avec quels documents.
+// Il peut corriger un statut avec un motif obligatoire ; l'arbitrage est
+// tracé dans l'historique et visible par le candidat.
 // Le journal des candidatures reçues par e-mail est affiché en dessous.
-
-const STATUS_LABELS = {
-  identifiee: "Identifiée",
-  cv_prepare: "CV préparé",
-  envoyee: "Envoyée",
-  en_attente: "En attente",
-  entretien: "Entretien",
-  offre: "Offre",
-  acceptee: "Acceptée",
-  refusee: "Refusée",
-};
 
 const CHANNEL_LABELS = {
   platform: "Plateforme",
@@ -49,16 +46,58 @@ export default function AdminApplications() {
   const [inboundError, setInboundError] = useState("");
   const [inboundNotice, setInboundNotice] = useState("");
   const [resendingId, setResendingId] = useState(null);
+  const [editing, setEditing] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [notice, setNotice] = useState("");
 
-  useEffect(() => {
+  function loadRows() {
     const params = new URLSearchParams();
     if (status) params.set("status", status);
     if (channel) params.set("channel", channel);
     const query = params.toString() ? `?${params}` : "";
-    api(`/admin/applications${query}`)
-      .then((data) => setRows(data || []))
-      .catch((err) => setError(err.detail));
+    return api(`/admin/applications${query}`).then(
+      (data) => setRows(data || [])
+    );
+  }
+
+  useEffect(() => {
+    setError("");
+    loadRows().catch((err) => setError(err.detail));
   }, [status, channel]);
+
+  function openArbitration(row) {
+    setEditing({ id: row.id, status: row.status, reason: "" });
+    setNotice("");
+    setError("");
+  }
+
+  async function saveArbitration(event) {
+    event.preventDefault();
+    if (!editing) return;
+    const reason = editing.reason.trim();
+    if (reason.length < 3) {
+      setError("Un motif d'au moins 3 caractères est requis.");
+      return;
+    }
+    setSaving(true);
+    setError("");
+    setNotice("");
+    try {
+      const res = await api(`/admin/applications/${editing.id}`, {
+        method: "PATCH",
+        body: { status: editing.status, reason },
+      });
+      setNotice(
+        `Candidature mise à jour : ${STATUS_LABELS[res.status] || res.status}.`
+      );
+      setEditing(null);
+      await loadRows();
+    } catch (err) {
+      setError(err.detail);
+    } finally {
+      setSaving(false);
+    }
+  }
 
   useEffect(() => {
     api("/admin/inbound-emails?limit=50")
@@ -161,6 +200,7 @@ export default function AdminApplications() {
       </div>
 
       <ErrorNote error={error} />
+      {notice && <div className="alert alert-success">{notice}</div>}
 
       {rows.length === 0 ? (
         <Empty title="Aucune candidature">
@@ -183,7 +223,8 @@ export default function AdminApplications() {
             </thead>
             <tbody>
               {rows.map((r) => (
-                <tr key={r.id}>
+                <Fragment key={r.id}>
+                <tr>
                   <td>
                     <div className="app-candidate">
                       <Avatar
@@ -204,7 +245,7 @@ export default function AdminApplications() {
                     <span className="muted small">{r.job_company}</span>
                   </td>
                   <td>
-                    <span className={`report-status report-status-${r.status}`}>
+                    <span className={`apps-status ${statusTone(r.status)}`}>
                       {STATUS_LABELS[r.status] || r.status}
                     </span>
                   </td>
@@ -246,16 +287,90 @@ export default function AdminApplications() {
                     {r.submitted_at ? fmtDate(r.submitted_at) : "Pas encore"}
                   </td>
                   <td>
-                    <Link
-                      className="btn btn-outline btn-small"
-                      to={`/opportunites/${r.job_id}`}
-                      target="_blank"
-                      rel="noreferrer"
-                    >
-                      Voir l'offre
-                    </Link>
+                    <div className="admin-user-actions">
+                      <Link
+                        className="btn btn-outline btn-small"
+                        to={`/opportunites/${r.job_id}`}
+                        target="_blank"
+                        rel="noreferrer"
+                      >
+                        Voir l'offre
+                      </Link>
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-small"
+                        onClick={() => openArbitration(r)}
+                      >
+                        Changer le statut
+                      </button>
+                    </div>
                   </td>
                 </tr>
+                {editing?.id === r.id && (
+                  <tr className="admin-arbitration-row">
+                    <td colSpan={8}>
+                      <form className="admin-arbitration" onSubmit={saveArbitration}>
+                        <p className="small muted">
+                          Statut actuel :{" "}
+                          <b>{STATUS_LABELS[r.status] || r.status}</b>. Toute
+                          correction est tracée avec votre nom, la date et le
+                          motif, et le candidat est notifié.
+                        </p>
+                        <div className="setting-grid">
+                          <label className="field">
+                            <span>Nouveau statut</span>
+                            <select
+                              value={editing.status}
+                              onChange={(event) =>
+                                setEditing({
+                                  ...editing,
+                                  status: event.target.value,
+                                })
+                              }
+                            >
+                              {STATUS_ORDER.map((value) => (
+                                <option key={value} value={value}>
+                                  {STATUS_LABELS[value]}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <label className="field">
+                            <span>Motif (obligatoire)</span>
+                            <input
+                              value={editing.reason}
+                              onChange={(event) =>
+                                setEditing({
+                                  ...editing,
+                                  reason: event.target.value,
+                                })
+                              }
+                              maxLength={1000}
+                              placeholder="Ex. dossier complété après relance du candidat"
+                            />
+                          </label>
+                        </div>
+                        <div className="actions-row">
+                          <button
+                            className="btn btn-primary btn-small"
+                            disabled={saving}
+                          >
+                            {saving ? "Enregistrement…" : "Enregistrer l'arbitrage"}
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-ghost btn-small"
+                            onClick={() => setEditing(null)}
+                            disabled={saving}
+                          >
+                            Annuler
+                          </button>
+                        </div>
+                      </form>
+                    </td>
+                  </tr>
+                )}
+                </Fragment>
               ))}
             </tbody>
           </table>

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../../api/client.js";
-import { STATUS_LABELS } from "../../lib.js";
+import { STATUS_LABELS, statusTone } from "../../lib.js";
 import Avatar from "../../components/Avatar.jsx";
 import ContactDialog from "../../components/ContactDialog.jsx";
 import TalentCard from "../../components/TalentCard.jsx";
@@ -12,14 +12,14 @@ import { Loader, ErrorNote } from "../../components/ui.jsx";
 // disponibles avec contact direct via la messagerie, statut PARTAGÉ
 // des candidatures reçues.
 
-const NEXT_STATUS = {
-  identifiee: "cv_prepare",
-  cv_prepare: "envoyee",
+// Transitions réellement autorisées au recruteur. Le candidat garde la
+// main sur l'envoi, l'acceptation et le retrait ; le recruteur instruit.
+const RECRUITER_NEXT = {
   envoyee: "en_attente",
   en_attente: "entretien",
   entretien: "offre",
-  offre: "acceptee",
 };
+const REFUSABLE = new Set(["envoyee", "en_attente", "entretien", "offre"]);
 
 export default function RecruiterHome() {
   const [company, setCompany] = useState(null);
@@ -33,6 +33,9 @@ export default function RecruiterHome() {
   const [companyForm, setCompanyForm] = useState(null);
   const [companyError, setCompanyError] = useState("");
   const [companyBusy, setCompanyBusy] = useState(false);
+  const [busyApp, setBusyApp] = useState(0);
+  const [refuseFor, setRefuseFor] = useState(null);
+  const [refuseReason, setRefuseReason] = useState("");
   const [searchParams] = useSearchParams();
 
   useEffect(() => {
@@ -79,8 +82,10 @@ export default function RecruiterHome() {
   }
 
   async function advanceApplication(app) {
-    const next = NEXT_STATUS[app.status];
+    const next = RECRUITER_NEXT[app.status];
     if (!next) return;
+    setBusyApp(app.id);
+    setError("");
     try {
       await api(`/recruiter/applications/${app.id}`, {
         method: "PATCH",
@@ -91,25 +96,28 @@ export default function RecruiterHome() {
       setApplications(updated);
     } catch (err) {
       setError(err.detail);
+    } finally {
+      setBusyApp(0);
     }
   }
 
-  async function refuseApplication(app) {
-    if (!window.confirm(
-      `Refuser la candidature de ${app.candidate_name} ? Le candidat sera notifié.`
-    )) {
-      return;
-    }
+  async function confirmRefusal(app) {
+    setBusyApp(app.id);
+    setError("");
     try {
       await api(`/recruiter/applications/${app.id}`, {
         method: "PATCH",
-        body: { status: "refusee" },
+        body: { status: "refusee", reason: refuseReason.trim() },
       });
       setNotice(`Candidature de ${app.candidate_name} refusée.`);
+      setRefuseFor(null);
+      setRefuseReason("");
       const updated = await api("/recruiter/applications");
       setApplications(updated);
     } catch (err) {
       setError(err.detail);
+    } finally {
+      setBusyApp(0);
     }
   }
 
@@ -281,18 +289,32 @@ export default function RecruiterHome() {
                       <VerifiedBadge label="Profil vérifié" size={13} className="verified-inline" />
                     )}
                     <p className="job-meta" style={{ margin: "0.15rem 0" }}>
-                      Postule à : {a.job_title} · statut : {STATUS_LABELS[a.status] || a.status}
+                      Postule à : {a.job_title} ·{" "}
+                      <span className={`apps-status ${statusTone(a.status)}`}>
+                        {STATUS_LABELS[a.status] || a.status}
+                      </span>
                     </p>
                   </div>
                 </div>
                 <div className="actions-row" style={{ marginTop: 0 }}>
-                  {NEXT_STATUS[a.status] && (
-                    <button className="btn btn-primary btn-small" onClick={() => advanceApplication(a)}>
-                      Passer à « {STATUS_LABELS[NEXT_STATUS[a.status]]} »
+                  {RECRUITER_NEXT[a.status] && (
+                    <button
+                      className="btn btn-primary btn-small"
+                      onClick={() => advanceApplication(a)}
+                      disabled={busyApp === a.id}
+                    >
+                      Passer à « {STATUS_LABELS[RECRUITER_NEXT[a.status]]} »
                     </button>
                   )}
-                  {!["acceptee", "refusee"].includes(a.status) && (
-                    <button className="btn btn-remove btn-small" onClick={() => refuseApplication(a)}>
+                  {REFUSABLE.has(a.status) && (
+                    <button
+                      className="btn btn-remove btn-small"
+                      onClick={() => {
+                        setRefuseFor(a.id);
+                        setRefuseReason("");
+                      }}
+                      disabled={busyApp === a.id}
+                    >
                       Refuser
                     </button>
                   )}
@@ -304,6 +326,44 @@ export default function RecruiterHome() {
                   </button>
                 </div>
               </div>
+              {refuseFor === a.id && (
+                <form
+                  className="app-refuse"
+                  onSubmit={(event) => {
+                    event.preventDefault();
+                    confirmRefusal(a);
+                  }}
+                >
+                  <label className="field">
+                    <span>Motif du refus (facultatif, visible par le candidat)</span>
+                    <input
+                      value={refuseReason}
+                      onChange={(event) => setRefuseReason(event.target.value)}
+                      maxLength={1000}
+                      placeholder="Ex. profil incomplet pour le poste"
+                    />
+                  </label>
+                  <div className="actions-row" style={{ marginTop: 0 }}>
+                    <button
+                      className="btn btn-remove btn-small"
+                      disabled={busyApp === a.id}
+                    >
+                      {busyApp === a.id ? "Envoi…" : "Confirmer le refus"}
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-small"
+                      onClick={() => {
+                        setRefuseFor(null);
+                        setRefuseReason("");
+                      }}
+                      disabled={busyApp === a.id}
+                    >
+                      Annuler
+                    </button>
+                  </div>
+                </form>
+              )}
               {a.apply_channel === "external" && (
                 <div className="app-external">
                   <span className="app-external-label">

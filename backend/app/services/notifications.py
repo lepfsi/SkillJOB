@@ -6,11 +6,13 @@ Les identifiants des services sont ceux configurés par l'administrateur
 d'envoi ne casse jamais la requête métier ; il est journalisé côté
 réponse pour le test manuel uniquement.
 """
+import base64
 import json
 import logging
 import smtplib
 from email.message import EmailMessage
 from typing import Any, Optional
+from urllib.error import HTTPError
 from urllib.parse import quote
 
 import urllib.request
@@ -18,6 +20,14 @@ import urllib.request
 from app.services import settings_store
 
 logger = logging.getLogger("orientskill.notifications")
+
+# Render bloque les ports SMTP 25, 465 et 587 sortants. Le message est
+# partagé par le test de connexion et les erreurs d'envoi.
+RENDER_SMTP_HINT = (
+    " Vérifiez le port : Render bloque les ports 25, 465 et 587 sortants. "
+    "Utilisez le port 2525 si votre fournisseur le propose, ou une API e-mail."
+)
+PROVIDER_LABELS = {"smtp": "SMTP", "brevo": "Brevo", "resend": "Resend"}
 
 # ------------------------------------------------- Événements (§25, §52)
 # Types d'événements notifiables. Le candidat choisit, POUR CHAQUE
@@ -93,6 +103,231 @@ def _add_attachments(msg: EmailMessage, attachments: Optional[list[Any]]) -> Non
         )
 
 
+def _provider(conf: dict) -> str:
+    return str(conf.get("provider") or "smtp").strip().lower()
+
+
+def _from_address(conf: dict, fallback: str = "no-reply@orientskill.cm") -> str:
+    return str(conf.get("from_email") or conf.get("username") or fallback).strip()
+
+
+def _from_name(conf: dict) -> str:
+    return str(conf.get("from_name") or "OrientSkill AI").strip()
+
+
+def _attachments_payload(
+    attachments: Optional[list[Any]],
+) -> list[dict[str, str]]:
+    """Convertit les pièces jointes en base64 pour les API e-mail."""
+    rows: list[dict[str, str]] = []
+    for item in attachments or []:
+        if isinstance(item, dict):
+            filename = str(item.get("filename") or "piece-jointe")
+            content = item.get("content") or b""
+            maintype = str(item.get("maintype") or "application")
+            subtype = str(item.get("subtype") or "octet-stream")
+        else:
+            filename, content = item[0], item[1]
+            maintype, subtype = "application", "pdf"
+        rows.append(
+            {
+                "filename": filename,
+                "content": base64.b64encode(content).decode("ascii"),
+                "maintype": maintype,
+                "subtype": subtype,
+            }
+        )
+    return rows
+
+
+def _build_message(
+    conf: dict,
+    to_email: str,
+    subject: str,
+    body: str,
+    attachments: Optional[list[Any]],
+    reply_to: str,
+    default_from: str,
+) -> EmailMessage:
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = _from_address(conf, default_from)
+    msg["To"] = to_email
+    if reply_to:
+        msg["Reply-To"] = reply_to
+    msg.set_content(body, charset="utf-8")
+    _add_attachments(msg, attachments)
+    return msg
+
+
+def _send_via_smtp(conf: dict, msg: EmailMessage, timeout: int) -> None:
+    with smtplib.SMTP(
+        conf["host"], int(conf.get("port") or 587), timeout=timeout
+    ) as server:
+        if conf.get("use_tls", True):
+            server.starttls()
+        if conf.get("username") and conf.get("password"):
+            server.login(conf["username"], conf["password"])
+        server.send_message(msg)
+
+
+def _post_json(
+    url: str, payload: dict, headers: dict[str, str], timeout: int = 15
+) -> tuple[int, bytes]:
+    request = urllib.request.Request(
+        url,
+        data=json.dumps(payload).encode("utf-8"),
+        headers={"Content-Type": "application/json", **headers},
+        method="POST",
+    )
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        return response.status, response.read()
+
+
+def _get_json(
+    url: str, headers: dict[str, str], timeout: int = 8
+) -> tuple[int, bytes]:
+    request = urllib.request.Request(url, headers=headers, method="GET")
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        return response.status, response.read()
+
+
+def _api_error(provider: str, exc: Exception) -> str:
+    label = PROVIDER_LABELS.get(provider, provider)
+    if isinstance(exc, HTTPError):
+        if exc.code in (401, 403):
+            return f"Clé API {label} refusée."
+        return f"Échec {label} : HTTP {exc.code}."
+    return f"Échec {label} : {exc}"
+
+
+def _send_via_brevo(
+    conf: dict,
+    to_email: str,
+    subject: str,
+    body: str,
+    attachments: Optional[list[Any]],
+    reply_to: str,
+) -> tuple[bool, str]:
+    payload: dict[str, Any] = {
+        "sender": {
+            "email": _from_address(conf),
+            "name": _from_name(conf),
+        },
+        "to": [{"email": to_email}],
+        "subject": subject,
+        "textContent": body,
+    }
+    if reply_to:
+        payload["replyTo"] = {"email": reply_to}
+    rows = _attachments_payload(attachments)
+    if rows:
+        payload["attachment"] = [
+            {"name": row["filename"], "content": row["content"]}
+            for row in rows
+        ]
+    try:
+        status, _ = _post_json(
+            "https://api.brevo.com/v3/smtp/email",
+            payload,
+            {"api-key": str(conf.get("api_key") or "").strip()},
+        )
+        if 200 <= status < 300:
+            return True, "E-mail envoyé via Brevo."
+        return False, f"Échec Brevo : HTTP {status}."
+    except Exception as exc:
+        logger.warning("Envoi Brevo échoué : %s", exc)
+        return False, _api_error("brevo", exc)
+
+
+def _send_via_resend(
+    conf: dict,
+    to_email: str,
+    subject: str,
+    body: str,
+    attachments: Optional[list[Any]],
+    reply_to: str,
+) -> tuple[bool, str]:
+    payload: dict[str, Any] = {
+        "from": f"{_from_name(conf)} <{_from_address(conf)}>",
+        "to": [to_email],
+        "subject": subject,
+        "text": body,
+    }
+    if reply_to:
+        payload["reply_to"] = reply_to
+    rows = _attachments_payload(attachments)
+    if rows:
+        payload["attachments"] = [
+            {"filename": row["filename"], "content": row["content"]}
+            for row in rows
+        ]
+    try:
+        status, _ = _post_json(
+            "https://api.resend.com/emails",
+            payload,
+            {
+                "Authorization": (
+                    f"Bearer {str(conf.get('api_key') or '').strip()}"
+                )
+            },
+        )
+        if 200 <= status < 300:
+            return True, "E-mail envoyé via Resend."
+        return False, f"Échec Resend : HTTP {status}."
+    except Exception as exc:
+        logger.warning("Envoi Resend échoué : %s", exc)
+        return False, _api_error("resend", exc)
+
+
+def _send_configured(
+    db,
+    to_email: str,
+    subject: str,
+    body: str,
+    attachments: Optional[list[Any]],
+    reply_to: str,
+    default_from: str,
+    smtp_timeout: int,
+    success_detail: str,
+) -> tuple[bool, str]:
+    conf = settings_store.get_raw_group(db, "smtp")
+    provider = _provider(conf)
+    if not (conf.get("enabled") and to_email):
+        return False, "Service e-mail non configuré (voir administrateur)."
+    if provider == "smtp":
+        if not conf.get("host"):
+            return False, "Service e-mail non configuré (voir administrateur)."
+        try:
+            msg = _build_message(
+                conf,
+                to_email,
+                subject,
+                body,
+                attachments,
+                reply_to,
+                default_from,
+            )
+            _send_via_smtp(conf, msg, smtp_timeout)
+            return True, success_detail
+        except Exception as exc:
+            logger.warning("Envoi e-mail échoué : %s", exc)
+            return False, f"Échec e-mail : {exc}"
+    if provider == "brevo":
+        if not (conf.get("api_key") and _from_address(conf)):
+            return False, "Service e-mail non configuré (voir administrateur)."
+        return _send_via_brevo(
+            conf, to_email, subject, body, attachments, reply_to
+        )
+    if provider == "resend":
+        if not (conf.get("api_key") and _from_address(conf)):
+            return False, "Service e-mail non configuré (voir administrateur)."
+        return _send_via_resend(
+            conf, to_email, subject, body, attachments, reply_to
+        )
+    return False, f"Fournisseur e-mail inconnu : {provider}."
+
+
 def send_email(
     db,
     to_email: str,
@@ -104,30 +339,21 @@ def send_email(
     """Envoie un e-mail texte, avec pièces jointes optionnelles.
 
     ``attachments`` accepte des dictionnaires (voir ``_add_attachments``)
-    pour les calendriers .ics et les CV/lettres reçus par e-mail.
+    pour les calendriers .ics et les CV/lettres reçus par e-mail. Le
+    transport est SMTP ou une API HTTPS (Brevo/Resend) selon la
+    configuration administrateur.
     """
-    conf = settings_store.get_raw_group(db, "smtp")
-    if not (conf.get("enabled") and conf.get("host") and to_email):
-        return False, "Service e-mail non configuré (voir administrateur)."
-    try:
-        msg = EmailMessage()
-        msg["Subject"] = subject
-        msg["From"] = conf.get("from_email") or conf.get("username") or "no-reply@orientskill.cm"
-        msg["To"] = to_email
-        if reply_to:
-            msg["Reply-To"] = reply_to
-        msg.set_content(body, charset="utf-8")
-        _add_attachments(msg, attachments)
-        with smtplib.SMTP(conf["host"], int(conf.get("port") or 587), timeout=8) as server:
-            if conf.get("use_tls", True):
-                server.starttls()
-            if conf.get("username") and conf.get("password"):
-                server.login(conf["username"], conf["password"])
-            server.send_message(msg)
-        return True, "E-mail envoyé."
-    except Exception as exc:
-        logger.warning("Envoi e-mail échoué : %s", exc)
-        return False, f"Échec e-mail : {exc}"
+    return _send_configured(
+        db,
+        to_email,
+        subject,
+        body,
+        attachments,
+        reply_to,
+        default_from="no-reply@orientskill.cm",
+        smtp_timeout=8,
+        success_detail="E-mail envoyé.",
+    )
 
 
 def send_application_email(
@@ -144,28 +370,81 @@ def send_application_email(
     directement chez lui (notre adresse reste en expéditeur pour la
     traçabilité SMTP). ``attachments`` : liste (nom_fichier, bytes PDF).
     """
-    conf = settings_store.get_raw_group(db, "smtp")
-    if not (conf.get("enabled") and conf.get("host") and to_email):
-        return False, "Service e-mail non configuré (voir administrateur)."
-    try:
-        msg = EmailMessage()
-        msg["Subject"] = subject
-        msg["From"] = conf.get("from_email") or conf.get("username") or "candidatures@orientskill.cm"
-        msg["To"] = to_email
-        if reply_to:
-            msg["Reply-To"] = reply_to
-        msg.set_content(body, charset="utf-8")
-        _add_attachments(msg, attachments)
-        with smtplib.SMTP(conf["host"], int(conf.get("port") or 587), timeout=15) as server:
-            if conf.get("use_tls", True):
-                server.starttls()
-            if conf.get("username") and conf.get("password"):
-                server.login(conf["username"], conf["password"])
-            server.send_message(msg)
-        return True, "Candidature transmise par e-mail."
-    except Exception as exc:
-        logger.warning("Envoi candidature e-mail échoué : %s", exc)
-        return False, f"Échec e-mail : {exc}"
+    return _send_configured(
+        db,
+        to_email,
+        subject,
+        body,
+        attachments,
+        reply_to,
+        default_from="candidatures@orientskill.cm",
+        smtp_timeout=15,
+        success_detail="Candidature transmise par e-mail.",
+    )
+
+
+def test_email_transport(
+    db, overrides: Optional[dict[str, Any]] = None
+) -> tuple[bool, str]:
+    """Teste le transport e-mail configuré, sans envoyer de message.
+
+    Les valeurs du formulaire (``overrides``) sont fusionnées sans
+    écriture : le test fonctionne avant l'enregistrement. Pour SMTP, on
+    vérifie la poignée de main et le LOGIN ; pour Brevo et Resend, on
+    appelle un endpoint de compte en lecture seule.
+    """
+    conf = settings_store.preview_group(db, "smtp", overrides)
+    if not conf.get("enabled"):
+        return False, "Service e-mail désactivé dans les paramètres."
+    provider = _provider(conf)
+    if provider == "smtp":
+        if not conf.get("host"):
+            return False, "Hôte SMTP manquant."
+        try:
+            with smtplib.SMTP(
+                conf["host"], int(conf.get("port") or 587), timeout=8
+            ) as server:
+                if conf.get("use_tls", True):
+                    server.starttls()
+                if conf.get("username") and conf.get("password"):
+                    server.login(conf["username"], conf["password"])
+            return True, "Connexion SMTP réussie."
+        except Exception as exc:
+            detail = f"Échec SMTP : {exc}"
+            if "timed out" in str(exc).lower() or "timeout" in str(exc).lower():
+                detail += RENDER_SMTP_HINT
+            return False, detail
+    api_key = str(conf.get("api_key") or "").strip()
+    if provider == "brevo":
+        if not api_key:
+            return False, "Clé API Brevo manquante."
+        if not _from_address(conf):
+            return False, "Adresse expéditrice manquante."
+        try:
+            status, _ = _get_json(
+                "https://api.brevo.com/v3/account", {"api-key": api_key}
+            )
+            if 200 <= status < 300:
+                return True, "Connexion Brevo réussie."
+            return False, f"Échec Brevo : HTTP {status}."
+        except Exception as exc:
+            return False, _api_error("brevo", exc)
+    if provider == "resend":
+        if not api_key:
+            return False, "Clé API Resend manquante."
+        if not _from_address(conf):
+            return False, "Adresse expéditrice manquante."
+        try:
+            status, _ = _get_json(
+                "https://api.resend.com/domains",
+                {"Authorization": f"Bearer {api_key}"},
+            )
+            if 200 <= status < 300:
+                return True, "Connexion Resend réussie."
+            return False, f"Échec Resend : HTTP {status}."
+        except Exception as exc:
+            return False, _api_error("resend", exc)
+    return False, f"Fournisseur e-mail inconnu : {provider}."
 
 
 def _telegram_error_detail(exc: Exception) -> str:
