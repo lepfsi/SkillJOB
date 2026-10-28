@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { api } from "../../api/client.js";
 import { fmtDate } from "../../lib.js";
 import { Loader, ErrorNote } from "../../components/ui.jsx";
@@ -11,42 +12,14 @@ export default function AdminUsers() {
   const [notice, setNotice] = useState("");
   const [query, setQuery] = useState("");
   const [role, setRole] = useState("");
-  const [appeals, setAppeals] = useState([]);
-  const [appealNotes, setAppealNotes] = useState({});
-  const [appealBusy, setAppealBusy] = useState(null);
 
   const reload = () => {
     api("/admin/users").then(setUsers).catch((e) => setError(e.detail));
-    api("/admin/appeals?status=pending")
-      .then((rows) => setAppeals(rows || []))
-      .catch(() => setAppeals([]));
   };
 
   useEffect(() => {
     reload();
   }, []);
-
-  async function decideAppeal(row, decision) {
-    setAppealBusy(row.id);
-    setError("");
-    try {
-      await api(`/admin/appeals/${row.id}`, {
-        method: "PUT",
-        body: { decision, note: (appealNotes[row.id] || "").trim() },
-      });
-      setNotice(
-        decision === "accepted"
-          ? `Recours de ${row.user_name} accepté : la suspension est levée.`
-          : `Recours de ${row.user_name} refusé.`
-      );
-      setAppealNotes((prev) => ({ ...prev, [row.id]: "" }));
-      reload();
-    } catch (err) {
-      setError(err.detail);
-    } finally {
-      setAppealBusy(null);
-    }
-  }
 
   async function resetMfa(user) {
     if (!window.confirm(
@@ -122,61 +95,10 @@ export default function AdminUsers() {
       {notice && <div className="alert alert-success">{notice}</div>}
       <ErrorNote error={error} />
 
-      {appeals.length > 0 && (
-        <section className="dash-card admin-appeals">
-          <div className="dash-card-head">
-            <h2>Recours en attente ({appeals.length})</h2>
-          </div>
-          <p className="small muted" style={{ marginTop: 0 }}>
-            Comptes suspendus qui contestent la décision. Accepter lève la
-            suspension et conserve le compte, ses candidatures et ses documents.
-          </p>
-          <ul className="admin-appeal-list">
-            {appeals.map((row) => (
-              <li key={row.id} className="admin-appeal">
-                <div className="admin-appeal-head">
-                  <strong>{row.user_name}</strong>
-                  <span className="small muted">{row.user_email}</span>
-                  <span className="small muted">Demande du {fmtDate(row.created_at)}</span>
-                </div>
-                <p className="admin-appeal-reason">
-                  <b>Motif de la suspension :</b> {row.ban_reason || "non précisé"}
-                </p>
-                <blockquote>{row.message}</blockquote>
-                <label className="field">
-                  <span>Réponse à l'utilisateur (facultatif)</span>
-                  <input
-                    value={appealNotes[row.id] || ""}
-                    onChange={(e) => setAppealNotes((prev) => ({
-                      ...prev,
-                      [row.id]: e.target.value,
-                    }))}
-                    placeholder="Expliquez la décision, elle sera visible dans les notifications."
-                  />
-                </label>
-                <div className="actions-row" style={{ marginTop: 0 }}>
-                  <button
-                    type="button"
-                    className="btn btn-primary btn-small"
-                    disabled={appealBusy === row.id}
-                    onClick={() => decideAppeal(row, "accepted")}
-                  >
-                    Accepter et lever la suspension
-                  </button>
-                  <button
-                    type="button"
-                    className="btn btn-outline btn-small"
-                    disabled={appealBusy === row.id}
-                    onClick={() => decideAppeal(row, "rejected")}
-                  >
-                    Refuser le recours
-                  </button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+      <div className="alert alert-info appeal-link-banner">
+        Les contestations de suspension sont instruites dans la page dédiée.{" "}
+        <Link to="/admin/recours">Ouvrir les recours</Link>.
+      </div>
 
       <div className="filters">
         <label className="field">

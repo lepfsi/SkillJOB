@@ -8730,6 +8730,83 @@ table.skills {
 }
 .admin-appeal .field { margin: 0 0 0.6rem; }
 
+/* Page dédiée aux recours : contexte, historique et décision motivée. */
+.appeal-link-banner { margin: 0.9rem 0 0; }
+.appeal-link-banner a { color: var(--green-dark); font-weight: 600; }
+.appeal-stats { margin: 1rem 0 0.4rem; }
+.appeal-stats .stat-card { box-shadow: none; }
+.appeal-filters { align-items: end; }
+.appeal-reset { align-self: end; }
+.admin-appeal-list { margin-top: 0.9rem; }
+.appeal-status-pending { border-left: 3px solid #d99a2b; }
+.appeal-status-complement { border-left: 3px solid #c47a1a; }
+.appeal-status-accepted { border-left: 3px solid var(--green); }
+.appeal-status-rejected { border-left: 3px solid #b94a48; }
+.appeal-context {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.1rem;
+  margin: 0.55rem 0 0;
+  font-size: 0.79rem;
+  color: var(--muted);
+}
+.appeal-context b { color: var(--slate); font-weight: 600; }
+.appeal-history {
+  margin: 0.85rem 0 0;
+  padding: 0.7rem 0.85rem;
+  background: #f7faf7;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.appeal-history h4 {
+  margin: 0 0 0.35rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.appeal-history ol { list-style: none; margin: 0; padding: 0; }
+.appeal-history li {
+  padding: 0.4rem 0;
+  border-top: 1px solid var(--border);
+  font-size: 0.82rem;
+}
+.appeal-history li:first-child { border-top: 0; padding-top: 0; }
+.appeal-history-head {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.appeal-history-date { font-size: 0.74rem; color: var(--muted); white-space: nowrap; }
+.appeal-history-action { font-weight: 600; color: var(--slate); }
+.appeal-history-note {
+  margin: 0.25rem 0 0;
+  line-height: 1.5;
+  color: var(--slate);
+  white-space: pre-wrap;
+}
+.appeal-decision {
+  margin-top: 0.9rem;
+  padding-top: 0.8rem;
+  border-top: 1px dashed var(--border);
+}
+.appeal-decision textarea { resize: vertical; min-height: 4.5rem; }
+.appeal-decision .actions-row { flex-wrap: wrap; }
+.appeal-decision-closed {
+  margin-top: 0.9rem;
+  padding: 0.7rem 0.85rem;
+  background: #fbfcfb;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 0.83rem;
+}
+.appeal-decision-closed p { margin: 0.2rem 0; }
+@media (max-width: 700px) {
+  .appeal-context { flex-direction: column; gap: 0.2rem; }
+  .appeal-decision .actions-row .btn { width: 100%; }
+}
+
 .admin-table {
   width: 100%;
   border-collapse: collapse;

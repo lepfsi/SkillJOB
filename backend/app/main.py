@@ -428,6 +428,9 @@ def _ensure_columns() -> None:
             ("history", "JSON"),
             ("recruiter_responded_at", "TIMESTAMP"),
         ],
+        "ban_appeals": [
+            ("history", "JSON"),
+        ],
     }
     dialect = engine.dialect.name
     with engine.begin() as conn:

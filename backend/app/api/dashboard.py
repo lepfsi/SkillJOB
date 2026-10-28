@@ -800,7 +800,9 @@ def _notification_events(db: Session, user: models.User) -> list[dict]:
         db.query(models.BanAppeal)
         .filter(
             models.BanAppeal.user_id == user.id,
-            models.BanAppeal.status.in_(["accepted", "rejected"]),
+            models.BanAppeal.status.in_(
+                ["complement", "accepted", "rejected"]
+            ),
             models.BanAppeal.reviewed_at.isnot(None),
         )
         .order_by(models.BanAppeal.reviewed_at.desc())
@@ -812,6 +814,11 @@ def _notification_events(db: Session, user: models.User) -> list[dict]:
             message = (
                 "Votre recours a été accepté : la suspension de votre compte "
                 "est levée, vos données sont intactes."
+            )
+        elif appeal.status == "complement":
+            message = (
+                "L'administration attend un complément pour instruire votre "
+                "recours. Déposez-le depuis l'écran de connexion."
             )
         else:
             message = "Votre recours a été refusé."

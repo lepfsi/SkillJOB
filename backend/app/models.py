@@ -606,11 +606,14 @@ class BanAppeal(Base):
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
     message: Mapped[str] = mapped_column(Text)
-    status: Mapped[str] = mapped_column(String(20), default="pending")  # pending|accepted|rejected
+    status: Mapped[str] = mapped_column(String(20), default="pending")  # pending|complement|accepted|rejected
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
     reviewed_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     reviewed_by: Mapped[Optional[int]] = mapped_column(ForeignKey("users.id"), nullable=True)
     admin_note: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    # Fil des échanges : dépôt, messages du candidat, demandes de complément
+    # et décisions motivées de l'administration.
+    history: Mapped[list[dict]] = mapped_column(JSON, default=list)
 
 
 

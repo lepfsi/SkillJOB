@@ -9,23 +9,32 @@ from sqlalchemy.orm import Session
 
 from app import config, models, schemas, security
 from app.database import get_db
-from app.services import admin_alerts, mfa as mfa_service
+from app.services import admin_alerts, appeals as appeal_service, mfa as mfa_service
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
 def _appeal_context(db: Session, user: models.User) -> str:
     """Complète le refus de connexion par l'état réel du recours."""
-    pending = (
+    open_appeal = (
         db.query(models.BanAppeal)
         .filter(
             models.BanAppeal.user_id == user.id,
-            models.BanAppeal.status == "pending",
+            models.BanAppeal.status.in_(appeal_service.OPEN_STATUSES),
         )
         .order_by(models.BanAppeal.created_at.desc())
         .first()
     )
-    if pending:
+    if open_appeal:
+        if open_appeal.status == "complement":
+            note = (
+                f" Motif : {open_appeal.admin_note}"
+                if open_appeal.admin_note else ""
+            )
+            return (
+                " L'administration attend un complément à votre recours."
+                f"{note} Déposez-le depuis l'écran de connexion."
+            )
         return " Votre recours est en cours d'examen."
     rejected = (
         db.query(models.BanAppeal)
@@ -154,30 +163,57 @@ def submit_appeal(payload: schemas.AppealIn, db: Session = Depends(get_db)):
             status_code=400,
             detail="Décrivez votre situation en 20 caractères minimum.",
         )
-    pending = (
+    open_appeal = (
         db.query(models.BanAppeal)
         .filter(
             models.BanAppeal.user_id == user.id,
-            models.BanAppeal.status == "pending",
+            models.BanAppeal.status.in_(appeal_service.OPEN_STATUSES),
         )
         .order_by(models.BanAppeal.created_at.desc())
         .first()
     )
-    if pending:
-        pending.message = message
+    if open_appeal:
+        was_complement = open_appeal.status == "complement"
+        open_appeal.message = message
+        if was_complement:
+            # Le candidat répond à la demande de complément : le recours
+            # repasse en examen, la demande reste dans l'historique.
+            open_appeal.status = "pending"
+            open_appeal.admin_note = None
+            open_appeal.reviewed_at = None
+            open_appeal.reviewed_by = None
+        appeal_service.append_history(
+            open_appeal,
+            actor="candidate",
+            action="complement" if was_complement else "message",
+            note=message,
+            status="pending",
+        )
         db.commit()
-        db.refresh(pending)
+        db.refresh(open_appeal)
         admin_alerts.notify_admins(
             db,
             "appeal",
-            f"Recours mis à jour : {user.full_name}",
             (
-                f"{user.full_name} ({user.email}) a actualisé son recours.\n"
+                f"Recours complété : {user.full_name}"
+                if was_complement
+                else f"Recours mis à jour : {user.full_name}"
+            ),
+            (
+                f"{user.full_name} ({user.email}) a "
+                f"{'répondu à la demande de complément' if was_complement else 'actualisé son recours'}.\n"
                 f"Message : {message}"
             ),
         )
-        return pending
+        return open_appeal
     row = models.BanAppeal(user_id=user.id, message=message, status="pending")
+    appeal_service.append_history(
+        row,
+        actor="candidate",
+        action="depot",
+        note=message,
+        status="pending",
+    )
     db.add(row)
     db.commit()
     db.refresh(row)

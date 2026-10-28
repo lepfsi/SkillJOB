@@ -243,7 +243,8 @@ export default function Login() {
               <>
                 <p>
                   Votre compte et vos données restent enregistrés. Expliquez
-                  votre situation : l'administration examinera votre recours.
+                  votre situation ou répondez à une demande de complément :
+                  l'administration examinera votre recours.
                 </p>
                 {appealError && <div className="alert alert-error">{appealError}</div>}
                 <label className="field">

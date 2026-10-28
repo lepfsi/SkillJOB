@@ -800,17 +800,33 @@ Le compte suspendu n'est jamais supprimé : la personne peut contester.
   (identité prouvée par le mot de passe). `message` : 20 à 2000
   caractères. 401 si les identifiants sont faux, 400 si le compte n'est
   pas suspendu. Un seul recours ouvert à la fois ; une nouvelle demande
-  met à jour le message du recours en attente.
-  → `{ id, status: "pending"|"accepted"|"rejected", message, created_at,
-       reviewed_at?, admin_note? }`
-- La connexion refusée indique l'état réel du recours (en examen, ou
-  refusé avec son motif) et invite à contester.
-- `GET /api/admin/appeals?status=pending` : file des recours, avec
-  `user_name`, `user_email`, `ban_reason` et le message.
-- `PUT /api/admin/appeals/{id} { decision: "accepted"|"rejected", note? }` :
-  traite un recours. `accepted` lève la suspension (données intactes) ;
-  `rejected` maintient la suspension. 400 si le recours est déjà traité.
-- La décision apparaît dans `/api/notifications` (kind `appeal`).
+  met à jour le message du recours en attente. Si l'administration a
+  demandé un complément, la réponse repasse le recours en `pending` et
+  conserve la demande dans l'historique.
+  → `{ id, status: "pending"|"complement"|"accepted"|"rejected", message,
+       created_at, reviewed_at?, admin_note? }`
+- La connexion refusée indique l'état réel du recours : en examen,
+  complément attendu avec son motif, ou refusé avec son motif.
+- `GET /api/admin/appeals` : page dédiée aux recours. Filtres :
+  `status` (`open` = `pending` + `complement`, ou un statut précis),
+  `kind` (`suspension`), `user` (nom ou e-mail), `q` (nom, e-mail, motif
+  de suspension ou message), `date_from`, `date_to`, `limit`.
+  Chaque ligne contient le contexte du compte (`user_role`,
+  `user_created_at`, `is_banned`, `applications_count`,
+  `documents_count`, `ban_reason`), l'ancienneté (`age_hours`,
+  `is_open`), le fil `history` et le nom du décideur
+  (`reviewed_by_name`).
+- `PUT /api/admin/appeals/{id} { decision: "accepted"|"rejected"|
+  "complement", note }` : traite un recours ouvert. `note` obligatoire
+  (10 caractères minimum, 422 sinon). `accepted` lève la suspension
+  (données intactes) ; `rejected` la maintient ; `complement` maintient
+  la suspension et attend une réponse du candidat. 400 si le recours est
+  déjà clos. Chaque décision est horodatée, ajoutée à `history`, tracée
+  dans le journal admin (`AdminNotificationLog`, catégorie `appeal`) et
+  notifiée par e-mail sur le canal activé du candidat. La décision
+  apparaît aussi dans `/api/notifications` (kind `appeal`).
+- Interface : page admin `/admin/recours`, entrée « Recours » de la
+  navigation ; la gestion des utilisateurs renvoie vers cette page.
 
 Côté recruteur, mêmes routes pour ses propres offres :
 `POST/DELETE /api/recruiter/jobs/{id}/photo` (404 si l'offre n'est pas la sienne).

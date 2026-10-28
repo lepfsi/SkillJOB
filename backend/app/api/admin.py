@@ -6,18 +6,19 @@ Accès réservé au rôle ``admin`` (§55 : la gestion opérationnelle reste
 dans le périmètre administrateur, pas candidat).
 """
 import logging
-from datetime import datetime, timedelta
+from datetime import date, datetime, time, timedelta
 from typing import Any, Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app import config, models, schemas, security
 from app.database import get_db
 from app.services import (
-    admin_alerts, email_routing, inbound_email, job_media, llm_client,
-    notifications, settings_store, uploads,
+    admin_alerts, appeals as appeal_service, email_routing, inbound_email,
+    job_media, llm_client, notifications, settings_store, uploads,
 )
 from app.services.applications import (
     STATUS_LABELS as APPLICATION_STATUS_LABELS,
@@ -567,31 +568,187 @@ def admin_unban_user(
 
 def _appeal_out(db: Session, row: models.BanAppeal) -> dict:
     user = db.get(models.User, row.user_id)
+    reviewer = db.get(models.User, row.reviewed_by) if row.reviewed_by else None
+    now = models.utcnow()
+    end = row.reviewed_at or now
+    age_hours = 0.0
+    if row.created_at:
+        age_hours = max(0.0, (end - row.created_at).total_seconds() / 3600)
     return {
         "id": row.id,
         "user_id": row.user_id,
         "user_name": user.full_name if user else f"utilisateur #{row.user_id}",
         "user_email": user.email if user else "",
+        "user_role": (user.role if user else "candidate") or "candidate",
+        "user_created_at": user.created_at if user else None,
+        "is_banned": bool(user.is_banned) if user else False,
+        "applications_count": (
+            db.query(models.Application)
+            .filter(models.Application.user_id == row.user_id)
+            .count()
+        ),
+        "documents_count": (
+            db.query(models.Document)
+            .filter(models.Document.user_id == row.user_id)
+            .count()
+        ),
         "ban_reason": (user.ban_reason or "") if user else "",
+        "kind": "suspension",
         "status": row.status,
         "message": row.message,
         "created_at": row.created_at,
         "reviewed_at": row.reviewed_at,
+        "reviewed_by_name": reviewer.full_name if reviewer else None,
         "admin_note": row.admin_note,
+        "age_hours": round(age_hours, 1),
+        "is_open": row.status in appeal_service.OPEN_STATUSES,
+        "history": appeal_service.history_for(row),
     }
 
 
 @router.get("/appeals", response_model=list[schemas.AdminAppealOut])
 def admin_appeals(
     status: str = Query(default=""),
+    kind: str = Query(default=""),
+    user: str = Query(default=""),
+    q: str = Query(default=""),
+    date_from: Optional[date] = Query(default=None),
+    date_to: Optional[date] = Query(default=None),
+    limit: int = Query(default=200, ge=1, le=500),
     db: Session = Depends(get_db),
 ):
-    """Recours des comptes suspendus, du plus récent au plus ancien."""
-    query = db.query(models.BanAppeal)
-    if status:
+    """Recours des comptes suspendus, avec filtres d'instruction.
+
+    ``status=open`` regroupe les recours en attente et ceux qui attendent
+    un complément. Les filtres ``user`` et ``q`` cherchent dans le nom,
+    l'e-mail, le motif de suspension et le message du candidat.
+    """
+    allowed = {"", "open", *appeal_service.OPEN_STATUSES, "accepted", "rejected"}
+    if status not in allowed:
+        raise HTTPException(status_code=422, detail="Statut de recours inconnu")
+    if kind and kind != "suspension":
+        raise HTTPException(status_code=422, detail="Type de recours inconnu")
+    query = (
+        db.query(models.BanAppeal)
+        .join(models.User, models.User.id == models.BanAppeal.user_id)
+    )
+    if status == "open":
+        query = query.filter(
+            models.BanAppeal.status.in_(appeal_service.OPEN_STATUSES)
+        )
+    elif status:
         query = query.filter(models.BanAppeal.status == status)
-    rows = query.order_by(models.BanAppeal.created_at.desc()).limit(200).all()
+    if user.strip():
+        like = f"%{user.strip()}%"
+        query = query.filter(or_(
+            models.User.full_name.ilike(like),
+            models.User.email.ilike(like),
+        ))
+    if q.strip():
+        like = f"%{q.strip()}%"
+        query = query.filter(or_(
+            models.User.full_name.ilike(like),
+            models.User.email.ilike(like),
+            models.User.ban_reason.ilike(like),
+            models.BanAppeal.message.ilike(like),
+        ))
+    if date_from:
+        query = query.filter(
+            models.BanAppeal.created_at >= datetime.combine(date_from, time.min)
+        )
+    if date_to:
+        query = query.filter(
+            models.BanAppeal.created_at
+            < datetime.combine(date_to + timedelta(days=1), time.min)
+        )
+    rows = (
+        query.order_by(models.BanAppeal.created_at.desc())
+        .limit(limit)
+        .all()
+    )
     return [_appeal_out(db, row) for row in rows]
+
+
+def _notify_appeal_decision(
+    db: Session, user: Optional[models.User], row: models.BanAppeal
+) -> tuple[bool, str]:
+    """Prévient le candidat de la décision par e-mail si son canal est actif.
+
+    La notification in-app est reconstruite depuis le recours (dashboard) ;
+    l'e-mail est transactionnel : il ne dépend pas d'un opt-in par
+    catégorie, mais respecte le canal e-mail activé par la personne.
+    """
+    if user is None or not user.email:
+        return False, "compte introuvable"
+    prefs = notifications.normalize_prefs(
+        getattr(user, "notification_prefs", None) or {}, "candidate"
+    )
+    if not prefs["email_enabled"]:
+        return False, "canal e-mail désactivé"
+    email = str(prefs["email"] or user.email or "").strip()
+    if not email:
+        return False, "aucune adresse e-mail"
+    if row.status == "accepted":
+        subject = "OrientSkill AI : votre recours est accepté"
+        opening = (
+            "Votre recours a été accepté. La suspension de votre compte "
+            "est levée : vous pouvez vous reconnecter, vos données sont "
+            "intactes."
+        )
+    elif row.status == "complement":
+        subject = "OrientSkill AI : un complément est attendu"
+        opening = (
+            "L'administration a besoin d'un complément pour instruire votre "
+            "recours. Connectez-vous à l'écran de connexion et déposez-le "
+            "depuis le formulaire de recours."
+        )
+    else:
+        subject = "OrientSkill AI : votre recours est refusé"
+        opening = (
+            "Votre recours a été refusé. La suspension de votre compte est "
+            "maintenue."
+        )
+    body = "\n".join([
+        f"Bonjour {(user.full_name or '').split(' ')[0]},",
+        "",
+        opening,
+        "",
+        f"Motif communiqué : {row.admin_note or 'non précisé'}",
+        "",
+        "L'équipe OrientSkill AI",
+    ])
+    return notifications.send_email(db, email, subject, body)
+
+
+def _log_appeal_decision(
+    db: Session,
+    admin: models.User,
+    row: models.BanAppeal,
+    user: Optional[models.User],
+    email_sent: bool,
+    email_detail: str,
+) -> None:
+    """Trace la décision dans le journal d'administration."""
+    label = appeal_service.STATUS_LABELS.get(row.status, row.status)
+    log = models.AdminNotificationLog(
+        category="appeal",
+        subject=f"Recours #{row.id} : {label}"[:255],
+        body=(
+            f"Recours de {user.full_name if user else row.user_id} "
+            f"({user.email if user else ''}) traité par {admin.full_name}.\n"
+            f"Décision : {label}\nMotif : {row.admin_note or ''}\n"
+            f"E-mail : {'envoyé' if email_sent else email_detail}"
+        )[:8000],
+        recipients=[user.email] if user and user.email else [],
+        sent_count=1 if email_sent else 0,
+        failed_count=0 if email_sent else 1,
+        detail=email_detail[:2000],
+    )
+    try:
+        db.add(log)
+        db.commit()
+    except Exception:
+        db.rollback()
 
 
 @router.put("/appeals/{appeal_id}", response_model=schemas.AdminAppealOut)
@@ -601,25 +758,45 @@ def admin_decide_appeal(
     admin: models.User = Depends(security.require_admin),
     db: Session = Depends(get_db),
 ):
-    """Traite un recours : l'acceptation lève la suspension et conserve
-    le compte (profil, candidatures, documents restent intacts)."""
+    """Traite un recours : acceptation, refus ou demande de complément.
+
+    Le motif est obligatoire pour toute décision. L'acceptation lève la
+    suspension et conserve le compte (profil, candidatures, documents).
+    La demande de complément maintient la suspension et permet au candidat
+    de répondre depuis l'écran de connexion.
+    """
     row = db.get(models.BanAppeal, appeal_id)
     if row is None:
         raise HTTPException(status_code=404, detail="Recours introuvable")
-    if row.status != "pending":
+    if row.status not in appeal_service.OPEN_STATUSES:
         raise HTTPException(status_code=400, detail="Ce recours a déjà été traité")
+    note = (payload.note or "").strip()
+    if len(note) < 10:
+        raise HTTPException(
+            status_code=422,
+            detail="Motif obligatoire (10 caractères minimum)",
+        )
+    user = db.get(models.User, row.user_id)
     row.status = payload.decision
     row.reviewed_at = models.utcnow()
     row.reviewed_by = admin.id
-    note = (payload.note or "").strip()
-    row.admin_note = note[:1000] or None
-    if payload.decision == "accepted":
-        user = db.get(models.User, row.user_id)
-        if user is not None:
-            user.is_banned = False
-            user.ban_reason = None
+    row.admin_note = note[:1000]
+    if payload.decision == "accepted" and user is not None:
+        user.is_banned = False
+        user.ban_reason = None
+    appeal_service.append_history(
+        row,
+        actor="admin",
+        action=payload.decision,
+        note=row.admin_note,
+        status=payload.decision,
+        actor_id=admin.id,
+        actor_name=admin.full_name,
+    )
     db.commit()
     db.refresh(row)
+    email_sent, email_detail = _notify_appeal_decision(db, user, row)
+    _log_appeal_decision(db, admin, row, user, email_sent, email_detail)
     return _appeal_out(db, row)
 
 

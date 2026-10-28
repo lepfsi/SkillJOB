@@ -218,6 +218,13 @@ et décisions motivées.
 - Chaque décision est horodatée et traçable.
 - Aucun recours ne reste sans statut après traitement.
 
+Statut : implémenté et vérifié le 28 octobre 2026 (page admin dédiée
+`/admin/recours`, filtres statut/type/utilisateur/texte/dates, contexte du
+compte, ancienneté, fil d'historique, décisions accepter / refuser /
+demander un complément avec motif obligatoire, notification in-app, e-mail
+si le canal est activé, trace dans le journal admin, réponse du candidat
+depuis l'écran de connexion).
+
 ### 23. Moteur d'alertes e-mail trop volumineux et redondant
 
 Statut : à traiter (priorité 0 ajoutée le 27 octobre 2026).

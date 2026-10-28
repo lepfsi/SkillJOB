@@ -51,7 +51,7 @@ class AppealIn(BaseModel):
 
 class AppealOut(BaseModel):
     id: int
-    status: Literal["pending", "accepted", "rejected"]
+    status: Literal["pending", "complement", "accepted", "rejected"]
     message: str
     created_at: datetime
     reviewed_at: Optional[datetime] = None
@@ -1294,16 +1294,26 @@ class AdminAppealOut(BaseModel):
     user_id: int
     user_name: str
     user_email: str
+    user_role: str = "candidate"
+    user_created_at: Optional[datetime] = None
+    is_banned: bool = True
+    applications_count: int = 0
+    documents_count: int = 0
     ban_reason: str = ""
-    status: Literal["pending", "accepted", "rejected"]
+    kind: str = "suspension"
+    status: Literal["pending", "complement", "accepted", "rejected"]
     message: str
     created_at: datetime
     reviewed_at: Optional[datetime] = None
+    reviewed_by_name: Optional[str] = None
     admin_note: Optional[str] = None
+    age_hours: float = 0
+    is_open: bool = False
+    history: list[dict] = Field(default_factory=list)
 
 
 class AppealDecisionIn(BaseModel):
-    decision: Literal["accepted", "rejected"]
+    decision: Literal["accepted", "rejected", "complement"]
     note: str = Field(default="", max_length=1000)
 
 

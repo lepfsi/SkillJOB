@@ -36,6 +36,7 @@ import AdminLearning from "./pages/admin/AdminLearning.jsx";
 import AdminReports from "./pages/admin/AdminReports.jsx";
 import AdminApplications from "./pages/admin/AdminApplications.jsx";
 import AdminUsers from "./pages/admin/AdminUsers.jsx";
+import AdminAppeals from "./pages/admin/AdminAppeals.jsx";
 import AdminVerifications from "./pages/admin/AdminVerifications.jsx";
 import AdminSources from "./pages/admin/AdminSources.jsx";
 import AdminPublicContent from "./pages/admin/AdminPublicContent.jsx";
@@ -131,6 +132,7 @@ export default function App() {
       {/* -------------------- Console admin -------------------- */}
       <Route path="/admin" element={<RequireAdmin><AdminHome /></RequireAdmin>} />
       <Route path="/admin/utilisateurs" element={<RequireAdmin><AdminUsers /></RequireAdmin>} />
+      <Route path="/admin/recours" element={<RequireAdmin><AdminAppeals /></RequireAdmin>} />
       <Route path="/admin/verifications" element={<RequireAdmin><AdminVerifications /></RequireAdmin>} />
       <Route path="/admin/offres" element={<RequireAdmin><AdminJobs /></RequireAdmin>} />
       <Route path="/admin/domaines" element={<RequireAdmin><AdminDomains /></RequireAdmin>} />
