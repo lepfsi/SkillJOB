@@ -18,6 +18,7 @@ from typing import Any, Optional
 from sqlalchemy.orm import Session
 
 from app import models
+from app.services import agent_prefs
 from app.services.matching import LEVEL_STRONG, compute_match
 from app.services.notifications import dispatch, normalize_prefs
 from app.services.skills_taxonomy import load_taxonomy
@@ -213,6 +214,11 @@ def run_alerts_once(db: Session) -> dict:
     taxonomy = load_taxonomy()
     candidates = db.query(models.User).filter(models.User.role == "candidate").all()
     for user in candidates:
+        # Fréquence de veille : manuelle = aucune passe automatique,
+        # hebdomadaire = uniquement le lundi.
+        if not agent_prefs.frequency_allows_auto(user):
+            skipped += 1
+            continue
         profile = (
             db.query(models.Profile)
             .filter(models.Profile.user_id == user.id)
@@ -231,33 +237,36 @@ def run_alerts_once(db: Session) -> dict:
         # Sans opt-in e-mail, l'offre reste visible dans l'application
         # (inbox) : on ne journalise PAS, un opt-in tardif doit pouvoir
         # déclencher l'envoi pendant la fenêtre de 7 jours.
-        for job, match in expiring_matches(
-            profile.skills or [], jobs, applications, taxonomy
-        ):
-            if _already_alerted(db, user.id, "expiring", job.id):
-                continue
-            if not _wants_email(user, "expiring"):
-                skipped += 1
-                continue
-            try:
-                results = dispatch(
-                    db, user,
-                    "OrientSkill AI : une offre qui vous correspond expire bientôt",
-                    build_expiring_body(user, job, match),
-                    event="expiring",
-                )
-                db.add(models.NotificationLog(
-                    user_id=user.id, event="expiring", job_id=job.id,
-                ))
-                if results and any(r["ok"] for r in results):
-                    notified += 1
-                else:
+        if agent_prefs.action_enabled(user, "alert_deadlines"):
+            for job, match in expiring_matches(
+                profile.skills or [], jobs, applications, taxonomy
+            ):
+                if _already_alerted(db, user.id, "expiring", job.id):
+                    continue
+                if not _wants_email(user, "expiring"):
+                    skipped += 1
+                    continue
+                try:
+                    results = dispatch(
+                        db, user,
+                        "OrientSkill AI : une offre qui vous correspond expire bientôt",
+                        build_expiring_body(user, job, match),
+                        event="expiring",
+                    )
+                    db.add(models.NotificationLog(
+                        user_id=user.id, event="expiring", job_id=job.id,
+                    ))
+                    if results and any(r["ok"] for r in results):
+                        notified += 1
+                    else:
+                        errors += 1
+                except Exception as exc:
+                    logger.warning("Alerte expiring user %s : %s", user.id, exc)
                     errors += 1
-            except Exception as exc:
-                logger.warning("Alerte expiring user %s : %s", user.id, exc)
-                errors += 1
 
         # ---- Événement « agent » : un conseil par jour au maximum.
+        if not agent_prefs.action_enabled(user, "watch_jobs"):
+            continue
         if _agent_alerted_today(db, user.id):
             continue
         body = build_agent_body(user, profile, jobs, applications, taxonomy)

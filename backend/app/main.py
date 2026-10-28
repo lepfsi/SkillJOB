@@ -372,6 +372,7 @@ def _ensure_columns() -> None:
             ("notification_prefs", "JSON"),
             ("notifications_seen_at", "TIMESTAMP"),
             ("agent_mode", "VARCHAR(20) DEFAULT 'preparation'"),
+            ("agent_prefs", "JSON"),
             ("agent_history_mode", "VARCHAR(12) DEFAULT 'persist'"),
             ("agent_history_retention_days", "INTEGER DEFAULT 30"),
             ("is_banned", "BOOLEAN DEFAULT 0"),

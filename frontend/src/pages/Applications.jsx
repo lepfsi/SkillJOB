@@ -154,7 +154,7 @@ function PrepPanel({ prep, onClose }) {
   );
 }
 
-function ApplicationCard({ app, onStatus, busy }) {
+function ApplicationCard({ app, onStatus, busy, agentActions }) {
   const navigate = useNavigate();
   const [actionError, setActionError] = useState("");
   const [action, setAction] = useState(""); // cv | lettre | entretien
@@ -166,6 +166,11 @@ function ApplicationCard({ app, onStatus, busy }) {
   const actions = CANDIDATE_ACTIONS[app.status] || [];
   const canWithdraw = !isClosed && app.status !== "offre";
   const tone = statusTone(app.status);
+  const cvAllowed = !agentActions || agentActions.prepare_cv;
+  const letterAllowed = !agentActions || agentActions.prepare_letter;
+  const interviewAllowed = !agentActions || agentActions.prepare_interview;
+  const someActionDisabled =
+    !cvAllowed || !letterAllowed || !interviewAllowed;
 
   async function generateCv(templateId) {
     setAction("cv");
@@ -303,20 +308,32 @@ function ApplicationCard({ app, onStatus, busy }) {
         </div>
 
         <div className="apps-actions">
-          <button className="btn btn-outline btn-small" onClick={openTemplates}>
-            {templates === undefined ? "Générer mon CV ciblé" : "Masquer les modèles"}
-          </button>
-          <button className="btn btn-outline btn-small" onClick={makeLetter} disabled={action === "lettre"}>
-            {action === "lettre" ? "Rédaction…" : "Lettre de motivation"}
-          </button>
-          <button className="btn btn-outline btn-small" onClick={prepare} disabled={action === "entretien"}>
-            {action === "entretien"
-              ? "Préparation…"
-              : prep ? "Masquer la préparation" : "Préparer l'entretien"}
-          </button>
+          {cvAllowed && (
+            <button className="btn btn-outline btn-small" onClick={openTemplates}>
+              {templates === undefined ? "Générer mon CV ciblé" : "Masquer les modèles"}
+            </button>
+          )}
+          {letterAllowed && (
+            <button className="btn btn-outline btn-small" onClick={makeLetter} disabled={action === "lettre"}>
+              {action === "lettre" ? "Rédaction…" : "Lettre de motivation"}
+            </button>
+          )}
+          {interviewAllowed && (
+            <button className="btn btn-outline btn-small" onClick={prepare} disabled={action === "entretien"}>
+              {action === "entretien"
+                ? "Préparation…"
+                : prep ? "Masquer la préparation" : "Préparer l'entretien"}
+            </button>
+          )}
           <Link className="btn btn-ghost btn-small" to={`/opportunites/${app.job_id}`}>
             Voir l'offre
           </Link>
+          {someActionDisabled && (
+            <span className="small muted">
+              Certaines actions sont désactivées dans vos{" "}
+              <Link to="/parametres-compte#agent">réglages d'agent</Link>.
+            </span>
+          )}
         </div>
       </div>
 
@@ -396,9 +413,13 @@ export default function Applications() {
   const [tab, setTab] = useState("toutes");
   const [sort, setSort] = useState("recent");
   const [busyId, setBusyId] = useState(0);
+  const [agentActions, setAgentActions] = useState(null);
 
   useEffect(() => {
     api("/applications").then(setApps).catch((e) => setError(e.detail));
+    api("/agent/preferences")
+      .then((res) => setAgentActions(res.prefs.actions))
+      .catch(() => setAgentActions(null));
   }, []);
 
   async function changeStatus(appId, status) {
@@ -611,6 +632,7 @@ export default function Applications() {
                     app={app}
                     onStatus={changeStatus}
                     busy={busyId === app.id}
+                    agentActions={agentActions}
                   />
                 ))}
               </div>

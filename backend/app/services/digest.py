@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 
 from app import models
 from app.database import SessionLocal
-from app.services import settings_store
+from app.services import agent_prefs, settings_store
 from app.services.matching import compute_match
 from app.services.notifications import dispatch, normalize_prefs
 from app.services.skills_taxonomy import load_taxonomy
@@ -63,8 +63,16 @@ def run_digest_once(db: Session) -> dict:
     notified = skipped = errors = 0
     users = db.query(models.User).filter(models.User.role == "candidate").all()
     for user in users:
+        # La fréquence de veille choisie dans les réglages de l'agent
+        # s'applique aussi au digest : manuelle = aucune passe auto.
+        if not agent_prefs.frequency_allows_auto(user):
+            skipped += 1
+            continue
         prefs = normalize_prefs(getattr(user, "notification_prefs", None) or {})
         if not any([prefs["email_enabled"], prefs["telegram_enabled"], prefs["whatsapp_enabled"]]):
+            skipped += 1
+            continue
+        if not agent_prefs.action_enabled(user, "watch_jobs"):
             skipped += 1
             continue
         try:

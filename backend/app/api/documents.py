@@ -10,13 +10,29 @@ from sqlalchemy.orm import Session
 
 from app import models, schemas, security
 from app.database import get_db
-from app.services import cv_builder
+from app.services import agent_prefs, cv_builder
 from app.services.document_pdf import build_document_pdf
 from app.services.document_pdf import with_domains as _with_domains
 from app.services.profile_store import get_profile_row, profile_to_dict
 from app.services.skills_taxonomy import load_taxonomy
 
 router = APIRouter(tags=["documents"])
+
+
+def _require_agent_action(user: models.User, action: str) -> None:
+    """Une action désactivée dans les réglages de l'agent reste bloquée.
+
+    Le contrôle est fait côté API pour que le réglage soit réellement
+    appliqué, même si le bouton est encore visible dans une ancienne page.
+    """
+    if not agent_prefs.action_enabled(user, action):
+        raise HTTPException(
+            status_code=403,
+            detail=(
+                "Cette action est désactivée dans vos réglages d'agent. "
+                "Réactivez-la depuis vos paramètres de compte."
+            ),
+        )
 
 
 def _load_context(user: models.User, job_id: int, db: Session):
@@ -66,6 +82,7 @@ def generate_cv(
 ):
     """CV ciblé, modèle et couleur au choix (§16). Six modèles :
     classique, ats, moderne, deux_colonnes, elegant, compact."""
+    _require_agent_action(user, "prepare_cv")
     profile, job = _load_context(user, job_id, db)
     template = payload.template if payload else "classique"
     if template not in schemas.CV_TEMPLATES:
@@ -114,6 +131,7 @@ def generate_general_cv(
     Compétences triées par preuves, expériences chronologiques, aucune
     réorganisation « pour une offre » puisqu'il n'y en a pas (§47).
     """
+    _require_agent_action(user, "prepare_cv")
     profile = profile_to_dict(get_profile_row(db, user.id), user.id)
     if profile is None:
         raise HTTPException(
@@ -191,6 +209,7 @@ def generate_cover_letter(
 ):
     """Lettre de motivation, modèle au choix : classique / moderne /
     email (§17). Mêmes faits, autre mise en page."""
+    _require_agent_action(user, "prepare_letter")
     profile, job = _load_context(user, job_id, db)
     template = payload.template if payload else "classique"
     if template not in schemas.LETTER_TEMPLATES:
@@ -314,6 +333,7 @@ def generate_interview_prep(
     user: models.User = Depends(security.get_current_user),
     db: Session = Depends(get_db),
 ):
+    _require_agent_action(user, "prepare_interview")
     profile, job = _load_context(user, job_id, db)
     return cv_builder.build_interview_prep(profile, job, load_taxonomy())
 

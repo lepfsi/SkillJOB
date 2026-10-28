@@ -5,13 +5,16 @@ import random
 from collections import Counter
 from datetime import timezone
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app import models, schemas, security
 from app.database import get_db
+from app.services import agent_prefs
+from app.services.applications import CLOSED_STATUSES
 from app.services.eventlog import _reference_now, build_inbox
 from app.services import interviews as interview_service
+from app.services.notifications import normalize_prefs
 from app.services.market import weekly_indicators
 from app.services.matching import LEVEL_STRONG, compute_match
 from app.services.orientation import prioritized_skill_gaps
@@ -19,8 +22,6 @@ from app.services.profile_store import get_profile_row, profile_to_dict
 from app.services.skills_taxonomy import load_taxonomy
 
 router = APIRouter(prefix="/api", tags=["dashboard"])
-
-CLOSED_STATUSES = {"acceptee", "refusee"}
 
 
 @router.get("/dashboard", response_model=schemas.DashboardOut)
@@ -292,28 +293,7 @@ def _autonomous_prepare(db, user, profile, strong_matches, applications, taxonom
     return None
 
 
-AGENT_MODES = [
-    {
-        "id": "accompagnement",
-        "label": "Mode accompagnement",
-        "description": "Je recommande et j'alerte sur les opportunités pertinentes.",
-    },
-    {
-        "id": "preparation",
-        "label": "Mode préparation",
-        "description": "Je prépare les CV et lettres ciblés ; vous validez chaque envoi.",
-    },
-    {
-        "id": "veille",
-        "label": "Mode veille",
-        "description": "Je surveille les nouvelles offres de votre domaine et je vous informe.",
-    },
-    {
-        "id": "autonome",
-        "label": "Mode autonome",
-        "description": "Je prépare automatiquement les documents pour vos meilleures correspondances ; vous validez l'envoi.",
-    },
-]
+AGENT_MODES = agent_prefs.AGENT_MODES
 
 
 @router.get("/agent/mode", response_model=schemas.AgentModeOut)
@@ -336,11 +316,91 @@ def set_agent_mode(
     """Enregistre le mode de travail de l'agent.
 
     Aucun mode n'envoie de candidature automatiquement : le candidat valide
-    toujours les contenus et les envois.
+    toujours les contenus et les envois. Le mode autonome exige une
+    validation par document.
     """
+    if user.role != "candidate":
+        raise HTTPException(
+            status_code=403,
+            detail="Les réglages de l'agent carrière sont réservés aux candidats.",
+        )
+    if not agent_prefs.mode_allowed(user, payload.mode):
+        raise HTTPException(
+            status_code=422,
+            detail="Le mode autonome exige une validation par document.",
+        )
     user.agent_mode = payload.mode
     db.commit()
     return {"mode": payload.mode, "modes": AGENT_MODES}
+
+
+def _agent_channels(user: models.User) -> list[str]:
+    prefs = normalize_prefs(getattr(user, "notification_prefs", None) or {})
+    channels = ["In-app"]
+    if prefs["email_enabled"] and prefs["email"]:
+        channels.append("E-mail")
+    if prefs["telegram_enabled"] and prefs["telegram_username"]:
+        channels.append("Telegram")
+    if prefs["whatsapp_enabled"] and prefs["whatsapp_number"]:
+        channels.append("WhatsApp")
+    return channels
+
+
+def _agent_preferences_payload(user: models.User) -> dict:
+    prefs = agent_prefs.normalize_agent_prefs(
+        getattr(user, "agent_prefs", None)
+    )
+    return {
+        "mode": getattr(user, "agent_mode", None) or "preparation",
+        "prefs": prefs,
+        **agent_prefs.catalog(),
+        "channels": _agent_channels(user),
+        "channels_href": "/notifications",
+    }
+
+
+@router.get("/agent/preferences", response_model=schemas.AgentPreferencesOut)
+def get_agent_preferences(
+    user: models.User = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Réglages complets de l'agent : mode + préférences persistées."""
+    if user.role != "candidate":
+        raise HTTPException(
+            status_code=403,
+            detail="Les réglages de l'agent carrière sont réservés aux candidats.",
+        )
+    return _agent_preferences_payload(user)
+
+
+@router.put("/agent/preferences", response_model=schemas.AgentPreferencesOut)
+def set_agent_preferences(
+    payload: schemas.AgentPreferencesIn,
+    user: models.User = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Enregistre les réglages de l'agent, sans jamais autoriser l'envoi auto."""
+    if user.role != "candidate":
+        raise HTTPException(
+            status_code=403,
+            detail="Les réglages de l'agent carrière sont réservés aux candidats.",
+        )
+    data = payload.model_dump(exclude_unset=True)
+    mode = data.pop("mode", None)
+    try:
+        prefs = agent_prefs.update_agent_prefs(user.agent_prefs, data)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    if mode is not None:
+        if mode == "autonome" and prefs["validation"] == "toujours":
+            raise HTTPException(
+                status_code=422,
+                detail="Le mode autonome exige une validation par document.",
+            )
+        user.agent_mode = mode
+    user.agent_prefs = prefs
+    db.commit()
+    return _agent_preferences_payload(user)
 
 
 _BRIEFING_LABELS = [
@@ -586,7 +646,12 @@ def _polish_sentences(text: str) -> str:
 
 
 def _next_action(user, profile, jobs, matches, applications, interviews) -> dict:
-    """Prochaine action prioritaire, ancrée sur les données réelles."""
+    """Prochaine action prioritaire, ancrée sur les données réelles.
+
+    Le mode choisi change réellement l'ordre des priorités : conseil,
+    préparation de document, ou examen des offres.
+    """
+    mode = getattr(user, "agent_mode", "preparation") or "preparation"
     if interviews:
         return {
             "label": f"Préparer l'entretien pour « {interviews[0].job.title} »",
@@ -601,24 +666,49 @@ def _next_action(user, profile, jobs, matches, applications, interviews) -> dict
             continue
         if best is None or match["score"] > best[1]["score"]:
             best = (job, match)
+
+    def learning_action() -> dict | None:
+        if not profile:
+            return None
+        gaps: Counter[str] = Counter()
+        for job in jobs:
+            for name in matches.get(job.id, {}).get("missing", []):
+                gaps[name] += 1
+        if not gaps:
+            return None
+        top_skill = gaps.most_common(1)[0][0]
+        return {
+            "label": f"Développer la compétence « {top_skill} » demandée par le marché",
+            "type": "learn",
+            "skill": top_skill,
+        }
+
+    # Accompagnement : le conseil et la compétence passent avant l'action.
+    if mode == "accompagnement":
+        advice = learning_action()
+        if advice:
+            return advice
+
+    # Veille : l'offre à examiner passe avant la préparation du CV.
+    if mode == "veille" and best and best[0].id not in applied_ids:
+        return {
+            "label": f"Candidater à « {best[0].title} » chez {best[0].company}",
+            "type": "apply",
+            "job_id": best[0].id,
+        }
+
     if best and best[1]["score"] >= LEVEL_STRONG and best[0].id not in applied_ids:
         return {
             "label": f"Adapter votre CV pour « {best[0].title} » chez {best[0].company}",
             "type": "adapt_cv",
             "job_id": best[0].id,
         }
-    if profile:
-        gaps: Counter[str] = Counter()
-        for job in jobs:
-            for name in matches.get(job.id, {}).get("missing", []):
-                gaps[name] += 1
-        if gaps:
-            top_skill = gaps.most_common(1)[0][0]
-            return {
-                "label": f"Développer la compétence « {top_skill} » demandée par le marché",
-                "type": "learn",
-                "skill": top_skill,
-            }
+
+    if mode != "accompagnement":
+        advice = learning_action()
+        if advice:
+            return advice
+
     if best and best[0].id not in applied_ids:
         return {
             "label": f"Candidater à « {best[0].title} » chez {best[0].company}",
@@ -653,9 +743,11 @@ def _notification_events(db: Session, user: models.User) -> list[dict]:
         .filter(models.Application.user_id == user.id)
         .all()
     )
+    prefs = agent_prefs.normalize_agent_prefs(getattr(user, "agent_prefs", None))
     events = build_inbox(
         profile, jobs, applications, load_taxonomy(),
         since=getattr(user, "created_at", None),
+        agent_actions=prefs["actions"],
     )
 
     # Signalements du candidat TRAITÉS par l'administration : la réponse

@@ -73,6 +73,10 @@ class User(Base):
     # humaine reste obligatoire avant tout envoi.
     agent_mode: Mapped[str] = mapped_column(String(20), default="preparation")
 
+    # Réglages de l'agent (périmètre, fréquence, validation, actions) :
+    # distincts du mode, persistés et appliqués par les services.
+    agent_prefs: Mapped[dict[str, Any]] = mapped_column(JSON, default=dict)
+
     # Historique de conversation avec l'agent : conservé par défaut 30
     # jours, ou en mode éphémère (aucune trace en base).
     agent_history_mode: Mapped[str] = mapped_column(String(12), default="persist")

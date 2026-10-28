@@ -119,6 +119,11 @@ paramètres persistés, compréhensibles et réellement appliqués par l'agent.
 - Un paramètre affiché sans effet est supprimé ou rendu explicite.
 - Le candidat ne peut activer que les actions autorisées par son rôle.
 
+Statut : implémenté et vérifié le 28 octobre 2026 (préférences persistées
+`agent_prefs`, API `GET/PUT /api/agent/preferences`, filtrage réel des offres
+par périmètre, fréquence appliquée au digest et aux alertes, actions bloquées
+côté API et filtrées dans l'inbox, tests `test_v26_agent_prefs.py`).
+
 ### 14. Lien « Gérer les paramètres » sans réglages de mode
 
 **Constat**
@@ -144,6 +149,11 @@ réglages de l'agent, ou disparaître si ces réglages n'existent pas.
 - La même valeur est visible dans « Mon agent » et dans les paramètres.
 - Aucun lien ne mène à une zone sans réglage correspondant.
 - Le parcours fonctionne sans rechargement manuel.
+
+Statut : implémenté et vérifié le 28 octobre 2026 (lien
+`/parametres-compte#agent`, même composant `AgentPreferencesForm` dans Mon
+agent et dans les paramètres, défilement automatique vers le bloc, état vide
+explicite pour les rôles recruteur et admin).
 
 ### 15. Statuts de candidature incohérents entre candidat, recruteur et admin
 
@@ -175,6 +185,11 @@ Définir une machine à états unique et des permissions claires pour chaque rô
   recruteur et l'admin.
 - Toute modification admin est tracée avec un motif.
 - Les statuts affichés sont identiques dans les trois espaces.
+
+Statut : implémenté et vérifié le 28 octobre 2026 (machine à états
+`services/applications.py`, statuts `retiree` et `declinee`, transitions
+candidat/recruteur/admin contrôlées côté API, arbitrage admin motivé et tracé,
+timeline avec auteur et motif, tests `test_v26_application_workflow.py`).
 
 ### 16. Absence de page dédiée au traitement des recours
 

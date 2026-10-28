@@ -555,7 +555,12 @@ peut effacer une conversation ou tout l'historique à tout moment.
 - `GET /api/agent/mode` → `{ mode: "accompagnement"|"preparation"|"veille"|"autonome",
   modes: [{ id, label, description }] }`
 - `PUT /api/agent/mode` `{ "mode": "..." }` → même réponse (mode persisté
-  sur l'utilisateur, 422 si inconnu).
+  sur l'utilisateur, 422 si inconnu). Réservé au rôle candidat (403 sinon).
+
+Chaque mode a un effet vérifiable sur la priorité de `dashboard.next_action` :
+`accompagnement` fait remonter d'abord la compétence à développer,
+`preparation` et `autonome` font remonter l'adaptation du CV pour une
+correspondance forte, `veille` fait remonter l'offre à examiner.
 
 **Mode autonome** : à chaque visite du dashboard, l'agent prépare
 automatiquement un CV ciblé pour la meilleure correspondance forte (≥75)
@@ -564,6 +569,29 @@ marque la candidature « CV préparé ». Le résultat est exposé dans
 `dashboard.autonomous_prepared` : `{ job_id, job_title, company, score,
 message }`. Le candidat relit puis soumet : l'envoi réel reste validé
 humain (§47).
+
+### Préférences de l'agent (point 13)
+
+- `GET /api/agent/preferences` → réservé au candidat :
+  `{ mode, prefs: { scope, frequency, validation, actions },
+  modes, scopes, frequencies, validations, actions,
+  channels, channels_href }`.
+  - `scope` : `tous` | `secteur` | `region` ; filtre réellement les offres
+    proposées par Mon agent (secteur principal ou localisation du profil).
+  - `frequency` : `quotidienne` | `hebdomadaire` | `manuelle` ; les passes
+    automatiques de digest et d'alertes respectent ce choix (manuelle =
+    aucune passe auto, hebdomadaire = le lundi).
+  - `validation` : `documents` | `toujours` ; la validation humaine de
+    l'envoi reste obligatoire dans les deux cas. Le mode `autonome` exige
+    `documents` (422 sinon).
+  - `actions` : `prepare_cv`, `prepare_letter`, `prepare_interview`,
+    `watch_jobs`, `alert_deadlines` (booléens). Une action désactivée est
+    bloquée côté API (403) et filtrée dans l'inbox et les alertes.
+  - `channels` : résumé en lecture seule des canaux de notification
+    (`channels_href` pointe vers `/notifications`).
+- `PUT /api/agent/preferences` : mise à jour partielle des mêmes champs
+  (le mode peut être inclus). 422 sur une valeur inconnue ou le mode
+  autonome avec `validation=toujours` ; 403 pour un rôle non candidat.
 
 Quel que soit le mode, l'agent prépare et le candidat valide : aucune
 candidature n'est envoyée automatiquement (§47).

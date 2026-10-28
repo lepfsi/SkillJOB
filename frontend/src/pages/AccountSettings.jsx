@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "../api/client.js";
 import { ErrorNote } from "../components/ui.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
+import AgentPreferencesForm from "../components/AgentPreferencesForm.jsx";
 import MfaSection from "../components/MfaSection.jsx";
 import VerificationSection from "../components/VerificationSection.jsx";
 
@@ -212,13 +213,41 @@ function NotificationsSection() {
 
 export default function AccountSettings() {
   const { user } = useAuth();
+
+  // Le lien « Gérer les paramètres » de Mon agent arrive avec #agent :
+  // on amène directement le bloc de réglages, sans faire chercher.
+  useEffect(() => {
+    if (window.location.hash !== "#agent") return;
+    const target = document.getElementById("agent");
+    if (target) {
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, []);
+
   return (
     <div className="page page-narrow">
       <h1>Paramètres</h1>
       <p className="page-lead">
         Sécurité de votre compte, canaux de notification
-        {user?.role === "candidate" ? " et vérification de profil" : ""}.
+        {user?.role === "candidate"
+          ? ", réglages de l'agent et vérification de profil"
+          : ""}
+        .
       </p>
+
+      <section className="panel" id="agent">
+        <h2>Agent carrière</h2>
+        {user?.role === "candidate" ? (
+          <AgentPreferencesForm theme="light" />
+        ) : (
+          <p className="small muted">
+            Les réglages de l'agent carrière sont disponibles pour les comptes
+            candidats. Votre espace {user?.role === "recruiter" ? "recruteur" : "administrateur"}{" "}
+            ne comporte pas d'agent de candidature.
+          </p>
+        )}
+      </section>
+
       {user?.role === "candidate" && <VerificationSection />}
       <MfaSection />
       <NotificationsSection />

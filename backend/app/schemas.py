@@ -468,6 +468,30 @@ class AgentModeOut(BaseModel):
     modes: list[dict[str, str]] = Field(default_factory=list)
 
 
+class AgentPreferencesIn(BaseModel):
+    """Mise à jour partielle des réglages de l'agent."""
+
+    mode: Optional[
+        Literal["accompagnement", "preparation", "veille", "autonome"]
+    ] = None
+    scope: Optional[str] = None
+    frequency: Optional[str] = None
+    validation: Optional[str] = None
+    actions: Optional[dict[str, bool]] = None
+
+
+class AgentPreferencesOut(BaseModel):
+    mode: str
+    prefs: dict[str, Any]
+    modes: list[dict[str, str]] = Field(default_factory=list)
+    scopes: list[dict[str, str]] = Field(default_factory=list)
+    frequencies: list[dict[str, str]] = Field(default_factory=list)
+    validations: list[dict[str, str]] = Field(default_factory=list)
+    actions: list[dict[str, str]] = Field(default_factory=list)
+    channels: list[str] = Field(default_factory=list)
+    channels_href: str = "/notifications"
+
+
 class TimelineEvent(BaseModel):
     at: datetime
     event: str

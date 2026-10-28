@@ -3194,6 +3194,65 @@ table.skills {
 .ag-mode-link { color: #7ff0c4; font-size: 0.84rem; font-weight: 700; text-decoration: none; display: inline-flex; align-items: center; gap: 0.3rem; }
 .ag-mode-link:hover { text-decoration: underline; }
 
+/* Réglages de l'agent : même formulaire dans Mon agent et Paramètres */
+.agent-prefs { display: flex; flex-direction: column; gap: 0.85rem; }
+.agent-prefs-lead { margin: 0; }
+.agent-prefs-group { border: 0; padding: 0; margin: 0; }
+.agent-prefs-group legend {
+  font-weight: 700;
+  font-size: 0.86rem;
+  margin-bottom: 0.5rem;
+  padding: 0;
+}
+.agent-prefs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.7rem;
+}
+.agent-prefs-grid .field { margin: 0; }
+.agent-prefs .check { align-items: flex-start; }
+.agent-prefs .check input { margin-top: 0.2rem; }
+.agent-prefs-channels {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  font-size: 0.82rem;
+}
+.agent-prefs-dark .agent-prefs-group legend,
+.agent-prefs-dark .field > span:first-child,
+.agent-prefs-dark .check { color: #fff; }
+.agent-prefs-dark .small.muted { color: rgba(242, 248, 245, 0.72); }
+.agent-prefs-dark .field input,
+.agent-prefs-dark .field select {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #fff;
+}
+.agent-prefs-dark .field input::placeholder { color: rgba(255, 255, 255, 0.5); }
+.agent-prefs-dark .agent-prefs-channels { color: rgba(242, 248, 245, 0.82); }
+.agent-prefs-dark .link-more { color: #7ff0c4; }
+.agent-prefs-light .ag-mode-opt,
+.agent-prefs-light .ag-mode-button {
+  color: var(--text);
+  background: var(--bg);
+  border-color: var(--border);
+}
+.agent-prefs-light .ag-mode-opt.active {
+  color: #fff;
+  background: linear-gradient(120deg, var(--green-dark), var(--green));
+  border-color: var(--green);
+}
+.agent-prefs-light .ag-mode-opt-icon {
+  background: var(--green-soft);
+  color: var(--green-dark);
+}
+.agent-prefs-light .ag-mode-opt-desc { color: var(--muted); }
+.agent-prefs-light .ag-mode-opt.active .ag-mode-opt-desc { color: rgba(255, 255, 255, 0.86); }
+.agent-prefs-light .agent-prefs-channels .link-more { color: var(--green-dark); }
+.panel[id="agent"] { scroll-margin-top: 90px; }
+
 .ag-history {
   margin-top: 0.6rem;
   border: 1px solid var(--border);

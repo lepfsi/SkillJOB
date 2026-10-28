@@ -5,6 +5,7 @@ import { Icon, I, ArrowIcon } from "../components/icons.jsx";
 import { Loader, ErrorNote } from "../components/ui.jsx";
 import Ring from "../components/Ring.jsx";
 import AssistantChat from "../components/AssistantChat.jsx";
+import AgentPreferencesForm from "../components/AgentPreferencesForm.jsx";
 import { initialsOf, mapInternalPath, plural, relTime, scoreLevel, LEVEL_LABELS } from "../lib.js";
 
 // Page « Mon agent » (maquette) : poste de pilotage où l'agent travaille
@@ -19,13 +20,6 @@ const KIND_ICONS = {
   learning: I.book,
   application: I.file,
 };
-
-const AGENT_MODES = [
-  { id: "accompagnement", label: "Mode accompagnement", description: "Je recommande et j'alerte sur les opportunités pertinentes.", icon: I.shield },
-  { id: "preparation", label: "Mode préparation", description: "Je prépare les CV et lettres ciblés ; vous validez chaque envoi.", icon: I.bot },
-  { id: "veille", label: "Mode veille", description: "Je surveille les nouvelles offres de votre domaine et je vous informe.", icon: I.search },
-  { id: "autonome", label: "Mode autonome", description: "Je prépare automatiquement les documents pour vos meilleures correspondances ; vous validez l'envoi.", icon: I.spark },
-];
 
 function nextActionHref(action) {
   if (!action) return "/";
@@ -54,45 +48,35 @@ export default function Agent() {
   const [tab, setTab] = useState("reco");
   const [showStrengths, setShowStrengths] = useState(true);
   const [error, setError] = useState("");
-  const [agentMode, setAgentMode] = useState("preparation");
-  const [modes, setModes] = useState(AGENT_MODES);
-  const [modeBusy, setModeBusy] = useState(false);
-  const [modeFlash, setModeFlash] = useState("");
-  const [modeError, setModeError] = useState("");
+  const [agentPrefs, setAgentPrefs] = useState(undefined);
 
   useEffect(() => {
     api("/dashboard").then(setData).catch((e) => setError(e.detail));
     api("/profile").then(setProfile).catch(() => setProfile(null));
-    api("/jobs?min_score=45").then((j) => setJobs(j || [])).catch(() => setJobs([]));
     api("/applications").then((a) => setApplications(a || [])).catch(() => setApplications([]));
     api("/notifications").then((e) => setEvents(e || [])).catch(() => setEvents([]));
-    api("/agent/mode")
-      .then((res) => {
-        setAgentMode(res.mode);
-        const icons = Object.fromEntries(AGENT_MODES.map((m) => [m.id, m.icon]));
-        setModes((res.modes || []).map((m) => ({
-          ...m,
-          icon: icons[m.id] || I.bot,
-        })));
-      })
-      .catch(() => {});
+    api("/agent/preferences")
+      .then(setAgentPrefs)
+      .catch(() => setAgentPrefs(null));
   }, []);
 
-  async function chooseMode(mode) {
-    if (mode === agentMode || modeBusy) return;
-    setModeBusy(true);
-    setModeError("");
-    setModeFlash("");
-    try {
-      const res = await api("/agent/mode", { method: "PUT", body: { mode } });
-      setAgentMode(res.mode);
-      setModeFlash("Mode enregistré. L'agent s'adapte dès maintenant.");
-    } catch (err) {
-      setModeError(err.detail);
-    } finally {
-      setModeBusy(false);
+  // Le périmètre choisi filtre réellement les offres proposées par
+  // l'agent : secteur principal ou zone géographique du profil.
+  useEffect(() => {
+    if (agentPrefs === undefined) return;
+    const params = new URLSearchParams({ min_score: "45" });
+    const scope = agentPrefs?.prefs?.scope;
+    if (scope === "secteur") {
+      const sector = profile?.preferences?.sectors?.[0];
+      if (sector) params.set("sector", sector);
     }
-  }
+    if (scope === "region" && profile?.location) {
+      params.set("location", profile.location);
+    }
+    api(`/jobs?${params.toString()}`)
+      .then((j) => setJobs(j || []))
+      .catch(() => setJobs([]));
+  }, [agentPrefs, profile]);
 
   // Meilleure piste : score + compétences couvertes / manquantes.
   useEffect(() => {
@@ -136,7 +120,7 @@ export default function Agent() {
   if (error) {
     return <div className="page"><ErrorNote error={error} /></div>;
   }
-  if (!data || profile === undefined) {
+  if (!data || profile === undefined || agentPrefs === undefined) {
     return <div className="page"><Loader /></div>;
   }
 
@@ -595,31 +579,13 @@ export default function Agent() {
               <h2>Contrôle de votre agent</h2>
             </div>
             <p className="ag-mode-lead">Définissez comment votre agent doit travailler pour vous. Ces réglages sont enregistrés sur votre compte.</p>
-            {modes.map((m) => (
-              <button
-                key={m.id}
-                type="button"
-                className={`ag-mode-opt ag-mode-button${m.id === agentMode ? " active" : ""}`}
-                onClick={() => chooseMode(m.id)}
-                disabled={modeBusy}
-                aria-pressed={m.id === agentMode}
-              >
-                <span className="ag-mode-opt-icon"><Icon d={m.icon} size={15} /></span>
-                <span className="ag-mode-opt-main">
-                  <span className="ag-mode-opt-label">{m.label}</span>
-                  <span className="ag-mode-opt-desc">{m.description || m.desc}</span>
-                </span>
-                {m.id === agentMode && (
-                  <span className="ag-mode-check"><Icon d={I.check} size={14} /></span>
-                )}
-              </button>
-            ))}
-            <p className="ag-mode-note">
-              Votre validation reste requise : l'agent prépare, vous décidez.
-            </p>
-            {modeFlash && <div className="alert alert-success small">{modeFlash}</div>}
-            <ErrorNote error={modeError} />
-            <Link className="ag-mode-link" to="/parametres-compte">
+            <AgentPreferencesForm
+              initial={agentPrefs}
+              onLoaded={(res) => setAgentPrefs(res)}
+              onSaved={(res) => setAgentPrefs(res)}
+              theme="dark"
+            />
+            <Link className="ag-mode-link" to="/parametres-compte#agent">
               Gérer les paramètres <ArrowIcon direction="right" size={13} />
             </Link>
           </section>

@@ -38,11 +38,15 @@ def build_inbox(
     applications: list[Any],
     taxonomy=None,
     since: Optional[datetime] = None,
+    agent_actions: Optional[dict[str, bool]] = None,
 ) -> list[dict[str, Any]]:
     now = _reference_now(jobs)
     now_naive = _naive_utc(now)
     since_naive = _naive_utc(since) if since else None
     events: list[dict[str, Any]] = []
+    actions = agent_actions or {}
+    watch_jobs = actions.get("watch_jobs", True)
+    alert_deadlines = actions.get("alert_deadlines", True)
 
     def before_account(value: Any) -> bool:
         return since_naive is not None and _naive_utc(value) < since_naive
@@ -50,76 +54,81 @@ def build_inbox(
     # Nouvelles offres récentes (fenêtre de 21 jours avant l'offre la plus fraîche).
     # Une offre publiée avant la création du compte n'est pas une « nouveauté »
     # pour ce candidat : elle ne doit pas apparaître dans ses notifications.
-    for job in sorted(jobs, key=lambda j: j.published_at, reverse=True):
-        if before_account(job.published_at):
-            continue
-        if (now_naive - _naive_utc(job.published_at)).days <= 21:
-            events.append({
-                "at": job.published_at,
-                "kind": "new_job",
-                "message": f"Nouvelle offre : « {job.title} » chez {job.company} ({job.location}).",
-                "job_id": job.id,
-            })
+    if watch_jobs:
+        for job in sorted(jobs, key=lambda j: j.published_at, reverse=True):
+            if before_account(job.published_at):
+                continue
+            if (now_naive - _naive_utc(job.published_at)).days <= 21:
+                events.append({
+                    "at": job.published_at,
+                    "kind": "new_job",
+                    "message": f"Nouvelle offre : « {job.title} » chez {job.company} ({job.location}).",
+                    "job_id": job.id,
+                })
 
     # Matches forts et candidatures
     if profile:
         profile_skills = profile.get("skills", [])
-        for job in jobs:
-            if before_account(job.published_at):
-                continue
-            match = compute_match(profile_skills, job.required_skills, taxonomy)
-            if match["score"] >= LEVEL_STRONG:
+        if watch_jobs:
+            for job in jobs:
+                if before_account(job.published_at):
+                    continue
+                match = compute_match(profile_skills, job.required_skills, taxonomy)
+                if match["score"] >= LEVEL_STRONG:
+                    events.append({
+                        "at": job.published_at,
+                        "kind": "strong_match",
+                        "message": (
+                            f"Correspondance forte ({match['score']}/100) avec "
+                            f"« {job.title} » chez {job.company} : pensez à candidater."
+                        ),
+                        "job_id": job.id,
+                    })
+
+        # Échéances proches : offres correspondantes non postulées.
+        # Toujours visibles in-app ; l'e-mail est un opt-in par événement.
+        if alert_deadlines:
+            from app.services.alerts import expiring_matches
+
+            for job, _match in expiring_matches(
+                profile_skills, jobs, applications, taxonomy, now=now_naive
+            ):
+                if before_account(job.published_at):
+                    continue
                 events.append({
-                    "at": job.published_at,
-                    "kind": "strong_match",
+                    "at": now_naive,
+                    "kind": "expiring",
                     "message": (
-                        f"Correspondance forte ({match['score']}/100) avec "
-                        f"« {job.title} » chez {job.company} : pensez à candidater."
+                        f"Date limite proche : « {job.title} » chez {job.company} "
+                        f"se termine le {job.deadline.strftime('%d/%m/%Y')}. "
+                        "Pensez à envoyer votre candidature."
                     ),
                     "job_id": job.id,
                 })
 
-        # Échéances proches : offres correspondantes non postulées.
-        # Toujours visibles in-app ; l'e-mail est un opt-in par événement.
-        from app.services.alerts import expiring_matches
-
-        for job, _match in expiring_matches(
-            profile_skills, jobs, applications, taxonomy, now=now_naive
-        ):
-            if before_account(job.published_at):
-                continue
-            events.append({
-                "at": now_naive,
-                "kind": "expiring",
-                "message": (
-                    f"Date limite proche : « {job.title} » chez {job.company} "
-                    f"se termine le {job.deadline.strftime('%d/%m/%Y')}. "
-                    "Pensez à envoyer votre candidature."
-                ),
-                "job_id": job.id,
-            })
-
-        missing: list[str] = []
-        for job in jobs[:10]:
-            for name in compute_match(profile_skills, job.required_skills, taxonomy)["missing"]:
-                if name not in missing:
-                    missing.append(name)
-        if missing:
-            events.append({
-                "at": now_naive,
-                "kind": "learning",
-                "message": (
-                    f"Compétence à développer en priorité : « {missing[0]} » "
-                    f"(voir la page Apprentissage)."
-                ),
-                "job_id": None,
-            })
+        if watch_jobs:
+            missing: list[str] = []
+            for job in jobs[:10]:
+                for name in compute_match(profile_skills, job.required_skills, taxonomy)["missing"]:
+                    if name not in missing:
+                        missing.append(name)
+            if missing:
+                events.append({
+                    "at": now_naive,
+                    "kind": "learning",
+                    "message": (
+                        f"Compétence à développer en priorité : « {missing[0]} » "
+                        f"(voir la page Apprentissage)."
+                    ),
+                    "job_id": None,
+                })
 
     STATUS_LABELS = {
         "identifiee": "identifiée", "cv_prepare": "CV préparé",
         "envoyee": "envoyée", "en_attente": "en attente de réponse",
         "entretien": "entretien à préparer", "offre": "offre reçue",
         "acceptee": "acceptée", "refusee": "refusée",
+        "retiree": "retirée", "declinee": "déclinée",
     }
     for app in applications:
         latest = app.timeline[-1] if app.timeline else None
