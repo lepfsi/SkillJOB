@@ -9265,9 +9265,16 @@ table.skills {
   flex-direction: column;
   gap: 0.8rem;
   min-width: 0;
-  max-height: calc(100vh - 180px);
+  align-self: start;
+  /* Desktop : la colonne reste sous la barre supérieure, avec son propre
+     défilement seulement si son contenu dépasse la hauteur visible. */
+  position: sticky;
+  top: 76px;
+  max-height: calc(100vh - 96px);
   overflow-y: auto;
+  overscroll-behavior: auto;
   padding-right: 0.35rem;
+  padding-bottom: 0.5rem;
   scrollbar-gutter: stable;
   scrollbar-width: thin;
 }
@@ -9574,6 +9581,13 @@ table.skills {
   .notif-side {
     display: grid;
     grid-template-columns: 1fr 1fr;
+    /* Tablette et mobile : la colonne reprend le flux normal. Aucun
+       défilement imbriqué ne doit bloquer la page. */
+    position: static;
+    max-height: none;
+    overflow: visible;
+    padding-right: 0;
+    padding-bottom: 0;
   }
   .notif-side-card:last-child { grid-column: 1 / -1; }
 }

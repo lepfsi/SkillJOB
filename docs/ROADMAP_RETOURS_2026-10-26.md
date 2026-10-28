@@ -426,6 +426,14 @@ contenu.
 - Le comportement est identique sur desktop et mobile.
 - La navigation clavier reste possible.
 
+Statut : implémenté et vérifié le 28 octobre 2026. Sur desktop, la
+colonne est sticky sous la barre supérieure avec une hauteur maximale
+et un défilement propre uniquement si son contenu dépasse la zone
+visible. Sous 1000 px, elle reprend le flux normal, sans hauteur
+contrainte ni défilement imbriqué. Vérification aux largeurs 1280, 768
+et 375 px : aucun recouvrement du titre ni du contenu, page défilable
+normalement, cartes de la colonne entièrement accessibles.
+
 ### 18. Préférences e-mail du candidat
 
 **Constat**
