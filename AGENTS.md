@@ -78,7 +78,10 @@ Compte démo : `demo@orientskill.cm / demo1234` (candidat) ·
   DraftReview et Profile).
 - Design : **aucun liséré d'accent** (bordure colorée épaisse) à gauche ni
   au-dessus d'une carte, d'un panneau ou d'un en-tête. La hiérarchie repose sur
-  l'espacement, la typographie et un fond de surface discret.
+  l'espacement, la typographie et un fond de surface discret. Toute évolution
+  d'interface suit la revue obligatoire de `docs/DESIGN_REVIEW.md` (checklist,
+  composants de référence, états, responsive et preuves aux largeurs 1280,
+  768 et 375 px) avant d'être marquée livrée.
 - Seed auto au démarrage si la table users est vide (`app/main.py::seed_database`) ;
   les données de référence vivent dans `backend/data/*.json`.
 - Ne pas committer `backend/skilljob.db` ni `frontend/node_modules`/`dist`.

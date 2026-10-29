@@ -1,6 +1,6 @@
 # Charte visuelle OrientSkill AI
 
-Version du 28 octobre 2026. Ce document fixe les règles communes aux
+Version du 29 octobre 2026. Ce document fixe les règles communes aux
 e-mails, aux affiches d'offre, aux visuels publics et à l'interface.
 L'objectif est une identité sobre, institutionnelle et lisible, sans
 effets décoratifs inutiles.
@@ -150,3 +150,6 @@ Gabarit `backend/app/services/job_media.py`, format 1200 x 800.
   sont jamais versionnées.
 - Toute évolution de la charte doit mettre à jour ce document et les
   tests concernés.
+- La revue design obligatoire, la checklist et la charte de composants sont
+  décrites dans `docs/DESIGN_REVIEW.md`. Une fonctionnalité d'interface n'est
+  pas marquée livrée sans cette revue.

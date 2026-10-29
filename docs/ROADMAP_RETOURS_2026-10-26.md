@@ -2,15 +2,14 @@
 
 Date de revue : lundi 26 octobre 2026
 Source : retours utilisateurs et tests terrain du 25 octobre 2026.
-Statut : document de travail. Aucune de ces remarques n'est encore considérée comme validée avant la revue.
+Statut : feuille de route active. Les points livrés sont datés dans leur section.
 
-Avancement au 29 octobre 2026 : les points 1 à 23 sont implémentés et
-vérifiés. Les points 24 à 34 restent à traiter.
+Avancement au 29 octobre 2026 : les points 1 à 24 sont implémentés et
+vérifiés. Les points 25 à 34 restent à traiter.
 
 Nouveaux retours intégrés le 26 octobre 2026 : les points 13 à 23 complètent
-cette feuille de route. Ils sont classés dans la priorité correspondante et
-restent à traiter. La numérotation continue à la suite pour ne pas modifier les
-points déjà suivis.
+cette feuille de route. Ils sont classés dans la priorité correspondante. La
+numérotation continue à la suite pour ne pas modifier les points déjà suivis.
 
 Nouveaux retours intégrés le 27 octobre 2026 : les points 24 à 34 sont ajoutés
 en fin de document. Ils complètent les irritants produits observés après la
@@ -716,6 +715,12 @@ revenir à plus tard.
 **Critères d'acceptation**
 - Aucune fonctionnalité n'est livrée sans validation design.
 - Les composants respectent la charte dès la première version.
+
+Statut : livré et vérifié le 29 octobre 2026. La revue design est formalisée
+dans `docs/DESIGN_REVIEW.md` avec la checklist obligatoire, la charte de
+composants de référence, les états, le responsive et les preuves à joindre.
+`AGENTS.md` et `docs/BRAND_GUIDE.md` renvoient à cette procédure. Les tests
+de branding et le build frontend restent les garde-fous techniques.
 
 ### 25. Photo de profil pour l'entreprise ou le recruteur
 
