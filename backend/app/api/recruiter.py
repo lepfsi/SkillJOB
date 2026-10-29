@@ -18,7 +18,14 @@ from sqlalchemy.orm import Session
 from app import config, models, schemas, security
 from app.database import get_db
 from app.services import calendar as calendar_service
-from app.services import cv_pdf, email_routing, job_media, notifications, uploads
+from app.services import (
+    company_media,
+    cv_pdf,
+    email_routing,
+    job_media,
+    notifications,
+    uploads,
+)
 from app.services import interviews as interview_service
 from app.services.applications import (
     STATUS_LABELS,
@@ -57,6 +64,7 @@ def _company_out(company: models.Company) -> dict:
         "location": company.location,
         "website": company.website,
         "has_logo": bool(company.logo_path),
+        "logo_url": company_media.logo_url(company),
     }
 
 
@@ -80,6 +88,35 @@ def update_company(
     data = payload.model_dump(exclude_unset=True)
     for field, value in data.items():
         setattr(company, field, value)
+    db.commit()
+    db.refresh(company)
+    return _company_out(company)
+
+
+@router.post("/company/logo", response_model=schemas.CompanyOut)
+def upload_company_logo(
+    file: UploadFile = File(...),
+    user: models.User = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Photo de profil de l'entreprise, visible sur les offres et les messages."""
+    _require_recruiter(user)
+    company = _get_company(db, user)
+    company_media.save(company, file)
+    db.commit()
+    db.refresh(company)
+    return _company_out(company)
+
+
+@router.delete("/company/logo", response_model=schemas.CompanyOut)
+def delete_company_logo(
+    user: models.User = Depends(security.get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Retire la photo de l'entreprise ; le repli sur les initiales reste actif."""
+    _require_recruiter(user)
+    company = _get_company(db, user)
+    company_media.remove(company)
     db.commit()
     db.refresh(company)
     return _company_out(company)

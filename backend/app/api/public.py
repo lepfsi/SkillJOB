@@ -10,13 +10,19 @@ import secrets
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
 from app import config, models, schemas, security
 from app.api.jobs import _company_branding
 from app.database import get_db
 from app.services import (
-    email_routing, inbound_email, job_media, notifications, poster,
+    company_media,
+    email_routing,
+    inbound_email,
+    job_media,
+    notifications,
+    poster,
     settings_store,
 )
 
@@ -41,6 +47,22 @@ def _apply_channel(db: Session, job: models.Job) -> str:
             if owner is not None and owner.role == "recruiter":
                 return "platform"
     return "external"
+
+
+@router.get("/companies/{company_id}/logo")
+def public_company_logo(company_id: int, db: Session = Depends(get_db)):
+    """Logo public d'une entreprise, sans authentification.
+
+    Le logo identifie l'entreprise sur les offres et dans la messagerie.
+    Il reste facultatif : sans fichier, le frontend affiche les initiales.
+    """
+    company = db.get(models.Company, company_id)
+    if company is None:
+        raise HTTPException(status_code=404, detail="Logo introuvable")
+    return FileResponse(
+        company_media.path_for(company),
+        headers={"Cache-Control": "public, max-age=3600"},
+    )
 
 
 @router.get("/jobs/{job_id}", response_model=dict)

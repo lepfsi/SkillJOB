@@ -1138,6 +1138,7 @@ class CompanyOut(BaseModel):
     location: str = ""
     website: Optional[str] = None
     has_logo: bool = False
+    logo_url: Optional[str] = None
 
 
 class CompanyUpdateIn(BaseModel):
@@ -1231,6 +1232,7 @@ class JobCompanyOut(BaseModel):
     sector: str = ""
     description: str = ""
     has_logo: bool = False
+    logo_url: Optional[str] = None
 
 
 # ------------------------------------------------- Domaines et spécialités

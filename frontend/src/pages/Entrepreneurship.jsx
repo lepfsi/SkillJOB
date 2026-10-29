@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { api } from "../api/client.js";
 import {
-  ENTREPRENEUR_KIND_LABELS, LEVEL_LABELS, fmtDate, initialsOf, plural, scoreLevel,
+  ENTREPRENEUR_KIND_LABELS, LEVEL_LABELS, fmtDate, plural, scoreLevel,
 } from "../lib.js";
 import { Loader, ErrorNote, Empty } from "../components/ui.jsx";
 import { Icon, I, ArrowIcon } from "../components/icons.jsx";
+import CompanyLogo from "../components/CompanyLogo.jsx";
 import SkillTag from "../components/SkillTag.jsx";
 import AssistantChat from "../components/AssistantChat.jsx";
 import AgentSideCard from "../components/AgentSideCard.jsx";
@@ -506,7 +507,11 @@ export default function Entrepreneurship() {
               <div className="ent-missions">
                 {missions.map((job) => (
                   <Link className="ent-mission" key={job.id} to={`/opportunites/${job.id}`}>
-                    <span className="opp-logo">{initialsOf(job.company)}</span>
+                    <CompanyLogo
+                      name={job.company}
+                      logoUrl={job.company_branding?.logo_url}
+                      className="opp-logo"
+                    />
                     <span className="ent-mission-main">
                       <span className="ent-mission-title">{job.title}</span>
                       <span className="opp-meta">

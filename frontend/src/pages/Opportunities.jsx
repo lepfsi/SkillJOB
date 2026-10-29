@@ -2,9 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api } from "../api/client.js";
 import {
-  CONTRACT_TYPES, LEVEL_LABELS, fmtDate, initialsOf, plural, scoreLevel,
+  CONTRACT_TYPES, LEVEL_LABELS, fmtDate, plural, scoreLevel,
 } from "../lib.js";
 import { Icon, I, ArrowIcon } from "../components/icons.jsx";
+import CompanyLogo from "../components/CompanyLogo.jsx";
 import Ring from "../components/Ring.jsx";
 import AgentSideCard from "../components/AgentSideCard.jsx";
 import JobVisual from "../components/JobVisual.jsx";
@@ -302,7 +303,11 @@ export default function Opportunities() {
 
               <div className="opps-best-top">
                 <div className="opps-best-media">
-                  <span className="opps-best-logo">{initialsOf(job.company)}</span>
+                  <CompanyLogo
+                    name={job.company}
+                    logoUrl={job.company_branding?.logo_url}
+                    className="opps-best-logo"
+                  />
                   <span className="opps-best-company">{job.company}</span>
                 </div>
                 <div className="opps-best-id">

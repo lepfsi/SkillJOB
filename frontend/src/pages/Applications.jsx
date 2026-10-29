@@ -5,10 +5,10 @@ import {
   STATUS_LABELS,
   fmtDate,
   fmtDateTime,
-  initialsOf,
   plural,
   statusTone,
 } from "../lib.js";
+import CompanyLogo from "../components/CompanyLogo.jsx";
 import { Loader, ErrorNote, Empty } from "../components/ui.jsx";
 import { Icon, I, ArrowIcon } from "../components/icons.jsx";
 import AssistantChat from "../components/AssistantChat.jsx";
@@ -233,7 +233,11 @@ function ApplicationCard({ app, onStatus, busy, agentActions }) {
   return (
     <article className="apps-item" id={`app-${app.id}`}>
       <div className="apps-item-head">
-        <span className="apps-logo">{initialsOf(app.job.company)}</span>
+        <CompanyLogo
+          name={app.job.company}
+          logoUrl={app.job.company_branding?.logo_url}
+          className="apps-logo"
+        />
         <div className="apps-item-main">
           <div className="apps-item-title">
             <Link to={`/opportunites/${app.job_id}`}>{app.job.title}</Link>

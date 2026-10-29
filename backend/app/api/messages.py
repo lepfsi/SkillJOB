@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app import models, schemas, security
 from app.database import get_db
+from app.services import company_media
 
 router = APIRouter(prefix="/api/messages", tags=["messages"])
 
@@ -29,6 +30,7 @@ def _identity(db: Session, user_id: int) -> dict:
             "sector": company.sector,
             "description": company.description,
             "location": company.location,
+            "logo_url": company_media.logo_url(company),
         } if company else None,
     }
 

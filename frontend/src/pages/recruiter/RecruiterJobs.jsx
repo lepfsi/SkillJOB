@@ -248,6 +248,7 @@ function JobForm({ initial, company, onCancel, onSaved, onPreview }) {
             name: company.name,
             sector: company.sector,
             description: company.description,
+            logo_url: company.logo_url,
           }
         : null,
       required_skills: skills,
@@ -609,6 +610,7 @@ export default function RecruiterJobs() {
             name: company.name,
             sector: company.sector,
             description: company.description,
+            logo_url: company.logo_url,
           }
         : null,
       source: { name: job.source_name, url: job.source_url },

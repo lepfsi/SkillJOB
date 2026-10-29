@@ -5,6 +5,7 @@ import {
   RECRUITER_NEXT, REFUSABLE_STATUSES, STATUS_LABELS, statusTone,
 } from "../../lib.js";
 import Avatar from "../../components/Avatar.jsx";
+import CompanyLogo from "../../components/CompanyLogo.jsx";
 import ContactDialog from "../../components/ContactDialog.jsx";
 import TalentCard from "../../components/TalentCard.jsx";
 import VerifiedBadge from "../../components/VerifiedBadge.jsx";
@@ -27,6 +28,8 @@ export default function RecruiterHome() {
   const [companyForm, setCompanyForm] = useState(null);
   const [companyError, setCompanyError] = useState("");
   const [companyBusy, setCompanyBusy] = useState(false);
+  const [logoError, setLogoError] = useState("");
+  const [logoBusy, setLogoBusy] = useState(false);
   const [busyApp, setBusyApp] = useState(0);
   const [refuseFor, setRefuseFor] = useState(null);
   const [refuseReason, setRefuseReason] = useState("");
@@ -72,6 +75,50 @@ export default function RecruiterHome() {
       setCompanyError(err.detail);
     } finally {
       setCompanyBusy(false);
+    }
+  }
+
+  async function uploadLogo(event) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (!/\.(jpe?g|png|webp)$/i.test(file.name)) {
+      setLogoError("Format accepté : JPG, PNG ou WebP.");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setLogoError("Image trop volumineuse (5 Mo maximum).");
+      return;
+    }
+    setLogoBusy(true);
+    setLogoError("");
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      const updated = await api("/recruiter/company/logo", {
+        method: "POST",
+        form,
+      });
+      setCompany(updated);
+      setNotice("Photo de profil mise à jour.");
+    } catch (err) {
+      setLogoError(err.detail);
+    } finally {
+      setLogoBusy(false);
+    }
+  }
+
+  async function removeLogo() {
+    setLogoBusy(true);
+    setLogoError("");
+    try {
+      const updated = await api("/recruiter/company/logo", { method: "DELETE" });
+      setCompany(updated);
+      setNotice("Photo de profil retirée.");
+    } catch (err) {
+      setLogoError(err.detail);
+    } finally {
+      setLogoBusy(false);
     }
   }
 
@@ -132,20 +179,17 @@ export default function RecruiterHome() {
     weekday: "long", day: "numeric", month: "long", year: "numeric",
   });
   const todayLabel = today.charAt(0).toUpperCase() + today.slice(1);
-  const companyInitials = (company.name || "?")
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
 
   return (
     <div className="page">
       <header className="recruiter-hero" aria-labelledby="recruiter-hero-title">
         <div className="recruiter-hero-top">
           <div className="recruiter-identity">
-            <span className="recruiter-mark" aria-hidden="true">{companyInitials}</span>
+            <CompanyLogo
+              name={company.name}
+              logoUrl={company.logo_url}
+              className="recruiter-mark"
+            />
             <div className="recruiter-identity-text">
               <p className="recruiter-eyebrow">
                 Accueil recruteur
@@ -220,6 +264,47 @@ export default function RecruiterHome() {
           <p className="small muted">
             Ces informations identifient vos offres auprès des candidats.
           </p>
+          <div className="company-logo-editor">
+            <CompanyLogo
+              name={company.name}
+              logoUrl={company.logo_url}
+              className="company-logo-preview"
+            />
+            <div className="company-logo-editor-copy">
+              <strong>Photo de profil</strong>
+              <p className="small muted">
+                JPG, PNG ou WebP, 5 Mo maximum. Elle apparaît sur vos offres
+                et dans la messagerie. Sans photo, vos initiales restent
+                affichées.
+              </p>
+              <div className="actions-row">
+                <label className="btn btn-ghost btn-small company-logo-upload">
+                  {logoBusy
+                    ? "Envoi…"
+                    : company.logo_url
+                      ? "Changer la photo"
+                      : "Ajouter une photo"}
+                  <input
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.webp"
+                    onChange={uploadLogo}
+                    disabled={logoBusy}
+                  />
+                </label>
+                {company.logo_url && (
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-small"
+                    onClick={removeLogo}
+                    disabled={logoBusy}
+                  >
+                    Retirer
+                  </button>
+                )}
+              </div>
+              <ErrorNote error={logoError} />
+            </div>
+          </div>
           <div className="grid-2">
             <label className="field">
               <span>Nom de l'entreprise *</span>

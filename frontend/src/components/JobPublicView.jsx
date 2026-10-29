@@ -1,4 +1,5 @@
 import { fmtDate } from "../lib.js";
+import CompanyLogo from "./CompanyLogo.jsx";
 import JobVisual from "./JobVisual.jsx";
 
 // Fiche publique d'une offre, partagée entre la page de candidature et
@@ -13,11 +14,18 @@ export default function JobPublicView({ job, preview = false, titleTag = "h1" })
 
   return (
     <section className="public-job">
-      <p className="public-job-company">
-        {company}
-        {company && job.location ? " · " : ""}
-        {job.location}
-      </p>
+      <div className="public-job-company-row">
+        <CompanyLogo
+          name={company}
+          logoUrl={job.company_branding?.logo_url}
+          className="public-job-logo"
+        />
+        <p className="public-job-company">
+          {company}
+          {company && job.location ? " · " : ""}
+          {job.location}
+        </p>
+      </div>
       <Heading className="public-job-title">
         {job.title || "Intitulé à compléter"}
       </Heading>

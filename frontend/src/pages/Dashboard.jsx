@@ -5,7 +5,8 @@ import { Icon, I, ArrowIcon } from "../components/icons.jsx";
 import { Loader, ErrorNote } from "../components/ui.jsx";
 import Ring from "../components/Ring.jsx";
 import VerifiedBadge from "../components/VerifiedBadge.jsx";
-import { initialsOf, mapInternalPath, plural } from "../lib.js";
+import CompanyLogo from "../components/CompanyLogo.jsx";
+import { mapInternalPath, plural } from "../lib.js";
 
 // Accueil (maquette) : l'agent travaille POUR le jeune. Toutes les
 // valeurs affichées proviennent de l'API, aucune donnée inventée (§47).
@@ -329,7 +330,11 @@ export default function Dashboard() {
                 {jobs.slice(0, 3).map((j) => (
                   <Link key={j.id} className="opp-card" to={`/opportunites/${j.id}`}>
                     <div className="opp-card-media">
-                      <span>{initialsOf(j.company)}</span>
+                      <CompanyLogo
+                        name={j.company}
+                        logoUrl={j.company_branding?.logo_url}
+                        className="opp-card-logo"
+                      />
                       {j.match_score != null && (
                         <span className="opp-card-score">{j.match_score}/100</span>
                       )}

@@ -483,6 +483,67 @@ a { color: var(--green-dark); }
   box-shadow: var(--shadow);
 }
 
+/* Photo de profil d'entreprise : le logo remplit son gabarit, avec repli
+   sur les initiales quand aucun fichier n'est disponible. */
+.company-logo { overflow: hidden; }
+.company-logo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.company-logo-editor {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 0.65rem 0 0.9rem;
+  padding: 0.85rem 0;
+  border-bottom: 1px solid var(--border);
+}
+.company-logo-preview {
+  width: 64px;
+  height: 64px;
+  flex-shrink: 0;
+  border-radius: var(--radius);
+  background: var(--green-dark);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-head);
+  font-weight: 700;
+  font-size: 1.15rem;
+}
+.company-logo-editor-copy { min-width: 0; }
+.company-logo-editor-copy p { margin: 0.15rem 0 0; }
+.company-logo-editor .actions-row { margin-top: 0.45rem; }
+.company-logo-upload { cursor: pointer; }
+.company-logo-upload input { display: none; }
+.opp-card-logo {
+  width: 54px;
+  height: 54px;
+  border-radius: var(--radius);
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+}
+.public-job-company-row { display: flex; align-items: center; gap: 0.6rem; }
+.public-job-logo {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  background: var(--green-dark);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+@media (max-width: 640px) {
+  .company-logo-editor { align-items: flex-start; }
+  .company-logo-preview { width: 56px; height: 56px; }
+}
+
 .panel-light {
   background: #ffffff;
   border: 1px solid var(--border);

@@ -6,7 +6,8 @@ import { Loader, ErrorNote } from "../components/ui.jsx";
 import Ring from "../components/Ring.jsx";
 import AssistantChat from "../components/AssistantChat.jsx";
 import AgentPreferencesForm from "../components/AgentPreferencesForm.jsx";
-import { initialsOf, mapInternalPath, plural, relTime, scoreLevel, LEVEL_LABELS } from "../lib.js";
+import CompanyLogo from "../components/CompanyLogo.jsx";
+import { mapInternalPath, plural, relTime, scoreLevel, LEVEL_LABELS } from "../lib.js";
 
 // Page « Mon agent » (maquette) : poste de pilotage où l'agent travaille
 // POUR le jeune : héros, étapes réelles, statistiques, action requise,
@@ -326,7 +327,11 @@ export default function Agent() {
                       <strong>{focusScore}%</strong>
                     </span>
                   )}
-                  <span className="opp-logo">{initialsOf(focusJob.company)}</span>
+                  <CompanyLogo
+                    name={focusJob.company}
+                    logoUrl={focusJob.company_branding?.logo_url}
+                    className="opp-logo"
+                  />
                   <span className="ag-attn-main">
                     <span className="ag-attn-title">{focusJob.title}</span>
                     <span className="opp-meta">
@@ -359,7 +364,11 @@ export default function Agent() {
               </>
             ) : bestJob ? (
               <div className="ag-attn-row">
-                <span className="opp-logo">{initialsOf(bestJob.company)}</span>
+                <CompanyLogo
+                  name={bestJob.company}
+                  logoUrl={bestJob.company_branding?.logo_url}
+                  className="opp-logo"
+                />
                 <span className="ag-attn-main">
                   <span className="ag-attn-title">{bestJob.title}</span>
                   <span className="opp-meta">
@@ -415,7 +424,11 @@ export default function Agent() {
                       <b>{j.match_score}%</b>
                       <span>{LEVEL_LABELS[scoreLevel(j.match_score)]}</span>
                     </span>
-                    <span className="opp-logo">{initialsOf(j.company)}</span>
+                    <CompanyLogo
+                      name={j.company}
+                      logoUrl={j.company_branding?.logo_url}
+                      className="opp-logo"
+                    />
                     <span className="ag-row-main">
                       <span className="ag-row-title">{j.title}</span>
                       <span className="opp-meta">
@@ -522,7 +535,11 @@ export default function Agent() {
                 <h2><Icon d={I.check} size={16} /> Pourquoi cette offre ?</h2>
               </div>
               <div className="ag-why-head">
-                <span className="opp-logo">{initialsOf(bestJob.company)}</span>
+                <CompanyLogo
+                  name={bestJob.company}
+                  logoUrl={bestJob.company_branding?.logo_url}
+                  className="opp-logo"
+                />
                 <span className="ag-why-id">
                   <span className="ag-row-title">{bestJob.title}</span>
                   <span className="opp-meta">

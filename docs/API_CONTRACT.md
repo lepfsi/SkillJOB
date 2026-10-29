@@ -114,6 +114,7 @@ Filtres du référentiel : `domain_id` (domaine principal) et `specialty_id`
 → `[{ id, title, company, location, sector, contract_type: "CDI"|"CDD"|"Stage"|"Freelance"|"Apprentissage",
       published_at, deadline: datetime | null, source: { name, url }, match_score: 0-100 | null,
       photo_url: string | null,
+      company_branding: { id, name, sector, description, has_logo, logo_url } | null,
       domain_id: int|null, domain_name: string|null,
       specialty_id: int|null, specialty_name: string|null,
       required_skills: [{ name, importance: "core"|"preferred", level?: string }] }]`
@@ -123,6 +124,7 @@ Filtres du référentiel : `domain_id` (domaine principal) et `specialty_id`
 ```text
 Job { id, title, company, location, sector, contract_type, description, requirements: string,
       photo_url: string | null,
+      company_branding: { id, name, sector, description, has_logo, logo_url } | null,
       domain_id: int|null, domain_name: string|null,
       specialty_id: int|null, specialty_name: string|null,
       required_skills: [{ name, importance: "core"|"preferred", level?: string }],
@@ -140,6 +142,11 @@ Le score est **explicable** (§12) : jamais un simple pourcentage opaque.
 `photo_url` = photo d'illustration **facultative** déposée par le publieur
 (recruteur ou administration) ; `null` = offre sans visuel.
 `GET /api/jobs/{id}/photo` sert le fichier (404 si aucune photo).
+
+`company_branding` identifie l'entreprise qui a publié l'offre via l'espace
+recruteur. `logo_url` est l'URL publique de sa photo de profil (`null` sans
+logo), avec un paramètre de version pour éviter les visuels obsolètes.
+`GET /api/public/companies/{id}/logo` sert le fichier (404 sans logo).
 
 `my_report` (connecté) : dernier signalement du candidat sur cette offre,
 `null` s'il n'en a pas déposé (voir § 5bis).
@@ -935,6 +942,29 @@ l'administration. Les calendriers restent ceux annoncés par le MINESUP.
   généraliste.
 - `GET/POST /api/recruiter/shortlists`, `DELETE /api/recruiter/shortlists/{id}`,
   `POST/DELETE /api/recruiter/shortlists/{id}/items`: listes privées par entreprise.
+
+### Profil et photo de l'entreprise
+
+- `GET /api/recruiter/company` → `Company { id, name, sector, description,
+  location, website, has_logo, logo_url }`.
+- `PUT /api/recruiter/company` : mêmes champs modifiables (`name`
+  obligatoire).
+- `POST /api/recruiter/company/logo` (multipart `file`) : JPG, PNG ou WebP,
+  5 Mo maximum → `Company` avec `logo_url`. Le nouveau fichier remplace
+  l'ancien.
+- `DELETE /api/recruiter/company/logo` → `Company` avec `logo_url: null`.
+- `GET /api/public/companies/{id}/logo` → image publique, `404` sans logo.
+  Le logo est visible sur les offres, dans le profil recruteur et dans la
+  messagerie. Sans logo, le frontend affiche les initiales de l'entreprise.
+
+### Messagerie
+
+- `GET /api/messages` → `[ThreadOut]` avec
+  `other_company: { id, name, sector, description, location, logo_url } | null`.
+- `GET /api/messages/{user_id}` → `{ messages, identity: { name, role,
+  company: { id, name, sector, description, location, logo_url } | null } }`.
+  L'identité de l'entreprise reste visible côté talent ; aucune coordonnée
+  personnelle n'est exposée.
 
 ### Invitations à un entretien
 

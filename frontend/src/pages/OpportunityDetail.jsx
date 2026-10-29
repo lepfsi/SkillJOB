@@ -11,7 +11,8 @@ import AccentRow from "../components/AccentRow.jsx";
 import PreviewImage from "../components/PreviewImage.jsx";
 import AgentSideCard from "../components/AgentSideCard.jsx";
 import JobVisual from "../components/JobVisual.jsx";
-import { templateAccentHex, fmtDate, initialsOf, plural, scoreLevel, LEVEL_LABELS } from "../lib.js";
+import { templateAccentHex, fmtDate, plural, scoreLevel, LEVEL_LABELS } from "../lib.js";
+import CompanyLogo from "../components/CompanyLogo.jsx";
 import { Loader, ErrorNote } from "../components/ui.jsx";
 
 // Détail d'une offre (§30) : description, profil recherché, compétences
@@ -821,7 +822,11 @@ export default function OpportunityDetail() {
             <section className="dash-card">
               <div className="dash-card-head"><h2>L'entreprise</h2></div>
               <div className="offre-company">
-                <span className="offre-company-logo">{initialsOf(company.name)}</span>
+                <CompanyLogo
+                  name={company.name}
+                  logoUrl={company.logo_url}
+                  className="offre-company-logo"
+                />
                 <div>
                   <strong>{company.name}</strong>
                   {company.sector && <span className="small muted">{company.sector}</span>}

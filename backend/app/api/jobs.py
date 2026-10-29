@@ -7,7 +7,14 @@ from sqlalchemy.orm import Session
 
 from app import config, models, schemas, security
 from app.database import get_db
-from app.services import admin_alerts, email_routing, job_media, job_parser, job_writer
+from app.services import (
+    admin_alerts,
+    company_media,
+    email_routing,
+    job_media,
+    job_parser,
+    job_writer,
+)
 from app.services.matching import compute_match
 from app.services.profile_store import get_profile_row, profile_to_dict
 from app.services.skills_taxonomy import load_taxonomy
@@ -28,6 +35,7 @@ def _company_branding(db: Session, job: models.Job) -> Optional[dict]:
         "sector": company.sector,
         "description": company.description,
         "has_logo": bool(company.logo_path),
+        "logo_url": company_media.logo_url(company),
     }
 
 

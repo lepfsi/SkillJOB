@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { api } from "../api/client.js";
-import { initialsOf } from "../lib.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { Icon, I, ArrowIcon } from "../components/icons.jsx";
+import CompanyLogo from "../components/CompanyLogo.jsx";
 import { Loader, ErrorNote, Empty } from "../components/ui.jsx";
 
 // Messagerie interne modernisée : liste des conversations et fil de discussion
@@ -54,16 +54,15 @@ function listStamp(iso) {
   return d.toLocaleDateString("fr-FR", { day: "2-digit", month: "2-digit", year: "2-digit" });
 }
 
-function Avatar({ name, role, size = 42 }) {
+function Avatar({ name, role, logoUrl, size = 42 }) {
   const tone = ROLE_TONES[role] || "slate";
   return (
-    <span
+    <CompanyLogo
+      name={name}
+      logoUrl={logoUrl}
       className={`msg-avatar msg-tone-${tone}`}
       style={{ width: size, height: size, fontSize: `${Math.round(size * 0.36)}px` }}
-      aria-hidden="true"
-    >
-      {initialsOf(name)}
-    </span>
+    />
   );
 }
 
@@ -84,7 +83,11 @@ function ThreadsList({ threads, activeId, onOpen, query, setQuery }) {
           className={`msg-thread${t.other_user_id === activeId ? " is-active" : ""}${t.unread > 0 ? " is-unread" : ""}`}
           onClick={() => onOpen(t.other_user_id)}
         >
-          <Avatar name={t.other_name} role={t.other_role} />
+          <Avatar
+            name={t.other_name}
+            role={t.other_role}
+            logoUrl={t.other_company?.logo_url}
+          />
           <span className="msg-thread-main">
             <span className="msg-thread-top">
               <strong>{t.other_name}</strong>
@@ -195,7 +198,12 @@ function ThreadView({ otherId, onBack, onSent }) {
         <button type="button" className="msg-back" onClick={onBack} aria-label="Retour aux conversations">
           <ArrowIcon direction="right" size={14} />
         </button>
-        <Avatar name={identity.name} role={identity.role} size={44} />
+        <Avatar
+          name={identity.name}
+          role={identity.role}
+          logoUrl={company?.logo_url}
+          size={44}
+        />
         <div className="msg-pane-id">
           <strong>{identity.name}</strong>
           <span className="small muted">
@@ -217,7 +225,7 @@ function ThreadView({ otherId, onBack, onSent }) {
           ) : (
             <div key={item.m.id} className={`msg-row ${item.mine ? "is-mine" : "is-theirs"}`}>
               {!item.mine && (item.first
-                ? <Avatar name={identity.name} role={identity.role} size={30} />
+                ? <Avatar name={identity.name} role={identity.role} logoUrl={company?.logo_url} size={30} />
                 : <span className="msg-avatar-gap" />)}
               <div className={`msg-bubble ${item.mine ? "msg-mine" : "msg-theirs"}`}>
                 <p className="msg-text">{item.m.body}</p>
