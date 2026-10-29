@@ -72,6 +72,9 @@ Compte démo : `demo@orientskill.cm / demo1234` (candidat) ·
 - Frontend : labels FR, pas d'emojis, `src/lib.js` pour helpers/libellés partagés,
   composants réutilisables dans `src/components/` (ProfileEditor partagé entre
   DraftReview et Profile).
+- Design : **aucun liséré d'accent** (bordure colorée épaisse) à gauche ni
+  au-dessus d'une carte, d'un panneau ou d'un en-tête. La hiérarchie repose sur
+  l'espacement, la typographie et un fond de surface discret.
 - Seed auto au démarrage si la table users est vide (`app/main.py::seed_database`) ;
   les données de référence vivent dans `backend/data/*.json`.
 - Ne pas committer `backend/skilljob.db` ni `frontend/node_modules`/`dist`.

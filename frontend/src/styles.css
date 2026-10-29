@@ -767,6 +767,231 @@ a.chip-warn:hover { background: #f8e8cb; color: var(--warn); }
 .metric strong { font-size: 1.7rem; color: var(--green-dark); line-height: 1.1; }
 .metric span { font-size: 0.82rem; color: var(--muted); }
 
+/* ---------------- En-tête du dashboard recruteur (§22) ---------------- */
+/* Aucun liséré à gauche ni au-dessus : la hiérarchie vient de l'espace,
+   de la typographie et d'un fond de surface discret. */
+
+.recruiter-hero {
+  background: var(--green-soft);
+  border: 0;
+  border-radius: var(--radius-lg);
+  padding: clamp(1.2rem, 1.6vw, 1.65rem);
+  margin: 0 0 1.4rem;
+}
+
+.recruiter-hero-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.2rem 1.6rem;
+  flex-wrap: wrap;
+}
+
+.recruiter-identity {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  min-width: 0;
+  flex: 1 1 420px;
+}
+
+.recruiter-mark {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius);
+  background: var(--green-dark);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-family: var(--font-head);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.recruiter-identity-text { min-width: 0; }
+
+.recruiter-eyebrow {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0.15rem 0.55rem;
+  margin: 0 0 0.2rem;
+  color: var(--green-dark);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.recruiter-eyebrow-date {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.recruiter-hero h1 {
+  margin: 0;
+  font-size: clamp(1.6rem, 1.15rem + 1.15vw, 2.05rem);
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+.recruiter-meta {
+  margin: 0.35rem 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.recruiter-description {
+  max-width: 58rem;
+  margin: 0.85rem 0 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.recruiter-hero-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem 1rem;
+  flex-wrap: wrap;
+}
+
+.recruiter-primary-action {
+  padding: 0.68rem 1.15rem;
+  border-radius: var(--radius);
+}
+
+.recruiter-secondary-action {
+  padding: 0.66rem 0.95rem;
+  border: 1px solid #c7ead9;
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: var(--green-dark);
+  white-space: nowrap;
+}
+
+.recruiter-secondary-action svg { color: var(--green); }
+
+.recruiter-secondary-action:hover {
+  border-color: var(--green);
+  background: #f2faf6;
+  color: var(--green-dark);
+  box-shadow: var(--shadow-sm);
+}
+
+.recruiter-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin-top: 1.35rem;
+}
+
+.recruiter-metric {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  padding: 0.9rem 1rem;
+  border-radius: var(--radius);
+  background: var(--panel);
+  color: inherit;
+  text-decoration: none;
+  transition: background 0.14s ease;
+}
+
+.recruiter-metric:hover { background: var(--green-soft); }
+
+.recruiter-metric strong {
+  color: var(--green-dark);
+  font-family: var(--font-head);
+  font-size: 1.9rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+}
+
+.recruiter-metric span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.35;
+}
+
+.recruiter-metric:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 2px;
+}
+
+.recruiter-identity-links {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-top: 0.45rem;
+}
+
+.recruiter-identity-links a,
+.recruiter-text-button {
+  color: var(--green-dark);
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.recruiter-identity-links a:hover,
+.recruiter-text-button:hover {
+  color: var(--green);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.recruiter-text-button {
+  border: 0;
+  padding: 0;
+  background: none;
+  font-family: var(--font);
+  cursor: pointer;
+}
+
+@media (max-width: 900px) {
+  .recruiter-hero { padding: 1.1rem; }
+  .recruiter-hero-actions { width: 100%; }
+  .recruiter-primary-action { flex: 0 0 auto; }
+}
+
+@media (max-width: 620px) {
+  .recruiter-hero { padding: 1rem; border-radius: var(--radius); }
+  .recruiter-hero-top { flex-direction: column; }
+  .recruiter-identity { flex-basis: auto; gap: 0.8rem; }
+  .recruiter-mark { width: 46px; height: 46px; font-size: 0.92rem; }
+  .recruiter-hero h1 { font-size: 1.55rem; }
+  .recruiter-hero-actions {
+    width: 100%;
+    align-items: stretch;
+    gap: 0.55rem;
+  }
+  .recruiter-primary-action { flex: 1 1 100%; }
+  .recruiter-secondary-action { flex: 1 1 0; }
+  .recruiter-metrics { grid-template-columns: 1fr; gap: 0.5rem; }
+  .recruiter-metric {
+    flex-direction: row;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.6rem;
+    padding: 0.7rem 0.85rem;
+  }
+  .recruiter-metric strong { font-size: 1.55rem; }
+}
+
 .next-action {
   background: var(--green-dark);
   color: #fff;

@@ -651,6 +651,14 @@ aux actions à traiter.
 - Seuls les admins peuvent accéder à cette page.
 - Les compteurs correspondent aux notifications affichées.
 
+Statut : page livrée et vérifiée le 29 octobre 2026. Route
+`/admin/notifications` réservée aux admins, filtres par catégorie, statut,
+date et livraison, actions lire, archiver et supprimer, compteur des non-lues
+et durée de conservation affichée. Deux réserves subsistent : le badge de la
+navigation admin n'est pas raccordé et l'action « Marquer non lue » appelle
+encore l'endpoint de lecture. Tests de régression dans
+`backend/tests/test_admin_notifications.py` ; suite backend complète au vert.
+
 ### 22. En-tête du dashboard recruteur à moderniser
 
 **Constat**
@@ -672,6 +680,15 @@ charte OrientSkill.
 - Les indicateurs clés sont lisibles sans surcharge.
 - Le rendu est cohérent sur desktop et mobile.
 - Aucune régression d'accessibilité n'est introduite.
+
+Statut : livré et vérifié le 29 octobre 2026. En-tête refondu sans liséré
+supérieur : panneau vert clair, identité et date, CTA « Publier une offre »,
+boutons secondaires avec icônes, indicateurs en tuiles et lien contextuel de
+modification.
+Rendu vérifié aux largeurs 1280, 768 et 375 px, sans débordement horizontal
+de l'en-tête. Build frontend et suite backend au vert. La règle « aucun
+liséré à gauche ni au-dessus » est inscrite dans `AGENTS.md` et
+`docs/BRAND_GUIDE.md`.
 
 ## Priorité 0 : retours complémentaires du 27 octobre 2026
 

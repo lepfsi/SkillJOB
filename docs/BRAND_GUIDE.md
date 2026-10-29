@@ -129,8 +129,12 @@ Gabarit `backend/app/services/job_media.py`, format 1200 x 800.
   filet de séparation discret.
 - Les badges, compétences et statuts sont rectangulaires. Les pastilles
   rondes sont réservées aux filtres et aux compteurs.
-- Les ombres restent discrètes. La hiérarchie repose d'abord sur les
-  bordures, l'espacement et la typographie.
+- Les ombres restent discrètes. La hiérarchie repose d'abord sur
+  l'espacement, la typographie et un fond de surface.
+- **Aucun liséré d'accent** (bordure colorée épaisse) à gauche ni au-dessus
+  d'une carte, d'un panneau ou d'un en-tête. Une bordure fine tout autour
+  reste possible pour délimiter un contenu, jamais un filet d'accent
+  unilatéral.
 - Les états de focus restent visibles au clavier.
 - Aucun texte porteur d'information ne doit être en dessous du seuil de
   contraste AA.

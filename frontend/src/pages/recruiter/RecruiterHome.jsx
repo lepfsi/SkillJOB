@@ -147,54 +147,70 @@ export default function RecruiterHome() {
           <div className="recruiter-identity">
             <span className="recruiter-mark" aria-hidden="true">{companyInitials}</span>
             <div className="recruiter-identity-text">
-              <p className="recruiter-eyebrow">Accueil recruteur</p>
+              <p className="recruiter-eyebrow">
+                Accueil recruteur
+                <span className="recruiter-eyebrow-date">{todayLabel}</span>
+              </p>
               <h1 id="recruiter-hero-title">{company.name}</h1>
               <p className="recruiter-meta">
                 {company.sector || "Entreprise"}
                 {company.location ? ` · ${company.location}` : ""}
-                <span className="recruiter-meta-date"> · {todayLabel}</span>
               </p>
-              {company.description && (
-                <p className="recruiter-description">{company.description}</p>
-              )}
+              <div className="recruiter-identity-links">
+                {company.website && (
+                  <a href={company.website} target="_blank" rel="noreferrer">
+                    Site web
+                  </a>
+                )}
+                <button type="button" className="recruiter-text-button" onClick={openCompanyEdit}>
+                  Modifier l'entreprise
+                </button>
+              </div>
             </div>
           </div>
           <div className="recruiter-hero-actions">
-            <Link className="btn btn-primary" to="/recruteur/offres">
-              <Icon d={I.plus} size={16} />
+            <Link className="btn btn-primary recruiter-primary-action" to="/recruteur/offres">
+              <Icon d={I.plus} size={17} />
               Publier une offre
             </Link>
-            <Link className="btn btn-outline" to="/recruteur/candidats">
-              Rechercher des talents
+            <Link
+              className="btn recruiter-secondary-action"
+              to="/recruteur/candidats"
+              title="Rechercher des talents"
+              aria-label="Rechercher des talents"
+            >
+              <Icon d={I.search} size={16} />
+              Rechercher
             </Link>
-            <Link className="btn btn-ghost" to="/messages">Boîte de réception</Link>
+            <Link
+              className="btn recruiter-secondary-action"
+              to="/messages"
+              title="Boîte de réception"
+              aria-label="Boîte de réception"
+            >
+              <Icon d={I.mail} size={16} />
+              Messages
+            </Link>
           </div>
         </div>
+
+        {company.description && (
+          <p className="recruiter-description">{company.description}</p>
+        )}
 
         <div className="recruiter-metrics" aria-label="Indicateurs clés">
           <Link className="recruiter-metric" to="/recruteur/offres">
             <strong>{jobs.length}</strong>
-            <span>Offre(s) publiée(s)</span>
+            <span>Offres publiées</span>
           </Link>
           <Link className="recruiter-metric" to="/recruteur/candidatures">
             <strong>{applications.length}</strong>
-            <span>Candidature(s) reçue(s)</span>
+            <span>Candidatures reçues</span>
           </Link>
           <Link className="recruiter-metric" to="/recruteur/candidats">
             <strong>{candidates.length}</strong>
-            <span>Profil(s) disponible(s)</span>
+            <span>Profils disponibles</span>
           </Link>
-        </div>
-
-        <div className="recruiter-hero-footer">
-          {company.website ? (
-            <a href={company.website} target="_blank" rel="noreferrer" className="small">
-              Site web de l'entreprise
-            </a>
-          ) : <span />}
-          <button type="button" className="btn btn-ghost btn-small" onClick={openCompanyEdit}>
-            Modifier l'entreprise
-          </button>
         </div>
       </header>
 
