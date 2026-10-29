@@ -651,6 +651,10 @@ class NotificationPrefsIn(BaseModel):
     # Fréquence des alertes emploi : immédiate (au fil de l'eau, plafonnée
     # à un e-mail par jour) ou résumé quotidien.
     email_frequency: Optional[Literal["immediate", "daily"]] = None
+    # Seuil minimum de correspondance pour les alertes emploi par e-mail.
+    # 61 = strictement plus de 60 %. Entre 45 % et 60 %, l'offre reste
+    # visible dans l'application sans e-mail.
+    email_min_match: Optional[int] = Field(default=None, ge=61, le=100)
     whatsapp_enabled: Optional[bool] = None
     whatsapp_number: Optional[str] = None
     telegram_enabled: Optional[bool] = None
@@ -1521,3 +1525,55 @@ class AdminJobUpdate(BaseModel):
     apply_keywords: Optional[list[str]] = None
     salary: Optional[str] = None
     deadline: Optional[datetime] = None
+
+
+# ------------------------------------------------- Notifications admin (§21)
+
+class AdminNotificationOut(BaseModel):
+    id: int
+    category: str
+    category_label: str
+    subject: str
+    body: str
+    detail: str
+    recipients: list[str]
+    status: str
+    sent_count: int
+    failed_count: int
+    is_unread: bool
+    marked_read_at: Optional[datetime] = None
+    archived_at: Optional[datetime] = None
+    created_at: datetime
+    href: Optional[str] = None
+
+    model_config = {"from_attributes": True}
+
+
+class AdminNotificationPage(BaseModel):
+    total: int
+    unread: int
+    per_category: dict[str, dict[str, int]]
+    items: list[AdminNotificationOut]
+    limit: int
+    offset: int
+    retention_days: int
+    categories: list[dict[str, str]]
+
+    model_config = {"from_attributes": True}
+
+
+class AdminNotificationStats(BaseModel):
+    total: int
+    unread: int
+    per_category: dict[str, dict[str, int]]
+
+    model_config = {"from_attributes": True}
+
+
+class AdminNotificationAction(BaseModel):
+    ok: bool
+    log_id: int
+    action: str
+
+    model_config = {"from_attributes": True}
+

@@ -23,13 +23,15 @@ from app.services.matching import LEVEL_STRONG, compute_match
 from app.services.notifications import (
     dispatch,
     email_wanted,
+    job_alert_sent_today,
     normalize_prefs,
 )
 from app.services.skills_taxonomy import load_taxonomy
 
 logger = logging.getLogger("orientskill.alerts")
 
-MATCH_THRESHOLD = 45   # correspondance moyenne minimum
+MATCH_THRESHOLD = 45   # correspondance moyenne minimum : visible in-app
+ALERT_EMAIL_THRESHOLD = 61  # strictement plus de 60 % pour les e-mails
 DEADLINE_WINDOW_DAYS = 7
 
 
@@ -43,11 +45,13 @@ def expiring_matches(
     applications: list[Any],
     taxonomy=None,
     now: Optional[datetime] = None,
+    min_score: int = ALERT_EMAIL_THRESHOLD,
 ) -> list[tuple[models.Job, dict]]:
     """Offres correspondantes dont l'échéance arrive sous 7 jours.
 
     ``skills`` : liste des compétences du profil (format du profil
-    validé). Une offre déjà postulée n'alerte plus.
+    validé). Une offre déjà postulée n'alerte plus. ``min_score`` filtre
+    les alertes e-mail (>= 61 par défaut).
     """
     now = now or datetime.utcnow()
     results: list[tuple[models.Job, dict]] = []
@@ -60,7 +64,7 @@ def expiring_matches(
         if _has_applied(applications, job.id):
             continue
         match = compute_match(skills or [], job.required_skills, taxonomy)
-        if match["score"] >= MATCH_THRESHOLD:
+        if match["score"] >= min_score:
             results.append((job, match))
     results.sort(key=lambda pair: pair[0].deadline)
     return results
@@ -257,6 +261,12 @@ def run_alerts_once(db: Session) -> dict:
         )
         jobs = db.query(models.Job).all()
 
+        # Plafonnement partagé : un seul e-mail d'alerte emploi par
+        # utilisateur et par jour (digest, échéances, agent).
+        if job_alert_sent_today(db, user.id):
+            skipped += 1
+            continue
+
         # ---- Événement « expiring » : par offre, une seule fois.
         # Sans opt-in e-mail, l'offre reste visible dans l'application
         # (inbox) : on ne journalise PAS, un opt-in tardif doit pouvoir
@@ -328,6 +338,8 @@ def run_alerts_once(db: Session) -> dict:
     )
     for recruiter in recruiters:
         if not _wants_email(recruiter, "job_expiring"):
+            continue
+        if job_alert_sent_today(db, recruiter.id):
             continue
         companies = (
             db.query(models.Company)

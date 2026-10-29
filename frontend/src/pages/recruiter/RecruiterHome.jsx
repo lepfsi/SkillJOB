@@ -9,6 +9,7 @@ import ContactDialog from "../../components/ContactDialog.jsx";
 import TalentCard from "../../components/TalentCard.jsx";
 import VerifiedBadge from "../../components/VerifiedBadge.jsx";
 import { Loader, ErrorNote } from "../../components/ui.jsx";
+import { Icon, I } from "../../components/icons.jsx";
 
 // Dashboard recruteur (§37) : entreprise, offres publiées, profils
 // disponibles avec contact direct via la messagerie, statut PARTAGÉ
@@ -127,35 +128,75 @@ export default function RecruiterHome() {
     ? applications.filter((a) => String(a.job_id) === jobFilter)
     : applications;
 
+  const today = new Date().toLocaleDateString("fr-FR", {
+    weekday: "long", day: "numeric", month: "long", year: "numeric",
+  });
+  const todayLabel = today.charAt(0).toUpperCase() + today.slice(1);
+  const companyInitials = (company.name || "?")
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part[0])
+    .join("")
+    .slice(0, 2)
+    .toUpperCase();
+
   return (
     <div className="page">
-      <div className="profile-card">
-        <div className="talent-avatar" style={{ background: "var(--accent)", fontSize: "1.4rem", width: "64px", height: "64px" }}>
-          {company.name.split(" ").map((p) => p[0]).join("").slice(0, 2).toUpperCase()}
-        </div>
-        <div style={{ flex: 1 }}>
-          <h1 style={{ marginBottom: 0 }}>{company.name}</h1>
-          <p className="job-meta" style={{ margin: "0.2rem 0" }}>
-            {company.sector || "Entreprise"}
-            {company.location ? ` · ${company.location}` : ""}
-          </p>
-          {company.description && (
-            <p className="small muted" style={{ margin: 0, maxWidth: "46rem" }}>
-              {company.description}
-            </p>
-          )}
-          <div className="company-links">
-            {company.website && (
-              <a href={company.website} target="_blank" rel="noreferrer" className="small">
-                Site web de l'entreprise
-              </a>
-            )}
-            <button type="button" className="btn btn-outline btn-small" onClick={openCompanyEdit}>
-              Modifier l'entreprise
-            </button>
+      <header className="recruiter-hero" aria-labelledby="recruiter-hero-title">
+        <div className="recruiter-hero-top">
+          <div className="recruiter-identity">
+            <span className="recruiter-mark" aria-hidden="true">{companyInitials}</span>
+            <div className="recruiter-identity-text">
+              <p className="recruiter-eyebrow">Accueil recruteur</p>
+              <h1 id="recruiter-hero-title">{company.name}</h1>
+              <p className="recruiter-meta">
+                {company.sector || "Entreprise"}
+                {company.location ? ` · ${company.location}` : ""}
+                <span className="recruiter-meta-date"> · {todayLabel}</span>
+              </p>
+              {company.description && (
+                <p className="recruiter-description">{company.description}</p>
+              )}
+            </div>
+          </div>
+          <div className="recruiter-hero-actions">
+            <Link className="btn btn-primary" to="/recruteur/offres">
+              <Icon d={I.plus} size={16} />
+              Publier une offre
+            </Link>
+            <Link className="btn btn-outline" to="/recruteur/candidats">
+              Rechercher des talents
+            </Link>
+            <Link className="btn btn-ghost" to="/messages">Boîte de réception</Link>
           </div>
         </div>
-      </div>
+
+        <div className="recruiter-metrics" aria-label="Indicateurs clés">
+          <Link className="recruiter-metric" to="/recruteur/offres">
+            <strong>{jobs.length}</strong>
+            <span>Offre(s) publiée(s)</span>
+          </Link>
+          <Link className="recruiter-metric" to="/recruteur/candidatures">
+            <strong>{applications.length}</strong>
+            <span>Candidature(s) reçue(s)</span>
+          </Link>
+          <Link className="recruiter-metric" to="/recruteur/candidats">
+            <strong>{candidates.length}</strong>
+            <span>Profil(s) disponible(s)</span>
+          </Link>
+        </div>
+
+        <div className="recruiter-hero-footer">
+          {company.website ? (
+            <a href={company.website} target="_blank" rel="noreferrer" className="small">
+              Site web de l'entreprise
+            </a>
+          ) : <span />}
+          <button type="button" className="btn btn-ghost btn-small" onClick={openCompanyEdit}>
+            Modifier l'entreprise
+          </button>
+        </div>
+      </header>
 
       {editingCompany && companyForm && (
         <form className="panel" onSubmit={saveCompany}>
@@ -223,32 +264,6 @@ export default function RecruiterHome() {
       )}
       <ErrorNote error={error} />
       {notice && <div className="alert alert-success">{notice}</div>}
-
-      <div className="metric-strip">
-        <div className="metric">
-          <strong>{jobs.length}</strong>
-          <span>offre(s) publiée(s)</span>
-        </div>
-        <div className="metric">
-          <strong>{applications.length}</strong>
-          <span>candidature(s) reçue(s)</span>
-        </div>
-        <div className="metric">
-          <strong>{candidates.length}</strong>
-          <span>profil(s) disponible(s)</span>
-        </div>
-      </div>
-
-      <section className="section">
-        <div className="section-head">
-          <h2>Prochaines actions</h2>
-        </div>
-        <div className="actions-row">
-          <Link className="btn btn-primary" to="/recruteur/offres">Publier une offre</Link>
-          <Link className="btn btn-outline" to="/recruteur/candidats">Rechercher des talents</Link>
-          <Link className="btn btn-ghost" to="/messages">Boîte de réception</Link>
-        </div>
-      </section>
 
       {(applications.length > 0 || jobFilter) && (
         <section className="section" id="candidatures">

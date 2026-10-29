@@ -7,7 +7,7 @@ dans le périmètre administrateur, pas candidat).
 """
 import logging
 from datetime import date, datetime, time, timedelta
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse
@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 from app import config, models, schemas, security
 from app.database import get_db
 from app.services import (
-    admin_alerts, appeals as appeal_service, email_routing, inbound_email,
+    admin_alerts, admin_inbox, appeals as appeal_service, email_routing, inbound_email,
     job_media, llm_client, notifications, settings_store, uploads,
 )
 from app.services.applications import (
@@ -1571,3 +1571,109 @@ def admin_delete_job_photo(job_id: int, db: Session = Depends(get_db)):
     job_media.remove(job)
     db.commit()
     return {"ok": True}
+
+
+# ------------------------------------------------- Notifications admin (§21)
+# Boîte de réception centralisée des événements et alertes administratives.
+# Chaque notification conserve son état lu/non lu (marquage temporel) et un
+# lien vers la page concernée pour le traitement. Seuls les admins y ont
+# accès via la dépendance de la route.
+
+
+def _admin_notification_query(
+    category: Optional[
+        Literal["verification", "appeal", "report", "ingestion", "critical"]
+    ] = None,
+    status: Literal["all", "unread", "read", "archived"] = "all",
+    since: Optional[date] = None,
+    until: Optional[date] = None,
+    delivery: Literal["all", "sent", "partial", "failed", "recorded"] = "all",
+    db: Session = Depends(get_db),
+):
+    if since and until and until < since:
+        raise HTTPException(status_code=422, detail="La date de fin précède la date de début")
+    return admin_inbox.filtered_query(
+        db,
+        category=category,
+        status=status,
+        since=since,
+        until=until,
+        delivery=delivery,
+    )
+
+
+@router.get("/notifications", response_model=schemas.AdminNotificationPage)
+def admin_notifications(
+    limit: int = Query(default=30, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+    query=Depends(_admin_notification_query),
+):
+    """Boîte commune aux administrateurs, conservée 90 jours.
+
+    Retourne les compteurs globaux et par catégorie ainsi que la page demandée.
+    L'état lu/non lu se fonde sur marked_read_at et archived_at, pas sur une fenêtre de 24 h.
+    """
+    rows = query.order_by(
+        models.AdminNotificationLog.created_at.desc(),
+        models.AdminNotificationLog.id.desc(),
+    ).offset(offset).limit(limit).all()
+    return {
+        **admin_inbox.counters(query),
+        "items": [admin_inbox.notification_dict(row) for row in rows],
+        "limit": limit,
+        "offset": offset,
+        "retention_days": admin_inbox.RETENTION_DAYS,
+        "categories": admin_alerts.categories_catalog(),
+    }
+
+
+@router.get("/notifications/stats", response_model=schemas.AdminNotificationStats)
+def admin_notifications_stats(query=Depends(_admin_notification_query)):
+    """Compteurs de notifications : totaux, non lus, par catégorie."""
+    return admin_inbox.counters(query)
+
+
+@router.post("/notifications/{log_id}/mark-read", response_model=schemas.AdminNotificationAction)
+def admin_mark_notification_read(
+    log_id: int,
+    db: Session = Depends(get_db),
+):
+    """Marque une notification comme lue sans supprimer son historique."""
+    log = db.get(models.AdminNotificationLog, log_id)
+    if log is None:
+        raise HTTPException(status_code=404, detail="Notification introuvable")
+    if log.marked_read_at is None:
+        log.marked_read_at = models.utcnow()
+        db.commit()
+    return {"ok": True, "log_id": log_id, "action": "mark-read"}
+
+
+@router.delete("/notifications/{log_id}", response_model=schemas.AdminNotificationAction)
+def admin_delete_notification(
+    log_id: int,
+    db: Session = Depends(get_db),
+):
+    """Supprime une notification du journal admin (nettoyage après conservation)."""
+    log = db.get(models.AdminNotificationLog, log_id)
+    if log is None:
+        raise HTTPException(status_code=404, detail="Notification introuvable")
+    db.delete(log)
+    db.commit()
+    return {"ok": True, "log_id": log_id, "action": "delete"}
+
+
+@router.put("/notifications/{log_id}/mark-deleted", response_model=schemas.AdminNotificationAction)
+def admin_archive_notification(
+    log_id: int,
+    db: Session = Depends(get_db),
+):
+    """Archive sans supprimer la trace d'envoi ni traiter l'événement métier."""
+    log = db.get(models.AdminNotificationLog, log_id)
+    if log is None:
+        raise HTTPException(status_code=404, detail="Notification introuvable")
+    if log.archived_at is None:
+        log.archived_at = models.utcnow()
+        db.commit()
+    return {"ok": True, "log_id": log_id, "action": "archive"}
+
+

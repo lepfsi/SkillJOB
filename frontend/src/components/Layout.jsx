@@ -80,6 +80,7 @@ const ADMIN_NAV_GROUPS = [
       { to: "/admin/sources", label: "Sources & collecte", icon: "globe" },
       { to: "/admin/contenus", label: "Contenus publics", icon: "layers" },
       { to: "/admin/verifications", label: "Vérifications", icon: "shield" },
+      { to: "/admin/notifications", label: "Notifications", icon: "bell" },
     ],
   },
   {

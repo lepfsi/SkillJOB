@@ -42,6 +42,7 @@ import AdminSources from "./pages/admin/AdminSources.jsx";
 import AdminPublicContent from "./pages/admin/AdminPublicContent.jsx";
 import AdminInstitutional from "./pages/admin/AdminInstitutional.jsx";
 import AdminSkillGraph from "./pages/admin/AdminSkillGraph.jsx";
+import AdminNotifications from "./pages/admin/AdminNotifications.jsx";
 import AdminAlerts from "./pages/admin/AdminAlerts.jsx";
 
 import RecruiterHome from "./pages/recruiter/RecruiterHome.jsx";
@@ -140,6 +141,7 @@ export default function App() {
       <Route path="/admin/domaines" element={<RequireAdmin><AdminDomains /></RequireAdmin>} />
       <Route path="/admin/formations" element={<RequireAdmin><AdminLearning /></RequireAdmin>} />
       <Route path="/admin/signalements" element={<RequireAdmin><AdminReports /></RequireAdmin>} />
+      <Route path="/admin/notifications" element={<RequireAdmin><AdminNotifications /></RequireAdmin>} />
       <Route path="/admin/candidatures" element={<RequireAdmin><AdminApplications /></RequireAdmin>} />
       <Route path="/admin/sources" element={<RequireAdmin><AdminSources /></RequireAdmin>} />
       <Route path="/admin/equipe-alertes" element={<RequireAdmin><AdminAlerts /></RequireAdmin>} />

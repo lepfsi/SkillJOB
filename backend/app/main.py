@@ -431,6 +431,10 @@ def _ensure_columns() -> None:
         "ban_appeals": [
             ("history", "JSON"),
         ],
+        "admin_notification_log": [
+            ("marked_read_at", "TIMESTAMP"),
+            ("archived_at", "TIMESTAMP"),
+        ],
     }
     dialect = engine.dialect.name
     with engine.begin() as conn:

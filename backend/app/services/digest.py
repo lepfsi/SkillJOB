@@ -18,12 +18,18 @@ from app import models
 from app.database import SessionLocal
 from app.services import agent_prefs, settings_store
 from app.services.matching import compute_match
-from app.services.notifications import dispatch, normalize_prefs
+from app.services.notifications import (
+    DEFAULT_EMAIL_MIN_MATCH,
+    dispatch,
+    job_alert_sent_today,
+    normalize_prefs,
+)
 from app.services.skills_taxonomy import load_taxonomy
 
 logger = logging.getLogger("orientskill.digest")
 
-MATCH_THRESHOLD = 45  # correspondance moyenne minimum
+MATCH_THRESHOLD = 45  # correspondance moyenne minimum : visible in-app
+EMAIL_THRESHOLD = DEFAULT_EMAIL_MIN_MATCH  # 61 : strictement plus de 60 % e-mail
 
 
 WINDOW_DAILY = timedelta(hours=24)
@@ -36,9 +42,13 @@ def digest_matches_for(
     user: models.User,
     since,
     exclude_job_ids: Optional[set[int]] = None,
+    min_score: int = MATCH_THRESHOLD,
 ) -> list[tuple[models.Job, dict]]:
     """Offres récentes qui correspondent au profil, hors offres déjà
-    envoyées par e-mail."""
+
+    envoyées par e-mail. ``min_score`` filtre les offres éligibles à
+    l'e-mail (>= 61 par défaut) ; entre 45 % et 60 % restent in-app.
+    """
     profile = (
         db.query(models.Profile)
         .filter(models.Profile.user_id == user.id)
@@ -62,7 +72,7 @@ def digest_matches_for(
         match = compute_match(
             profile.skills or [], job.required_skills, taxonomy
         )
-        if match["score"] >= MATCH_THRESHOLD:
+        if match["score"] >= min_score:
             matches.append((job, match))
     return matches
 
@@ -134,8 +144,8 @@ def run_digest_for_user(
 ) -> dict:
     """Une passe pour un candidat : immédiate (fenêtre 1 h) ou quotidienne.
 
-    Dans les deux cas, un seul e-mail d'offres par jour : le reste reste
-    visible dans l'application.
+    Un seul e-mail d'alerte emploi par utilisateur et par jour (partagé
+    avec les échéances et l'agent) ; le reste reste visible in-app.
     """
     now = now or datetime.utcnow()
     if not agent_prefs.frequency_allows_auto(user, now):
@@ -152,14 +162,21 @@ def run_digest_for_user(
         return {"notified": 0, "skipped": 1, "errors": 0}
     if not agent_prefs.action_enabled(user, "watch_jobs"):
         return {"notified": 0, "skipped": 1, "errors": 0}
+    if job_alert_sent_today(db, user.id):
+        return {"notified": 0, "skipped": 1, "errors": 0}
     frequency = prefs.get("email_frequency", "daily")
     if frequency == "daily" and now.hour < int(digest_hour):
         return {"notified": 0, "skipped": 1, "errors": 0}
     if _already_digested_today(db, user.id, now):
         return {"notified": 0, "skipped": 1, "errors": 0}
     window = WINDOW_IMMEDIATE if frequency == "immediate" else WINDOW_DAILY
+    min_score = int(prefs.get("email_min_match") or EMAIL_THRESHOLD)
     matches = digest_matches_for(
-        db, user, now - window, _digested_job_ids(db, user.id)
+        db,
+        user,
+        now - window,
+        _digested_job_ids(db, user.id),
+        min_score=min_score,
     )
     if not matches:
         return {"notified": 0, "skipped": 1, "errors": 0}

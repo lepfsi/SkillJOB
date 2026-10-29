@@ -441,6 +441,10 @@ class AdminNotificationLog(Base):
     sent_count: Mapped[int] = mapped_column(Integer, default=0)
     failed_count: Mapped[int] = mapped_column(Integer, default=0)
     detail: Mapped[str] = mapped_column(Text, default="")
+    # Marquage temporel de la lecture (badge non-lu / tri).
+    marked_read_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    # Archive / suppression différée : conserve l'historique.
+    archived_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=utcnow, index=True)
 
 

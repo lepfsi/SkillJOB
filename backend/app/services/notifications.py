@@ -12,6 +12,7 @@ import hmac
 import json
 import logging
 import smtplib
+from datetime import datetime, timedelta
 from email.message import EmailMessage
 from typing import Any, Optional
 from urllib.error import HTTPError
@@ -19,7 +20,7 @@ from urllib.parse import quote
 
 import urllib.request
 
-from app import config
+from app import config, models
 from app.services import email_branding, settings_store
 
 logger = logging.getLogger("orientskill.notifications")
@@ -160,6 +161,30 @@ ADMIN_CATEGORY_EVENTS = {
 # Alertes emploi concernées par le lien de désabonnement en un clic.
 JOB_ALERT_EVENTS = {"new_match", "expiring", "agent", "job_expiring"}
 
+# Seuil minimum pour une alerte emploi par e-mail : strictement plus de 60 %,
+# donc 61 % par défaut. Entre 45 % et 60 %, l'offre reste visible dans
+# l'application sans e-mail. Peut être affiné par email_min_match.
+DEFAULT_EMAIL_MIN_MATCH = 61
+
+
+def job_alert_sent_today(db: Session, user_id: int) -> bool:
+    """Un e-mail d'alerte emploi a-t-il déjà été envoyé à cet utilisateur ?
+
+    Partagé par le digest, les échéances et le conseil de l'agent : une
+    seule passe par jour et par utilisateur, quels que soient les jobs.
+    """
+    start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    return (
+        db.query(models.NotificationLog.id)
+        .filter(
+            models.NotificationLog.user_id == user_id,
+            models.NotificationLog.event.in_(JOB_ALERT_EVENTS),
+            models.NotificationLog.sent_at >= start,
+        )
+        .first()
+        is not None
+    )
+
 DEFAULT_PREFS: dict[str, Any] = {
     "email_enabled": False,
     "email": "",
@@ -211,6 +236,11 @@ def normalize_prefs(
     prefs["email_frequency"] = (
         frequency if frequency in ("immediate", "daily") else "daily"
     )
+    # Seuil d'alerte emploi : jamais inférieur à 61 % (strictement > 60 %).
+    min_match = int(prefs.get("email_min_match") or DEFAULT_EMAIL_MIN_MATCH)
+    if min_match < DEFAULT_EMAIL_MIN_MATCH:
+        min_match = DEFAULT_EMAIL_MIN_MATCH
+    prefs["email_min_match"] = min_match
     events = prefs.get("events") or {}
     prefs["events"] = {
         event: bool(events.get(event, False)) for event in event_keys(role)
