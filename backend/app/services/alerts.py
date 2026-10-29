@@ -267,36 +267,54 @@ def run_alerts_once(db: Session) -> dict:
             skipped += 1
             continue
 
-        # ---- Événement « expiring » : par offre, une seule fois.
+        # ---- Événement « expiring » : une seule échéance par passe.
         # Sans opt-in e-mail, l'offre reste visible dans l'application
         # (inbox) : on ne journalise PAS, un opt-in tardif doit pouvoir
         # déclencher l'envoi pendant la fenêtre de 7 jours.
+        job_alert_logged = False
         if agent_prefs.action_enabled(user, "alert_deadlines"):
-            for job, match in expiring_matches(
-                profile.skills or [], jobs, applications, taxonomy
-            ):
-                if _already_alerted(db, user.id, "expiring", job.id):
-                    continue
-                if not _wants_email(user, "expiring"):
-                    skipped += 1
-                    continue
-                try:
-                    results = dispatch(
-                        db, user,
-                        "OrientSkill AI : une offre qui vous correspond expire bientôt",
-                        build_expiring_body(user, job, match),
-                        event="expiring",
-                    )
-                    db.add(models.NotificationLog(
-                        user_id=user.id, event="expiring", job_id=job.id,
-                    ))
-                    if results and any(r["ok"] for r in results):
-                        notified += 1
-                    else:
+            if not _wants_email(user, "expiring"):
+                skipped += 1
+            else:
+                prefs = normalize_prefs(
+                    getattr(user, "notification_prefs", None) or {},
+                    getattr(user, "role", "candidate"),
+                )
+                min_match = int(
+                    prefs.get("email_min_match") or ALERT_EMAIL_THRESHOLD
+                )
+                for job, match in expiring_matches(
+                    profile.skills or [], jobs, applications, taxonomy,
+                    min_score=min_match,
+                ):
+                    if _already_alerted(db, user.id, "expiring", job.id):
+                        continue
+                    try:
+                        results = dispatch(
+                            db, user,
+                            "OrientSkill AI : une offre qui vous correspond expire bientôt",
+                            build_expiring_body(user, job, match),
+                            event="expiring",
+                        )
+                        db.add(models.NotificationLog(
+                            user_id=user.id, event="expiring", job_id=job.id,
+                        ))
+                        job_alert_logged = True
+                        if results and any(r["ok"] for r in results):
+                            notified += 1
+                        else:
+                            errors += 1
+                    except Exception as exc:
+                        logger.warning("Alerte expiring user %s : %s", user.id, exc)
                         errors += 1
-                except Exception as exc:
-                    logger.warning("Alerte expiring user %s : %s", user.id, exc)
-                    errors += 1
+                    # Plafond quotidien : une seule échéance par passe.
+                    break
+
+        # Plafond partagé : une échéance vient d'être journalisée, le
+        # conseil de l'agent attend la prochaine journée.
+        if job_alert_logged:
+            skipped += 1
+            continue
 
         # ---- Événement « agent » : un conseil par jour au maximum.
         if not agent_prefs.action_enabled(user, "watch_jobs"):
@@ -346,6 +364,7 @@ def run_alerts_once(db: Session) -> dict:
             .filter(models.Company.owner_user_id == recruiter.id)
             .all()
         )
+        job_expiring_logged = False
         for company in companies:
             jobs = (
                 db.query(models.Job)
@@ -375,6 +394,7 @@ def run_alerts_once(db: Session) -> dict:
                         event="job_expiring",
                         job_id=job.id,
                     ))
+                    job_expiring_logged = True
                     if results and any(r["ok"] for r in results):
                         notified += 1
                     else:
@@ -385,5 +405,9 @@ def run_alerts_once(db: Session) -> dict:
                         recruiter.id, exc,
                     )
                     errors += 1
+                # Plafond quotidien : une seule offre signalée par passe.
+                break
+            if job_expiring_logged:
+                break
     db.commit()
     return {"notified": notified, "skipped": skipped, "errors": errors}

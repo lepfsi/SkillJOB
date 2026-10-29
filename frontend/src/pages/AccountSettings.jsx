@@ -240,6 +240,25 @@ function NotificationsSection({ role }) {
                   Immédiate (au plus un e-mail par jour)
                 </label>
               </div>
+              <label className="field">
+                <span>Seuil de correspondance des offres par e-mail</span>
+                <select
+                  value={prefs.email_min_match || 61}
+                  disabled={!prefs.email_enabled}
+                  onChange={(e) =>
+                    set("email_min_match", Number(e.target.value))
+                  }
+                >
+                  <option value={61}>61 % et plus</option>
+                  <option value={70}>70 % et plus</option>
+                  <option value={80}>80 % et plus</option>
+                  <option value={90}>90 % et plus</option>
+                </select>
+                <span className="field-hint">
+                  Les offres entre 45 % et 60 % restent dans vos notifications,
+                  sans e-mail. Le seuil minimum est de 61 %.
+                </span>
+              </label>
             </div>
           )}
 

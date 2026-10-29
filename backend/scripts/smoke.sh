@@ -21,6 +21,10 @@ rm -f "$SMOKE_DB"
 # jamais le dossier uploads/ réel de l'utilisateur.
 export DATABASE_URL="sqlite:///./$SMOKE_DB"
 export UPLOAD_DIR="$PWD/$SMOKE_DIR/uploads"
+# Aucun planificateur pendant le smoke : pas d'e-mail ni de requête réseau
+# imprévus, et aucune course avec les données de test.
+export SOURCE_SCHEDULER_ENABLED=0
+export DIGEST_SCHEDULER_ENABLED=0
 if [ -f ".venv/Scripts/activate" ]; then source .venv/Scripts/activate; fi
 
 echo "=== Vérification isolée (base: $SMOKE_DB, port: $SMOKE_PORT) ==="

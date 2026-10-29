@@ -37,3 +37,10 @@ SOURCE_SCHEDULER_ENABLED = os.getenv(
 SOURCE_SCHEDULER_TICK_SECONDS = max(
     15, int(os.getenv("SOURCE_SCHEDULER_TICK_SECONDS", "60"))
 )
+
+# Digest et alertes planifiées : le thread démarre avec l'application.
+# Les tests et le smoke le désactivent pour éviter tout envoi réel et
+# toute course avec les données de test.
+DIGEST_SCHEDULER_ENABLED = os.getenv(
+    "DIGEST_SCHEDULER_ENABLED", "1"
+).strip().lower() not in {"0", "false", "no", "off"}

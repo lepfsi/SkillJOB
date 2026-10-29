@@ -999,8 +999,10 @@ l'administration. Les calendriers restent ceux annoncés par le MINESUP.
 
 - `GET /api/profile/notifications` → préférences de l'utilisateur :
   canaux (`email_enabled`, `email`, `telegram_*`, `whatsapp_*`),
-  `email_frequency` (`immediate` | `daily`) et `events` : opt-in e-mail
-  **par événement** (`false` = l'information reste dans l'application).
+  `email_frequency` (`immediate` | `daily`), `email_min_match`
+  (seuil de correspondance e-mail, `61` à `100`) et `events` : opt-in
+  e-mail **par événement** (`false` = l'information reste dans
+  l'application).
   La réponse contient aussi `role`, `event_types` (libellés) et
   `event_catalog` (liste `{key, label, description, group, critical}`)
   **filtrés selon le rôle connecté** :
@@ -1011,15 +1013,19 @@ l'administration. Les calendriers restent ceux annoncés par le MINESUP.
     `company_verification` ;
   - admin : `verification_request`, `appeal`, `report`,
     `ingestion_failure`, `critical_alert`.
-- `PUT /api/profile/notifications { ...canaux, email_frequency?, events?:
-  {clé: bool} }` : fusion (mise à jour partielle possible). Les clés
-  d'événements d'un autre rôle sont ignorées. `email_frequency` invalide
-  → `422`.
+- `PUT /api/profile/notifications { ...canaux, email_frequency?,
+  email_min_match?, events?: {clé: bool} }` : fusion (mise à jour
+  partielle possible). Les clés d'événements d'un autre rôle sont
+  ignorées. `email_frequency` invalide ou `email_min_match` hors
+  `61`–`100` → `422`.
 - Fréquence des offres : `immediate` = passe horaire, fenêtre d'une heure ;
   `daily` = fenêtre de 24 h, après `digest_hour` configuré par l'admin.
-  Dans les deux cas, **un seul e-mail d'offres par jour et par candidat** ;
-  les offres déjà envoyées sont dédupliquées dans `notification_log`.
-  Les autres correspondances restent dans l'inbox.
+  Dans les deux cas, **un seul e-mail d'alerte emploi par utilisateur et
+  par jour** (digest, échéances et conseil de l'agent partagent le même
+  plafond) ; un recruteur reçoit au plus **un e-mail d'expiration par
+  jour**, même si plusieurs de ses offres arrivent à échéance. Les offres
+  déjà envoyées sont dédupliquées dans `notification_log`. Les autres
+  correspondances restent dans l'inbox, y compris entre 45 % et 60 %.
 - Événements déclencheurs : message d'un recruteur (messagerie), mise à
   jour de candidature, nouvelle candidature reçue (recruteur), réponse à
   une invitation (recruteur), publication et expiration d'offre

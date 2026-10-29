@@ -4,9 +4,8 @@ Date de revue : lundi 26 octobre 2026
 Source : retours utilisateurs et tests terrain du 25 octobre 2026.
 Statut : document de travail. Aucune de ces remarques n'est encore considérée comme validée avant la revue.
 
-Avancement au 27 octobre 2026 : les points 1, 2, 3, 4, 5, 6, 7, 8, 9 et 10
-sont implémentés et vérifiés. Les points 11, 12, 13 à 22 et 23 restent à
-traiter. Le point 23 a été ajouté en priorité 0.
+Avancement au 29 octobre 2026 : les points 1 à 23 sont implémentés et
+vérifiés. Les points 24 à 34 restent à traiter.
 
 Nouveaux retours intégrés le 26 octobre 2026 : les points 13 à 23 complètent
 cette feuille de route. Ils sont classés dans la priorité correspondante et
@@ -227,7 +226,13 @@ depuis l'écran de connexion).
 
 ### 23. Moteur d'alertes e-mail trop volumineux et redondant
 
-Statut : à traiter (priorité 0 ajoutée le 27 octobre 2026).
+Statut : livré et vérifié le 29 octobre 2026. Seuil e-mail à 61 %
+(réglable de 61 à 100), déduplication par utilisateur et par offre dans
+`notification_log`, plafond partagé d'un e-mail d'alerte emploi par
+utilisateur et par jour, passe idempotente y compris pour un recruteur avec
+plusieurs offres, notifications in-app conservées dès 45 % et tests sans
+envoi réel. Le planificateur de digest et d'alertes est désactivé dans les
+tests et le smoke.
 
 **Constat**
 Le moteur d'alertes envoie plusieurs fois la même offre par e-mail. Un

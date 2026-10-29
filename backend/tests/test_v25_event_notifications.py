@@ -223,6 +223,35 @@ def test_inbox_lists_expiring_event(client, admin_headers):
     ]
 
 
+def test_inbox_keeps_expiring_match_between_45_and_60():
+    """Une correspondance moyenne reste visible in-app, sans e-mail."""
+    job = SimpleNamespace(
+        id=1201,
+        title="Offre partielle",
+        company="Partielle SARL",
+        location="Douala",
+        published_at=datetime.utcnow() - timedelta(days=1),
+        required_skills=[
+            {"name": "Python", "importance": "core"},
+            {"name": "SQL", "importance": "preferred"},
+        ],
+        deadline=datetime.utcnow() + timedelta(days=2),
+    )
+    profile = {
+        "skills": [{
+            "skill": "Python",
+            "name": "Python",
+            "importance": "core",
+            "proficiency": "intermediaire",
+        }]
+    }
+    inbox = build_inbox(profile, [job], [])
+    assert any(
+        event["kind"] == "expiring" and event["job_id"] == job.id
+        for event in inbox
+    ), inbox
+
+
 def test_inbox_ignores_jobs_published_before_account():
     """Un compte neuf ne voit pas les offres publiées avant sa création."""
     since = datetime.utcnow() - timedelta(hours=1)
@@ -314,8 +343,20 @@ def test_alerts_once_sends_and_dedupes(client, admin_headers, monkeypatch):
             for m in inst.messages
         ]
         assert any("expire bientôt" in s for s in subjects)
-        # Un conseil de l'agent part au plus une fois par jour.
-        assert any("votre agent a repéré" in s for s in subjects)
+        # Plafond partagé : l'échéance partie, l'agent attend le lendemain.
+        user = (
+            db.query(models.User)
+            .filter_by(email="candidat.alerte@orientskill.cm")
+            .one()
+        )
+        events = [
+            log.event
+            for log in db.query(models.NotificationLog)
+            .filter_by(user_id=user.id)
+            .all()
+        ]
+        assert "expiring" in events, events
+        assert "agent" not in events, events
 
         FakeSMTP.instances = []
         second = run_alerts_once(db)

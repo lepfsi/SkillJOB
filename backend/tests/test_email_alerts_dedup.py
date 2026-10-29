@@ -41,10 +41,11 @@ def _create_candidate(db, email, skills, prefs):
     return user
 
 
-def _create_job(db, title, required_skills, days_ahead=1):
+def _create_job(db, title, required_skills, days_ahead=1, company_id=None):
     job = models.Job(
         title=title,
         company="Entreprise Test",
+        company_id=company_id,
         location="Douala",
         sector="Informatique / IT",
         contract_type="CDI",
@@ -59,6 +60,29 @@ def _create_job(db, title, required_skills, days_ahead=1):
     db.commit()
     db.refresh(job)
     return job
+
+
+def _create_recruiter(db, email, prefs):
+    user = models.User(
+        email=email,
+        full_name="Recruteur Alertes",
+        password_hash="x",
+        role="recruiter",
+        notification_prefs=prefs,
+    )
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    company = models.Company(
+        owner_user_id=user.id,
+        name="Entreprise Alertes",
+        sector="Informatique / IT",
+        location="Douala",
+    )
+    db.add(company)
+    db.commit()
+    db.refresh(company)
+    return user, company
 
 
 def _prefs(**extra):
@@ -255,6 +279,153 @@ def test_job_alert_sent_today(client):
         assert job_alert_sent_today(db, 999999) is False
     finally:
         db.query(models.NotificationLog).delete()
+        db.commit()
+        db.close()
+
+
+def test_alerts_one_email_per_candidate_pass(client):
+    db = next(_db())
+    try:
+        user = _create_candidate(
+            db,
+            "alerts.cap.candidat@orientskill.cm",
+            [_skill("Python")],
+            _prefs(),
+        )
+        _create_job(
+            db, "Dev Python urgent A", [_skill("Python")], days_ahead=1
+        )
+        _create_job(
+            db, "Dev Python urgent B", [_skill("Python")], days_ahead=2
+        )
+        import app.services.alerts as alerts_mod
+
+        original = alerts_mod.dispatch
+        fake = FakeDispatch()
+        alerts_mod.dispatch = fake
+        try:
+            alerts_mod.run_alerts_once(db)
+            calls = [c for c in fake.calls if c["args"][1].id == user.id]
+            assert len(calls) == 1, calls
+            assert "expire bientôt" in calls[0]["args"][2]
+            events = [
+                log.event
+                for log in db.query(models.NotificationLog)
+                .filter_by(user_id=user.id)
+                .all()
+            ]
+            assert events == ["expiring"], events
+        finally:
+            alerts_mod.dispatch = original
+    finally:
+        _cleanup(db, "alerts.cap.candidat@orientskill.cm")
+        db.close()
+
+
+def test_expiring_email_respects_min_match(client):
+    db = next(_db())
+    try:
+        user = _create_candidate(
+            db,
+            "alerts.seuil.expiration@orientskill.cm",
+            [_skill("Python", proficiency="avance")],
+            _prefs(
+                email_min_match=70,
+                events={"expiring": True, "agent": False},
+            ),
+        )
+        _create_job(
+            db,
+            "Dev Python partiel",
+            [
+                _skill("Python", importance="core"),
+                _skill("SQL", importance="preferred"),
+            ],
+            days_ahead=1,
+        )
+        import app.services.alerts as alerts_mod
+
+        original = alerts_mod.dispatch
+        fake = FakeDispatch()
+        alerts_mod.dispatch = fake
+        try:
+            alerts_mod.run_alerts_once(db)
+            calls = [c for c in fake.calls if c["args"][1].id == user.id]
+            assert calls == [], "seuil 70 : le match à 67 % reste in-app"
+
+            prefs = dict(user.notification_prefs)
+            prefs["email_min_match"] = 61
+            user.notification_prefs = prefs
+            db.commit()
+
+            alerts_mod.run_alerts_once(db)
+            calls = [c for c in fake.calls if c["args"][1].id == user.id]
+            assert len(calls) == 1, calls
+            assert "expire bientôt" in calls[0]["args"][2]
+        finally:
+            alerts_mod.dispatch = original
+    finally:
+        _cleanup(db, "alerts.seuil.expiration@orientskill.cm")
+        db.close()
+
+
+def test_alerts_one_email_per_recruiter_pass(client):
+    db = next(_db())
+    recruiter = company = None
+    try:
+        recruiter, company = _create_recruiter(
+            db,
+            "alerts.cap.recruteur@orientskill.cm",
+            _prefs(
+                email="recruteur.alertes@orientskill.cm",
+                events={"job_expiring": True},
+            ),
+        )
+        _create_job(
+            db, "Offre urgente A", [_skill("Python")],
+            days_ahead=1, company_id=company.id,
+        )
+        _create_job(
+            db, "Offre urgente B", [_skill("Python")],
+            days_ahead=2, company_id=company.id,
+        )
+        import app.services.alerts as alerts_mod
+
+        original = alerts_mod.dispatch
+        fake = FakeDispatch()
+        alerts_mod.dispatch = fake
+        try:
+            alerts_mod.run_alerts_once(db)
+            calls = [
+                c for c in fake.calls if c["args"][1].id == recruiter.id
+            ]
+            assert len(calls) == 1, calls
+            assert "expire bientôt" in calls[0]["args"][2]
+            events = [
+                log.event
+                for log in db.query(models.NotificationLog)
+                .filter_by(user_id=recruiter.id)
+                .all()
+            ]
+            assert events == ["job_expiring"], events
+        finally:
+            alerts_mod.dispatch = original
+    finally:
+        if recruiter is not None:
+            db.query(models.NotificationLog).filter_by(
+                user_id=recruiter.id
+            ).delete(synchronize_session=False)
+        if company is not None:
+            db.query(models.Job).filter(
+                models.Job.company_id == company.id
+            ).delete(synchronize_session=False)
+            db.query(models.Company).filter_by(id=company.id).delete(
+                synchronize_session=False
+            )
+        if recruiter is not None:
+            db.query(models.User).filter_by(id=recruiter.id).delete(
+                synchronize_session=False
+            )
         db.commit()
         db.close()
 

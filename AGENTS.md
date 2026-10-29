@@ -45,6 +45,10 @@ bash scripts/smoke.sh   # base .smoke/ jetable, port 8123
   `backend/uploads/`). Les tests (conftest) et le smoke le redéfinissent vers un
   bac à sable jetable : JAMAIS écrire dans `backend/uploads/` réel depuis un test,
   un upload écraserait les photos des vrais utilisateurs.
+- Les planificateurs (digest/alertes et collecte de sources) sont désactivés
+  dans les tests et le smoke (`DIGEST_SCHEDULER_ENABLED=0`,
+  `SOURCE_SCHEDULER_ENABLED=0`) : aucun e-mail réel ni requête réseau imprévue
+  pendant les vérifications.
 
 Compte démo : `demo@orientskill.cm / demo1234` (candidat) ·
 `recruteur@orientskill.cm / recruteur1234` (recruteur) ·

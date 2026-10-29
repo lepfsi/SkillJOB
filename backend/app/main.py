@@ -706,10 +706,11 @@ async def lifespan(app: FastAPI):
         bot_service.start_if_configured()
     except Exception as exc:  # pragma: no cover
         print(f"Bot Telegram non démarré : {exc}")
-    try:
-        digest_service.start()
-    except Exception as exc:  # pragma: no cover
-        print(f"Planificateur de digest non démarré : {exc}")
+    if config.DIGEST_SCHEDULER_ENABLED:
+        try:
+            digest_service.start()
+        except Exception as exc:  # pragma: no cover
+            print(f"Planificateur de digest non démarré : {exc}")
     try:
         inbound_service.start_if_configured()
     except Exception as exc:  # pragma: no cover

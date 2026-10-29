@@ -88,10 +88,11 @@ def build_inbox(
         # Échéances proches : offres correspondantes non postulées.
         # Toujours visibles in-app ; l'e-mail est un opt-in par événement.
         if alert_deadlines:
-            from app.services.alerts import expiring_matches
+            from app.services.alerts import MATCH_THRESHOLD, expiring_matches
 
             for job, _match in expiring_matches(
-                profile_skills, jobs, applications, taxonomy, now=now_naive
+                profile_skills, jobs, applications, taxonomy,
+                now=now_naive, min_score=MATCH_THRESHOLD,
             ):
                 if before_account(job.published_at):
                     continue

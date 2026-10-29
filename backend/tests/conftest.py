@@ -11,6 +11,10 @@ os.environ["SECRET_KEY"] = "test-secret"
 # Pas de collecte autonome pendant les tests : les sources de test ne
 # doivent jamais lancer de requêtes réseau imprévues.
 os.environ["SOURCE_SCHEDULER_ENABLED"] = "0"
+# Le planificateur de digest/alertes ne doit jamais tourner pendant les
+# tests : il enverrait des notifications et créerait des courses avec les
+# données de test.
+os.environ["DIGEST_SCHEDULER_ENABLED"] = "0"
 # Dépôts (photos, pièces) ISOLÉS : jamais le dossier réel de l'utilisateur.
 os.environ["UPLOAD_DIR"] = str(_tmpdir / "uploads")
 
