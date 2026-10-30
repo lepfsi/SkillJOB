@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Icon, I } from "./icons.jsx";
-import { initialsOf } from "../lib.js";
+import CompanyLogo from "./CompanyLogo.jsx";
 import { useDomains } from "./DomainPicker.jsx";
 
 // Visuel d'offre partagé : la photo déposée si elle existe, sinon une tuile
@@ -79,7 +79,11 @@ export default function JobVisual({
           </span>
         </span>
       )}
-      <span className="job-visual-initials">{initialsOf(company)}</span>
+      <CompanyLogo
+        name={company}
+        logoUrl={job?.company_branding?.logo_url}
+        className="job-visual-initials"
+      />
     </span>
   );
 }

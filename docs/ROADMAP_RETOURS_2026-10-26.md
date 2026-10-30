@@ -4,8 +4,8 @@ Date de revue : lundi 26 octobre 2026
 Source : retours utilisateurs et tests terrain du 25 octobre 2026.
 Statut : feuille de route active. Les points livrés sont datés dans leur section.
 
-Avancement au 29 octobre 2026 : les points 1 à 24 sont implémentés et
-vérifiés. Les points 25 à 34 restent à traiter.
+Avancement au 30 octobre 2026 : les points 1 à 25 sont implémentés et
+vérifiés. Les points 26 à 34 restent à traiter.
 
 Nouveaux retours intégrés le 26 octobre 2026 : les points 13 à 23 complètent
 cette feuille de route. Ils sont classés dans la priorité correspondante. La
@@ -741,6 +741,14 @@ représentative, comme les candidats.
 - Le recruteur peut ajouter et changer sa photo.
 - La photo apparaît partout où l'identité est visible.
 - Une entreprise sans photo conserve un rendu propre.
+
+Statut : livré et vérifié le 30 octobre 2026. Le logo est stocké dans
+`Company.logo_path` et déposé depuis le profil recruteur
+(`POST/DELETE /api/recruiter/company/logo`, JPG, PNG ou WebP, 5 Mo maximum).
+Il est exposé via `logo_url` dans le profil, les offres
+(`company_branding`), les candidatures et la messagerie, avec repli sur les
+initiales. Tests backend (277), build frontend, smoke isolé et revue
+responsive aux largeurs 1280, 768 et 375 px effectués.
 
 ### 26. Parcours de suivi clair des actions
 
